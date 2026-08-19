@@ -1,21 +1,82 @@
-import './App.css'
+import "./App.css";
 import Login from "./Login";
-import { useState } from 'react';
+import { useState } from "react";
 import Usuarios from "./pages/Usuarios";
 import NovoUsuario from "./pages/NovoUsuario";
+import EditarUsuario from "./pages/EditarUsuario";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+
+  const [usuarios, setUsuarios] = useState([
+    {
+      id: 1,
+      nome: "Administrador",
+      email: "admin@cuidare.com.br",
+      telefone: "(00) 00000-0000",
+      perfil: "Administrador",
+      status: "Ativo",
+      ultimoAcesso: "Acesso recente",
+    },
+    {
+      id: 2,
+      nome: "Clínica Cuidare",
+      email: "clinica@cuidare.com.br",
+      telefone: "(00) 00000-0000",
+      perfil: "Administrador",
+      status: "Ativo",
+      ultimoAcesso: "Acesso recente",
+    },
+  ]);
+
+  function adicionarUsuario(novoUsuario) {
+    const usuario = {
+      ...novoUsuario,
+      id: Date.now(),
+      ultimoAcesso: "Nunca acessou",
+    };
+
+    setUsuarios((usuariosAtuais) => [
+      ...usuariosAtuais,
+      usuario,
+    ]);
+
+    setCurrentPage("usuarios");
+  }
+
+  function atualizarUsuario(usuarioAtualizado) {
+    setUsuarios((usuariosAtuais) =>
+      usuariosAtuais.map((usuario) =>
+        usuario.id === usuarioAtualizado.id
+          ? usuarioAtualizado
+          : usuario
+      )
+    );
+
+    setCurrentPage("usuarios");
+  }
+
+  function abrirEdicao(usuario) {
+    setUsuarioSelecionado(usuario);
+    setCurrentPage("editar-usuario");
+  }
 
   if (!isLoggedIn) {
-    return <Login onLogin={() => setIsLoggedIn(true)} />;
+    return (
+      <Login
+        onLogin={() => setIsLoggedIn(true)}
+      />
+    );
   }
 
   if (currentPage === "usuarios") {
     return (
       <Usuarios
+        usuarios={usuarios}
         onNovoUsuario={() => setCurrentPage("novo-usuario")}
+        onEditarUsuario={abrirEdicao}
       />
     );
   }
@@ -24,6 +85,17 @@ function App() {
     return (
       <NovoUsuario
         onVoltar={() => setCurrentPage("usuarios")}
+        onSalvar={adicionarUsuario}
+      />
+    );
+  }
+
+  if (currentPage === "editar-usuario") {
+    return (
+      <EditarUsuario
+        usuario={usuarioSelecionado}
+        onVoltar={() => setCurrentPage("usuarios")}
+        onSalvar={atualizarUsuario}
       />
     );
   }
@@ -155,8 +227,8 @@ function App() {
               </h3>
 
               <p>
-                O Cuidare foi desenvolvido para tornar a gestão da clínica
-                mais simples, segura e inteligente.
+                O Cuidare foi desenvolvido para tornar a gestão
+                da clínica mais simples, segura e inteligente.
               </p>
 
             </div>

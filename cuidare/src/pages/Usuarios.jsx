@@ -1,6 +1,22 @@
 import "./Usuarios.css";
 
-function Usuarios({ onNovoUsuario }) {
+function Usuarios({ usuarios, onNovoUsuario, onEditarUsuario }) {
+  const listaUsuarios = usuarios || [];
+
+  const totalUsuarios = listaUsuarios.length;
+
+  const administradores = listaUsuarios.filter(
+    (usuario) => usuario.perfil === "Administrador"
+  ).length;
+
+  const usuariosAtivos = listaUsuarios.filter(
+    (usuario) => usuario.status === "Ativo"
+  ).length;
+
+  const usuariosInativos = listaUsuarios.filter(
+    (usuario) => usuario.status === "Inativo"
+  ).length;
+
   return (
     <div className="usuarios-page">
 
@@ -40,7 +56,7 @@ function Usuarios({ onNovoUsuario }) {
           </span>
 
           <strong>
-            2
+            {totalUsuarios}
           </strong>
 
           <small>
@@ -56,7 +72,7 @@ function Usuarios({ onNovoUsuario }) {
           </span>
 
           <strong>
-            2
+            {administradores}
           </strong>
 
           <small>
@@ -72,7 +88,7 @@ function Usuarios({ onNovoUsuario }) {
           </span>
 
           <strong>
-            2
+            {usuariosAtivos}
           </strong>
 
           <small>
@@ -88,11 +104,11 @@ function Usuarios({ onNovoUsuario }) {
           </span>
 
           <strong>
-            0
+            {usuariosInativos}
           </strong>
 
           <small>
-            Nenhum usuário inativo
+            Usuários inativos
           </small>
 
         </div>
@@ -149,91 +165,65 @@ function Usuarios({ onNovoUsuario }) {
 
           </div>
 
-          <div className="table-row">
+          {listaUsuarios.map((usuario) => (
 
-            <div className="user-info">
+            <div
+              className="table-row"
+              key={usuario.id}
+            >
 
-              <div className="user-avatar">
-                D
+              <div className="user-info">
+
+                <div className="user-avatar">
+                  {usuario.nome
+                    ? usuario.nome.charAt(0).toUpperCase()
+                    : "U"}
+                </div>
+
+                <div>
+
+                  <strong>
+                    {usuario.nome}
+                  </strong>
+
+                  <small>
+                    {usuario.email}
+                  </small>
+
+                </div>
+
               </div>
 
-              <div>
+              <span className="role-badge admin">
+                {usuario.perfil}
+              </span>
 
-                <strong>
-                  Administrador
-                </strong>
+              <span
+                className={`status-badge ${
+                  usuario.status === "Ativo"
+                    ? "active"
+                    : "inactive"
+                }`}
+              >
+                {usuario.status}
+              </span>
 
-                <small>
-                  admin@cuidare.com.br
-                </small>
+              <span className="last-access">
+                {usuario.ultimoAcesso}
+              </span>
 
-              </div>
+              <button
+                className="action-button"
+                type="button"
+                onClick={() => onEditarUsuario(usuario)}
+                title="Editar usuário"
+              >
+                ✎
+              </button>
 
             </div>
 
-            <span className="role-badge admin">
-              Administrador
-            </span>
-
-            <span className="status-badge active">
-              Ativo
-            </span>
-
-            <span className="last-access">
-              Acesso recente
-            </span>
-
-            <button
-              className="action-button"
-              type="button"
-            >
-              ⋮
-            </button>
-
-          </div>
-
-          <div className="table-row">
-
-            <div className="user-info">
-
-              <div className="user-avatar">
-                C
-              </div>
-
-              <div>
-
-                <strong>
-                  Clínica Cuidare
-                </strong>
-
-                <small>
-                  clinica@cuidare.com.br
-                </small>
-
-              </div>
-
-            </div>
-
-            <span className="role-badge admin">
-              Administrador
-            </span>
-
-            <span className="status-badge active">
-              Ativo
-            </span>
-
-            <span className="last-access">
-              Acesso recente
-            </span>
-
-            <button
-              className="action-button"
-              type="button"
-            >
-              ⋮
-            </button>
-
-          </div>
+          ))}
 
         </div>
 

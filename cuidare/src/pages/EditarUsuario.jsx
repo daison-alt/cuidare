@@ -1,14 +1,22 @@
 import { useState } from "react";
 import "./NovoUsuario.css";
 
-function NovoUsuario({ onVoltar, onSalvar }) {
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [senha, setSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
-  const [perfil, setPerfil] = useState("");
-  const [status, setStatus] = useState("Ativo");
+function EditarUsuario({ usuario, onVoltar, onSalvar }) {
+  const [nome, setNome] = useState(usuario?.nome || "");
+  const [email, setEmail] = useState(usuario?.email || "");
+  const [telefone, setTelefone] = useState(usuario?.telefone || "");
+
+  const perfilInicial =
+    usuario?.perfil === "Administrador"
+      ? "administrador"
+      : usuario?.perfil === "Fisioterapeuta"
+      ? "fisioterapeuta"
+      : usuario?.perfil === "Secretária"
+      ? "secretaria"
+      : "estagiario";
+
+  const [perfil, setPerfil] = useState(perfilInicial);
+  const [status, setStatus] = useState(usuario?.status || "Ativo");
 
   const permissoes = {
     administrador: [
@@ -74,28 +82,16 @@ function NovoUsuario({ onVoltar, onSalvar }) {
       return;
     }
 
-    if (!perfil) {
-      alert("Selecione um perfil de acesso.");
-      return;
-    }
-
-    if (!senha) {
-      alert("Digite uma senha.");
-      return;
-    }
-
-    if (senha !== confirmarSenha) {
-      alert("As senhas não conferem.");
-      return;
-    }
-
-    onSalvar({
+    const usuarioAtualizado = {
+      ...usuario,
       nome,
       email,
       telefone,
       perfil: nomePerfil[perfil],
       status,
-    });
+    };
+
+    onSalvar(usuarioAtualizado);
   }
 
   return (
@@ -118,11 +114,11 @@ function NovoUsuario({ onVoltar, onSalvar }) {
           </span>
 
           <h1>
-            Novo usuário
+            Editar usuário
           </h1>
 
           <p>
-            Cadastre um novo usuário e defina seu nível de acesso ao Cuidare.
+            Atualize os dados e as permissões de acesso deste usuário.
           </p>
 
         </div>
@@ -156,7 +152,6 @@ function NovoUsuario({ onVoltar, onSalvar }) {
               <input
                 id="nome"
                 type="text"
-                placeholder="Digite o nome completo"
                 value={nome}
                 onChange={(event) => setNome(event.target.value)}
               />
@@ -172,7 +167,6 @@ function NovoUsuario({ onVoltar, onSalvar }) {
               <input
                 id="email"
                 type="email"
-                placeholder="Digite o usuário ou e-mail"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />
@@ -188,9 +182,10 @@ function NovoUsuario({ onVoltar, onSalvar }) {
               <input
                 id="telefone"
                 type="text"
-                placeholder="(00) 00000-0000"
                 value={telefone}
-                onChange={(event) => setTelefone(event.target.value)}
+                onChange={(event) =>
+                  setTelefone(event.target.value)
+                }
               />
 
             </div>
@@ -198,15 +193,13 @@ function NovoUsuario({ onVoltar, onSalvar }) {
             <div className="form-group">
 
               <label htmlFor="senha">
-                Senha
+                Nova senha
               </label>
 
               <input
                 id="senha"
                 type="password"
-                placeholder="Digite uma senha"
-                value={senha}
-                onChange={(event) => setSenha(event.target.value)}
+                placeholder="Deixe em branco para manter"
               />
 
             </div>
@@ -214,17 +207,13 @@ function NovoUsuario({ onVoltar, onSalvar }) {
             <div className="form-group">
 
               <label htmlFor="confirmarSenha">
-                Confirmar senha
+                Confirmar nova senha
               </label>
 
               <input
                 id="confirmarSenha"
                 type="password"
-                placeholder="Confirme a senha"
-                value={confirmarSenha}
-                onChange={(event) =>
-                  setConfirmarSenha(event.target.value)
-                }
+                placeholder="Confirme a nova senha"
               />
 
             </div>
@@ -259,10 +248,6 @@ function NovoUsuario({ onVoltar, onSalvar }) {
               onChange={(event) => setPerfil(event.target.value)}
             >
 
-              <option value="" disabled>
-                Selecione um perfil
-              </option>
-
               <option value="administrador">
                 Administrador
               </option>
@@ -292,12 +277,12 @@ function NovoUsuario({ onVoltar, onSalvar }) {
             <div>
 
               <strong>
-                Permissões por perfil
+                Alteração de perfil
               </strong>
 
               <p>
-                As permissões são apresentadas automaticamente
-                de acordo com o perfil selecionado.
+                Alterar o perfil modifica as permissões
+                padrão associadas a este usuário.
               </p>
 
             </div>
@@ -317,7 +302,6 @@ function NovoUsuario({ onVoltar, onSalvar }) {
                 <input
                   type="radio"
                   name="status"
-                  value="Ativo"
                   checked={status === "Ativo"}
                   onChange={() => setStatus("Ativo")}
                 />
@@ -333,7 +317,6 @@ function NovoUsuario({ onVoltar, onSalvar }) {
                 <input
                   type="radio"
                   name="status"
-                  value="Inativo"
                   checked={status === "Inativo"}
                   onChange={() => setStatus("Inativo")}
                 />
@@ -357,77 +340,47 @@ function NovoUsuario({ onVoltar, onSalvar }) {
         <div className="form-panel-header">
 
           <span>
-            PERMISSÕES
+            PERMISSÕES ATUAIS
           </span>
 
           <h2>
-            {perfil
-              ? `Permissões do perfil: ${nomePerfil[perfil]}`
-              : "Selecione um perfil"
-            }
+            Permissões do perfil: {nomePerfil[perfil]}
           </h2>
 
           <p>
-            Os acessos abaixo serão definidos automaticamente
-            conforme o perfil escolhido.
+            Estas são as permissões padrão associadas ao perfil selecionado.
           </p>
 
         </div>
 
-        {!perfil && (
+        <div className="permissions-grid">
 
-          <div className="permission-empty">
+          {permissoes[perfil].map(
+            ([nomePermissao, permitido]) => (
 
-            <div>
-              🔐
-            </div>
+              <div
+                className={`permission-card ${
+                  permitido ? "" : "restricted"
+                }`}
+                key={nomePermissao}
+              >
 
-            <strong>
-              Nenhum perfil selecionado
-            </strong>
+                <strong>
+                  {permitido ? "✓" : "×"} {nomePermissao}
+                </strong>
 
-            <p>
-              Selecione um perfil acima para visualizar
-              as permissões disponíveis.
-            </p>
+                <span>
+                  {permitido
+                    ? "Acesso permitido"
+                    : "Acesso restrito"}
+                </span>
 
-          </div>
+              </div>
 
-        )}
+            )
+          )}
 
-        {perfil && (
-
-          <div className="permissions-grid">
-
-            {permissoes[perfil].map(
-              ([nomePermissao, permitido]) => (
-
-                <div
-                  className={`permission-card ${
-                    permitido ? "" : "restricted"
-                  }`}
-                  key={nomePermissao}
-                >
-
-                  <strong>
-                    {permitido ? "✓" : "×"} {nomePermissao}
-                  </strong>
-
-                  <span>
-                    {permitido
-                      ? "Acesso permitido"
-                      : "Acesso restrito"
-                    }
-                  </span>
-
-                </div>
-
-              )
-            )}
-
-          </div>
-
-        )}
+        </div>
 
       </section>
 
@@ -446,7 +399,7 @@ function NovoUsuario({ onVoltar, onSalvar }) {
           className="primary-button"
           onClick={handleSalvar}
         >
-          Criar usuário
+          Salvar alterações
         </button>
 
       </div>
@@ -455,4 +408,4 @@ function NovoUsuario({ onVoltar, onSalvar }) {
   );
 }
 
-export default NovoUsuario;
+export default EditarUsuario;

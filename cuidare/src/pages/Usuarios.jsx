@@ -1,46 +1,100 @@
 import "./Usuarios.css";
-function Usuarios() {
+
+function Usuarios({ onNovoUsuario }) {
   return (
     <div className="usuarios-page">
 
       <div className="usuarios-header">
+
         <div>
-          <span className="page-label">ADMINISTRAÇÃO</span>
-          <h1>Usuários</h1>
+
+          <span className="page-label">
+            ADMINISTRAÇÃO
+          </span>
+
+          <h1>
+            Usuários
+          </h1>
+
           <p>
             Gerencie os usuários que possuem acesso ao sistema Cuidare.
           </p>
+
         </div>
 
-        <button className="primary-button">
+        <button
+          className="primary-button"
+          onClick={onNovoUsuario}
+        >
           + Novo usuário
         </button>
+
       </div>
 
       <div className="usuarios-summary">
 
         <div className="summary-card">
-          <span>Total de usuários</span>
-          <strong>2</strong>
-          <small>Usuários cadastrados</small>
+
+          <span>
+            Total de usuários
+          </span>
+
+          <strong>
+            2
+          </strong>
+
+          <small>
+            Usuários cadastrados
+          </small>
+
         </div>
 
         <div className="summary-card">
-          <span>Administradores</span>
-          <strong>2</strong>
-          <small>Acesso completo</small>
+
+          <span>
+            Administradores
+          </span>
+
+          <strong>
+            2
+          </strong>
+
+          <small>
+            Acesso completo
+          </small>
+
         </div>
 
         <div className="summary-card">
-          <span>Ativos</span>
-          <strong>2</strong>
-          <small>Usuários ativos</small>
+
+          <span>
+            Ativos
+          </span>
+
+          <strong>
+            2
+          </strong>
+
+          <small>
+            Usuários ativos
+          </small>
+
         </div>
 
         <div className="summary-card">
-          <span>Inativos</span>
-          <strong>0</strong>
-          <small>Nenhum usuário inativo</small>
+
+          <span>
+            Inativos
+          </span>
+
+          <strong>
+            0
+          </strong>
+
+          <small>
+            Nenhum usuário inativo
+          </small>
+
         </div>
 
       </div>
@@ -48,9 +102,17 @@ function Usuarios() {
       <section className="usuarios-panel">
 
         <div className="panel-title">
+
           <div>
-            <span>USUÁRIOS CADASTRADOS</span>
-            <h2>Controle de acesso</h2>
+
+            <span>
+              USUÁRIOS CADASTRADOS
+            </span>
+
+            <h2>
+              Controle de acesso
+            </h2>
+
           </div>
 
           <input
@@ -58,27 +120,55 @@ function Usuarios() {
             placeholder="Pesquisar usuário..."
             className="search-input"
           />
+
         </div>
 
         <div className="usuarios-table">
 
           <div className="table-header">
-            <span>USUÁRIO</span>
-            <span>PERFIL</span>
-            <span>STATUS</span>
-            <span>ÚLTIMO ACESSO</span>
-            <span>AÇÕES</span>
+
+            <span>
+              USUÁRIO
+            </span>
+
+            <span>
+              PERFIL
+            </span>
+
+            <span>
+              STATUS
+            </span>
+
+            <span>
+              ÚLTIMO ACESSO
+            </span>
+
+            <span>
+              AÇÕES
+            </span>
+
           </div>
 
           <div className="table-row">
 
             <div className="user-info">
-              <div className="user-avatar">D</div>
+
+              <div className="user-avatar">
+                D
+              </div>
 
               <div>
-                <strong>Administrador</strong>
-                <small>admin@cuidare.com.br</small>
+
+                <strong>
+                  Administrador
+                </strong>
+
+                <small>
+                  admin@cuidare.com.br
+                </small>
+
               </div>
+
             </div>
 
             <span className="role-badge admin">
@@ -93,7 +183,10 @@ function Usuarios() {
               Acesso recente
             </span>
 
-            <button className="action-button">
+            <button
+              className="action-button"
+              type="button"
+            >
               ⋮
             </button>
 
@@ -102,12 +195,23 @@ function Usuarios() {
           <div className="table-row">
 
             <div className="user-info">
-              <div className="user-avatar">C</div>
+
+              <div className="user-avatar">
+                C
+              </div>
 
               <div>
-                <strong>Clínica Cuidare</strong>
-                <small>clinica@cuidare.com.br</small>
+
+                <strong>
+                  Clínica Cuidare
+                </strong>
+
+                <small>
+                  clinica@cuidare.com.br
+                </small>
+
               </div>
+
             </div>
 
             <span className="role-badge admin">
@@ -122,7 +226,10 @@ function Usuarios() {
               Acesso recente
             </span>
 
-            <button className="action-button">
+            <button
+              className="action-button"
+              type="button"
+            >
               ⋮
             </button>
 

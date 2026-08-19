@@ -2,6 +2,7 @@ import './App.css'
 import Login from "./Login";
 import { useState } from 'react';
 import Usuarios from "./pages/Usuarios";
+import NovoUsuario from "./pages/NovoUsuario";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -12,20 +13,37 @@ function App() {
   }
 
   if (currentPage === "usuarios") {
-    return <Usuarios />;
+    return (
+      <Usuarios
+        onNovoUsuario={() => setCurrentPage("novo-usuario")}
+      />
+    );
+  }
+
+  if (currentPage === "novo-usuario") {
+    return (
+      <NovoUsuario
+        onVoltar={() => setCurrentPage("usuarios")}
+      />
+    );
   }
 
   return (
     <div className="app">
+
       <aside className="sidebar">
 
         <div className="brand">
-          <div className="brand-icon">C</div>
+
+          <div className="brand-icon">
+            C
+          </div>
 
           <div>
             <h1>Cuidare</h1>
             <span>Gestão em Saúde</span>
           </div>
+
         </div>
 
         <nav className="menu">
@@ -71,8 +89,15 @@ function App() {
         </nav>
 
         <div className="sidebar-footer">
-          <span>Administrador</span>
-          <strong>Cuidare Clínica</strong>
+
+          <span>
+            Administrador
+          </span>
+
+          <strong>
+            Cuidare Clínica
+          </strong>
+
         </div>
 
       </aside>
@@ -82,6 +107,7 @@ function App() {
         <header className="topbar">
 
           <div>
+
             <span className="welcome">
               Bem-vindo ao Cuidare
             </span>
@@ -89,6 +115,7 @@ function App() {
             <h2>
               Dashboard
             </h2>
+
           </div>
 
           <div className="user-area">
@@ -98,6 +125,7 @@ function App() {
             </div>
 
             <div>
+
               <strong>
                 Administrador
               </strong>
@@ -105,6 +133,7 @@ function App() {
               <span>
                 Acesso completo
               </span>
+
             </div>
 
           </div>
@@ -141,27 +170,67 @@ function App() {
           <div className="stats-grid">
 
             <div className="stat-card">
-              <span>Pacientes</span>
-              <strong>0</strong>
-              <small>Nenhum paciente cadastrado</small>
+
+              <span>
+                Pacientes
+              </span>
+
+              <strong>
+                0
+              </strong>
+
+              <small>
+                Nenhum paciente cadastrado
+              </small>
+
             </div>
 
             <div className="stat-card">
-              <span>Atendimentos hoje</span>
-              <strong>0</strong>
-              <small>Agenda disponível</small>
+
+              <span>
+                Atendimentos hoje
+              </span>
+
+              <strong>
+                0
+              </strong>
+
+              <small>
+                Agenda disponível
+              </small>
+
             </div>
 
             <div className="stat-card">
-              <span>Receita do mês</span>
-              <strong>R$ 0,00</strong>
-              <small>Aguardando lançamentos</small>
+
+              <span>
+                Receita do mês
+              </span>
+
+              <strong>
+                R$ 0,00
+              </strong>
+
+              <small>
+                Aguardando lançamentos
+              </small>
+
             </div>
 
             <div className="stat-card">
-              <span>Contas pendentes</span>
-              <strong>0</strong>
-              <small>Nenhuma pendência</small>
+
+              <span>
+                Contas pendentes
+              </span>
+
+              <strong>
+                0
+              </strong>
+
+              <small>
+                Nenhuma pendência
+              </small>
+
             </div>
 
           </div>

@@ -1,17 +1,24 @@
 import './App.css'
 import Login from "./Login";
 import { useState } from 'react';
+import Usuarios from "./pages/Usuarios";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentPage, setCurrentPage] = useState("dashboard");
 
   if (!isLoggedIn) {
     return <Login onLogin={() => setIsLoggedIn(true)} />;
   }
 
+  if (currentPage === "usuarios") {
+    return <Usuarios />;
+  }
+
   return (
     <div className="app">
       <aside className="sidebar">
+
         <div className="brand">
           <div className="brand-icon">C</div>
 
@@ -22,44 +29,97 @@ function App() {
         </div>
 
         <nav className="menu">
-          <button className="menu-item active">Dashboard</button>
-          <button className="menu-item">Pacientes</button>
-          <button className="menu-item">Prontuários</button>
-          <button className="menu-item">Agenda</button>
-          <button className="menu-item">Financeiro</button>
-          <button className="menu-item">Estoque</button>
-          <button className="menu-item">Relatórios</button>
-          <button className="menu-item">Configurações</button>
+
+          <button
+            className="menu-item active"
+            onClick={() => setCurrentPage("dashboard")}
+          >
+            Dashboard
+          </button>
+
+          <button className="menu-item">
+            Pacientes
+          </button>
+
+          <button className="menu-item">
+            Prontuários
+          </button>
+
+          <button className="menu-item">
+            Agenda
+          </button>
+
+          <button className="menu-item">
+            Financeiro
+          </button>
+
+          <button className="menu-item">
+            Estoque
+          </button>
+
+          <button className="menu-item">
+            Relatórios
+          </button>
+
+          <button
+            className="menu-item"
+            onClick={() => setCurrentPage("usuarios")}
+          >
+            Configurações
+          </button>
+
         </nav>
 
         <div className="sidebar-footer">
           <span>Administrador</span>
           <strong>Cuidare Clínica</strong>
         </div>
+
       </aside>
 
       <main className="main-content">
+
         <header className="topbar">
+
           <div>
-            <span className="welcome">Bem-vindo ao Cuidare</span>
-            <h2>Dashboard</h2>
+            <span className="welcome">
+              Bem-vindo ao Cuidare
+            </span>
+
+            <h2>
+              Dashboard
+            </h2>
           </div>
 
           <div className="user-area">
-            <div className="avatar">A</div>
+
+            <div className="avatar">
+              A
+            </div>
 
             <div>
-              <strong>Administrador</strong>
-              <span>Acesso completo</span>
+              <strong>
+                Administrador
+              </strong>
+
+              <span>
+                Acesso completo
+              </span>
             </div>
+
           </div>
+
         </header>
 
         <section className="dashboard">
 
           <div className="welcome-card">
+
             <div>
-              <span className="card-label">VISÃO GERAL</span>
+
+              <span className="card-label">
+                VISÃO GERAL
+              </span>
 
               <h3>
                 Tenha o controle da sua clínica em um só lugar.
@@ -69,9 +129,13 @@ function App() {
                 O Cuidare foi desenvolvido para tornar a gestão da clínica
                 mais simples, segura e inteligente.
               </p>
+
             </div>
 
-            <div className="card-symbol">✚</div>
+            <div className="card-symbol">
+              ✚
+            </div>
+
           </div>
 
           <div className="stats-grid">
@@ -107,16 +171,30 @@ function App() {
             <section className="panel">
 
               <div className="panel-header">
+
                 <div>
-                  <span>AGENDA</span>
-                  <h3>Próximos atendimentos</h3>
+
+                  <span>
+                    AGENDA
+                  </span>
+
+                  <h3>
+                    Próximos atendimentos
+                  </h3>
+
                 </div>
 
-                <button>Ver agenda</button>
+                <button>
+                  Ver agenda
+                </button>
+
               </div>
 
               <div className="empty-state">
-                <div className="empty-icon">◷</div>
+
+                <div className="empty-icon">
+                  ◷
+                </div>
 
                 <strong>
                   Nenhum atendimento agendado
@@ -125,6 +203,7 @@ function App() {
                 <p>
                   Os próximos atendimentos aparecerão aqui.
                 </p>
+
               </div>
 
             </section>
@@ -132,17 +211,39 @@ function App() {
             <section className="panel">
 
               <div className="panel-header">
+
                 <div>
-                  <span>ACESSO RÁPIDO</span>
-                  <h3>Principais ações</h3>
+
+                  <span>
+                    ACESSO RÁPIDO
+                  </span>
+
+                  <h3>
+                    Principais ações
+                  </h3>
+
                 </div>
+
               </div>
 
               <div className="quick-actions">
-                <button>Novo paciente</button>
-                <button>Novo atendimento</button>
-                <button>Novo lançamento</button>
-                <button>Registrar ocorrência</button>
+
+                <button>
+                  Novo paciente
+                </button>
+
+                <button>
+                  Novo atendimento
+                </button>
+
+                <button>
+                  Novo lançamento
+                </button>
+
+                <button>
+                  Registrar ocorrência
+                </button>
+
               </div>
 
             </section>
@@ -150,7 +251,9 @@ function App() {
           </div>
 
         </section>
+
       </main>
+
     </div>
   );
 }

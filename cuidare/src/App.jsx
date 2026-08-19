@@ -58,6 +58,22 @@ function App() {
     setCurrentPage("usuarios");
   }
 
+  function alterarStatusUsuario(usuario) {
+    setUsuarios((usuariosAtuais) =>
+      usuariosAtuais.map((usuarioAtual) =>
+        usuarioAtual.id === usuario.id
+          ? {
+              ...usuarioAtual,
+              status:
+                usuarioAtual.status === "Ativo"
+                  ? "Inativo"
+                  : "Ativo",
+            }
+          : usuarioAtual
+      )
+    );
+  }
+
   function abrirEdicao(usuario) {
     setUsuarioSelecionado(usuario);
     setCurrentPage("editar-usuario");
@@ -77,6 +93,7 @@ function App() {
         usuarios={usuarios}
         onNovoUsuario={() => setCurrentPage("novo-usuario")}
         onEditarUsuario={abrirEdicao}
+        onAlterarStatus={alterarStatusUsuario}
       />
     );
   }

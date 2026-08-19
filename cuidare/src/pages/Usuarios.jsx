@@ -1,6 +1,11 @@
 import "./Usuarios.css";
 
-function Usuarios({ usuarios, onNovoUsuario, onEditarUsuario }) {
+function Usuarios({
+  usuarios,
+  onNovoUsuario,
+  onEditarUsuario,
+  onAlterarStatus,
+}) {
   const listaUsuarios = usuarios || [];
 
   const totalUsuarios = listaUsuarios.length;
@@ -40,6 +45,7 @@ function Usuarios({ usuarios, onNovoUsuario, onEditarUsuario }) {
 
         <button
           className="primary-button"
+          type="button"
           onClick={onNovoUsuario}
         >
           + Novo usuário
@@ -50,67 +56,27 @@ function Usuarios({ usuarios, onNovoUsuario, onEditarUsuario }) {
       <div className="usuarios-summary">
 
         <div className="summary-card">
-
-          <span>
-            Total de usuários
-          </span>
-
-          <strong>
-            {totalUsuarios}
-          </strong>
-
-          <small>
-            Usuários cadastrados
-          </small>
-
+          <span>Total de usuários</span>
+          <strong>{totalUsuarios}</strong>
+          <small>Usuários cadastrados</small>
         </div>
 
         <div className="summary-card">
-
-          <span>
-            Administradores
-          </span>
-
-          <strong>
-            {administradores}
-          </strong>
-
-          <small>
-            Acesso completo
-          </small>
-
+          <span>Administradores</span>
+          <strong>{administradores}</strong>
+          <small>Acesso completo</small>
         </div>
 
         <div className="summary-card">
-
-          <span>
-            Ativos
-          </span>
-
-          <strong>
-            {usuariosAtivos}
-          </strong>
-
-          <small>
-            Usuários ativos
-          </small>
-
+          <span>Ativos</span>
+          <strong>{usuariosAtivos}</strong>
+          <small>Usuários ativos</small>
         </div>
 
         <div className="summary-card">
-
-          <span>
-            Inativos
-          </span>
-
-          <strong>
-            {usuariosInativos}
-          </strong>
-
-          <small>
-            Usuários inativos
-          </small>
-
+          <span>Inativos</span>
+          <strong>{usuariosInativos}</strong>
+          <small>Usuários inativos</small>
         </div>
 
       </div>
@@ -143,25 +109,11 @@ function Usuarios({ usuarios, onNovoUsuario, onEditarUsuario }) {
 
           <div className="table-header">
 
-            <span>
-              USUÁRIO
-            </span>
-
-            <span>
-              PERFIL
-            </span>
-
-            <span>
-              STATUS
-            </span>
-
-            <span>
-              ÚLTIMO ACESSO
-            </span>
-
-            <span>
-              AÇÕES
-            </span>
+            <span>USUÁRIO</span>
+            <span>PERFIL</span>
+            <span>STATUS</span>
+            <span>ÚLTIMO ACESSO</span>
+            <span>AÇÕES</span>
 
           </div>
 
@@ -175,9 +127,11 @@ function Usuarios({ usuarios, onNovoUsuario, onEditarUsuario }) {
               <div className="user-info">
 
                 <div className="user-avatar">
+
                   {usuario.nome
                     ? usuario.nome.charAt(0).toUpperCase()
                     : "U"}
+
                 </div>
 
                 <div>
@@ -212,14 +166,39 @@ function Usuarios({ usuarios, onNovoUsuario, onEditarUsuario }) {
                 {usuario.ultimoAcesso}
               </span>
 
-              <button
-                className="action-button"
-                type="button"
-                onClick={() => onEditarUsuario(usuario)}
-                title="Editar usuário"
-              >
-                ✎
-              </button>
+              <div className="user-actions">
+
+                <button
+                  type="button"
+                  className="action-button"
+                  onClick={() => onEditarUsuario(usuario)}
+                  title="Editar usuário"
+                  aria-label="Editar usuário"
+                >
+                  ✎
+                </button>
+
+                <button
+                  type="button"
+                  className="action-button"
+                  onClick={() => onAlterarStatus(usuario)}
+                  title={
+                    usuario.status === "Ativo"
+                      ? "Inativar usuário"
+                      : "Ativar usuário"
+                  }
+                  aria-label={
+                    usuario.status === "Ativo"
+                      ? "Inativar usuário"
+                      : "Ativar usuário"
+                  }
+                >
+                  {usuario.status === "Ativo"
+                    ? "⏸"
+                    : "▶"}
+                </button>
+
+              </div>
 
             </div>
 

@@ -1,6 +1,6 @@
 import "./Login.css";
 
-function Login() {
+function Login({ onLogin }) {
   return (
     <div className="login-page">
       <div className="login-container">
@@ -59,8 +59,9 @@ function Login() {
             </div>
 
             <button
-              type="submit"
+              type="button"
               className="login-button"
+              onClick={onLogin}
             >
               Entrar
             </button>

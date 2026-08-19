@@ -1,13 +1,20 @@
 import './App.css'
 import Login from "./Login";
+import { useState } from 'react';
+
 function App() {
-  return <Login />;
-    /*  
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  if (!isLoggedIn) {
+    return <Login onLogin={() => setIsLoggedIn(true)} />;
+  }
+
+  return (
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon">C</div>
-        
+
           <div>
             <h1>Cuidare</h1>
             <span>Gestão em Saúde</span>
@@ -145,9 +152,7 @@ function App() {
         </section>
       </main>
     </div>
-  )
-  */
-
+  );
 }
 
-export default App
+export default App;

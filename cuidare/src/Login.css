@@ -1,0 +1,330 @@
+.login-page {
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 40px 20px;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(194, 155, 71, 0.12),
+      transparent 35%
+    ),
+    #f5f5f3;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 430px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ========================================
+   MARCA
+======================================== */
+
+.login-brand {
+  text-align: center;
+
+  margin-bottom: 24px;
+}
+
+.login-logo-placeholder {
+  width: 76px;
+  height: 76px;
+
+  margin: 0 auto 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid #c29b47;
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  color: #c29b47;
+
+  font-family: Georgia, serif;
+
+  font-size: 34px;
+  font-weight: 600;
+
+  box-shadow: 0 8px 25px rgba(14, 67, 52, 0.08);
+}
+
+.login-brand h1 {
+  margin: 0;
+
+  color: #0e4334;
+
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: 30px;
+
+  letter-spacing: 3px;
+}
+
+.login-brand p {
+  margin: 5px 0 0;
+
+  color: #c29b47;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  letter-spacing: 2.2px;
+}
+
+/* ========================================
+   CARD
+======================================== */
+
+.login-card {
+  width: 100%;
+
+  padding: 34px;
+
+  border: 1px solid #e4e4df;
+  border-radius: 20px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 15px 40px rgba(14, 67, 52, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.login-heading {
+  margin-bottom: 26px;
+}
+
+.login-heading span {
+  color: #c29b47;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+}
+
+.login-heading h2 {
+  margin: 7px 0 7px;
+
+  color: #2b2b2b;
+
+  font-size: 23px;
+  font-weight: 650;
+}
+
+.login-heading p {
+  margin: 0;
+
+  color: #777777;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+/* ========================================
+   FORMULÁRIO
+======================================== */
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #2b2b2b;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.form-group input {
+  width: 100%;
+
+  padding: 13px 14px;
+
+  border: 1px solid #deded8;
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #2b2b2b;
+
+  font-size: 13px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-group input::placeholder {
+  color: #a0a0a0;
+}
+
+.form-group input:focus {
+  border-color: #c29b47;
+
+  box-shadow:
+    0 0 0 3px rgba(194, 155, 71, 0.13);
+}
+
+/* ========================================
+   OPÇÕES
+======================================== */
+
+.login-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin: 4px 0 22px;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  color: #6f6f6f;
+
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+.remember input {
+  accent-color: #0e4334;
+}
+
+.forgot-password {
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: #0e4334;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.forgot-password:hover {
+  color: #c29b47;
+
+  text-decoration: underline;
+}
+
+/* ========================================
+   BOTÃO ENTRAR
+======================================== */
+
+.login-button {
+  width: 100%;
+
+  padding: 14px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: #0e4334;
+
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  letter-spacing: 0.3px;
+
+  box-shadow:
+    0 6px 15px rgba(14, 67, 52, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.login-button:hover {
+  background: #c29b47;
+
+  box-shadow:
+    0 7px 17px rgba(194, 155, 71, 0.25);
+
+  transform: translateY(-1px);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   RODAPÉ
+======================================== */
+
+.login-footer {
+  margin-top: 22px;
+
+  text-align: center;
+}
+
+.login-footer span {
+  color: #c29b47;
+
+  font-family: Georgia, serif;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.login-footer p {
+  margin: 4px 0 0;
+
+  color: #888888;
+
+  font-size: 10px;
+}
+
+/* ========================================
+   RESPONSIVIDADE
+======================================== */
+
+@media (max-width: 480px) {
+  .login-page {
+    padding: 25px 15px;
+  }
+
+  .login-card {
+    padding: 27px 22px;
+
+    border-radius: 17px;
+  }
+
+  .login-brand h1 {
+    font-size: 27px;
+  }
+
+  .login-heading h2 {
+    font-size: 21px;
+  }
+}

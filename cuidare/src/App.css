@@ -6,8 +6,8 @@
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
 
-  color: #243238;
-  background: #f4f8f7;
+  color: #2b2b2b;
+  background: #f5f5f3;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -17,7 +17,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f4f8f7;
+
+  background: #f5f5f3;
 }
 
 button {
@@ -30,7 +31,9 @@ button {
   min-height: 100vh;
 }
 
-/* SIDEBAR */
+/* ========================================
+   SIDEBAR
+======================================== */
 
 .sidebar {
   width: 250px;
@@ -41,9 +44,9 @@ button {
   display: flex;
   flex-direction: column;
 
-  background: #ffffff;
+  background: #0e4334;
 
-  border-right: 1px solid #e4ecea;
+  border-right: 1px solid #09372b;
 }
 
 .brand {
@@ -65,16 +68,20 @@ button {
 
   border-radius: 13px;
 
-  background: #78a99d;
+  background: #c29b47;
 
-  color: white;
+  color: #ffffff;
 
   font-size: 22px;
   font-weight: 700;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .brand h1 {
   margin: 0;
+
+  color: #ffffff;
 
   font-size: 22px;
 
@@ -86,7 +93,7 @@ button {
 
   margin-top: 2px;
 
-  color: #8a9996;
+  color: #f3db70;
 
   font-size: 11px;
 }
@@ -108,27 +115,29 @@ button {
 
   background: transparent;
 
-  color: #71817e;
+  color: #dbe7e2;
 
   text-align: left;
 
   font-size: 14px;
 
-  transition: 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .menu-item:hover {
-  background: #f1f6f5;
+  background: rgba(255, 255, 255, 0.10);
 
-  color: #45645e;
+  color: #ffffff;
 }
 
 .menu-item.active {
-  background: #e7f1ee;
+  background: #c29b47;
 
-  color: #47776c;
+  color: #ffffff;
 
   font-weight: 600;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .sidebar-footer {
@@ -136,7 +145,7 @@ button {
 
   padding: 18px 12px 5px;
 
-  border-top: 1px solid #edf1f0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .sidebar-footer span {
@@ -144,18 +153,20 @@ button {
 
   margin-bottom: 4px;
 
-  color: #9aa7a4;
+  color: #f3db70;
 
   font-size: 11px;
 }
 
 .sidebar-footer strong {
-  color: #52635f;
+  color: #ffffff;
 
   font-size: 13px;
 }
 
-/* MAIN */
+/* ========================================
+   MAIN
+======================================== */
 
 .main-content {
   flex: 1;
@@ -174,19 +185,21 @@ button {
 
   background: #ffffff;
 
-  border-bottom: 1px solid #e7eeec;
+  border-bottom: 1px solid #e4e4df;
 }
 
 .welcome {
-  color: #92a09d;
+  color: #0e4334;
 
   font-size: 12px;
+
+  font-weight: 600;
 }
 
 .topbar h2 {
   margin: 3px 0 0;
 
-  color: #273a36;
+  color: #2b2b2b;
 
   font-size: 21px;
 }
@@ -204,7 +217,7 @@ button {
 }
 
 .user-area strong {
-  color: #3d504c;
+  color: #2b2b2b;
 
   font-size: 13px;
 }
@@ -212,7 +225,7 @@ button {
 .user-area span {
   margin-top: 2px;
 
-  color: #9aa7a4;
+  color: #858585;
 
   font-size: 11px;
 }
@@ -227,14 +240,16 @@ button {
 
   border-radius: 50%;
 
-  background: #e1eeeb;
+  background: #f3ebd8;
 
-  color: #4c796e;
+  color: #0e4334;
 
   font-weight: 700;
 }
 
-/* DASHBOARD */
+/* ========================================
+   DASHBOARD
+======================================== */
 
 .dashboard {
   padding: 30px 34px 40px;
@@ -251,19 +266,17 @@ button {
 
   overflow: hidden;
 
-  border: 1px solid #dbeae6;
+  border: 1px solid #e4dfd2;
 
   border-radius: 20px;
 
-  background: linear-gradient(
-    135deg,
-    #e8f3f0,
-    #f5faf8
-  );
+  background: #ffffff;
+
+  box-shadow: 0 4px 18px rgba(14, 67, 52, 0.05);
 }
 
 .card-label {
-  color: #67988d;
+  color: #c29b47;
 
   font-size: 11px;
 
@@ -277,7 +290,7 @@ button {
 
   margin: 9px 0 8px;
 
-  color: #29413b;
+  color: #2b2b2b;
 
   font-size: 27px;
 
@@ -289,7 +302,7 @@ button {
 
   margin: 0;
 
-  color: #72837f;
+  color: #666666;
 
   font-size: 14px;
 
@@ -308,14 +321,18 @@ button {
 
   border-radius: 50%;
 
-  background: #d5e9e4;
+  background: #0e4334;
 
-  color: #67998d;
+  color: #c29b47;
 
   font-size: 42px;
+
+  box-shadow: 0 8px 20px rgba(14, 67, 52, 0.18);
 }
 
-/* STATS */
+/* ========================================
+   STATS
+======================================== */
 
 .stats-grid {
   display: grid;
@@ -330,11 +347,19 @@ button {
 .stat-card {
   padding: 20px;
 
-  border: 1px solid #e3ebe9;
+  border: 1px solid #e4e4df;
 
   border-radius: 16px;
 
   background: #ffffff;
+
+  box-shadow: 0 3px 14px rgba(14, 67, 52, 0.04);
+
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
 }
 
 .stat-card span,
@@ -343,9 +368,11 @@ button {
 }
 
 .stat-card span {
-  color: #778783;
+  color: #0e4334;
 
   font-size: 12px;
+
+  font-weight: 600;
 }
 
 .stat-card strong {
@@ -353,18 +380,20 @@ button {
 
   margin: 10px 0 6px;
 
-  color: #2d423d;
+  color: #2b2b2b;
 
   font-size: 25px;
 }
 
 .stat-card small {
-  color: #a0aaa8;
+  color: #858585;
 
   font-size: 11px;
 }
 
-/* CONTENT */
+/* ========================================
+   CONTENT
+======================================== */
 
 .content-grid {
   display: grid;
@@ -381,11 +410,13 @@ button {
 
   padding: 22px;
 
-  border: 1px solid #e3ebe9;
+  border: 1px solid #e4e4df;
 
   border-radius: 16px;
 
   background: #ffffff;
+
+  box-shadow: 0 3px 14px rgba(14, 67, 52, 0.04);
 }
 
 .panel-header {
@@ -395,7 +426,7 @@ button {
 }
 
 .panel-header span {
-  color: #8b9996;
+  color: #c29b47;
 
   font-size: 10px;
 
@@ -407,7 +438,7 @@ button {
 .panel-header h3 {
   margin: 5px 0 0;
 
-  color: #344943;
+  color: #2b2b2b;
 
   font-size: 17px;
 }
@@ -415,16 +446,28 @@ button {
 .panel-header button {
   padding: 8px 12px;
 
-  border: 0;
+  border: 1px solid #c29b47;
 
   border-radius: 8px;
 
-  background: #edf5f3;
+  background: #f3ebd8;
 
-  color: #4e7b70;
+  color: #0e4334;
 
   font-size: 11px;
+
+  transition: all 0.2s ease;
 }
+
+.panel-header button:hover {
+  background: #c29b47;
+
+  color: #ffffff;
+}
+
+/* ========================================
+   EMPTY STATE
+======================================== */
 
 .empty-state {
   min-height: 180px;
@@ -450,15 +493,15 @@ button {
 
   border-radius: 12px;
 
-  background: #f0f6f4;
+  background: #f3ebd8;
 
-  color: #7da79d;
+  color: #0e4334;
 
   font-size: 20px;
 }
 
 .empty-state strong {
-  color: #52635f;
+  color: #2b2b2b;
 
   font-size: 13px;
 }
@@ -466,10 +509,14 @@ button {
 .empty-state p {
   margin: 5px 0 0;
 
-  color: #a0aaa8;
+  color: #858585;
 
   font-size: 11px;
 }
+
+/* ========================================
+   QUICK ACTIONS
+======================================== */
 
 .quick-actions {
   display: grid;
@@ -482,28 +529,32 @@ button {
 .quick-actions button {
   padding: 13px 14px;
 
-  border: 1px solid #e4ecea;
+  border: 1px solid #e4e4df;
 
   border-radius: 10px;
 
-  background: #fafcfc;
+  background: #f3ebd8;
 
-  color: #536963;
+  color: #0e4334;
 
   text-align: left;
 
   font-size: 12px;
 
-  transition: 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .quick-actions button:hover {
-  background: #eef6f3;
+  background: #0e4334;
 
-  border-color: #d6e8e3;
+  border-color: #0e4334;
+
+  color: #ffffff;
 }
 
-/* RESPONSIVE */
+/* ========================================
+   RESPONSIVE
+======================================== */
 
 @media (max-width: 1100px) {
   .stats-grid {

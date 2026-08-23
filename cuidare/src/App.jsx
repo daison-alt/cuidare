@@ -1,13 +1,31 @@
 import "./App.css";
-import Login from "./Login";
 import { useState } from "react";
+
+import Login from "./Login";
 import Usuarios from "./pages/Usuarios";
 import NovoUsuario from "./pages/NovoUsuario";
 import EditarUsuario from "./pages/EditarUsuario";
 
+
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [usuarioLogado, setUsuarioLogado] = useState(() => {
+    const usuarioSalvo = localStorage.getItem("cuidare_usuario");
+
+    if (!usuarioSalvo) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(usuarioSalvo);
+    } catch {
+      localStorage.removeItem("cuidare_usuario");
+      localStorage.removeItem("cuidare_token");
+      return null;
+    }
+  });
+
   const [currentPage, setCurrentPage] = useState("dashboard");
+
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
 
   const [usuarios, setUsuarios] = useState([
@@ -31,6 +49,22 @@ function App() {
     },
   ]);
 
+
+  function handleLogin(usuario) {
+    setUsuarioLogado(usuario);
+    setCurrentPage("dashboard");
+  }
+
+
+  function handleLogout() {
+    localStorage.removeItem("cuidare_token");
+    localStorage.removeItem("cuidare_usuario");
+
+    setUsuarioLogado(null);
+    setCurrentPage("dashboard");
+  }
+
+
   function adicionarUsuario(novoUsuario) {
     const usuario = {
       ...novoUsuario,
@@ -46,6 +80,7 @@ function App() {
     setCurrentPage("usuarios");
   }
 
+
   function atualizarUsuario(usuarioAtualizado) {
     setUsuarios((usuariosAtuais) =>
       usuariosAtuais.map((usuario) =>
@@ -57,6 +92,7 @@ function App() {
 
     setCurrentPage("usuarios");
   }
+
 
   function alterarStatusUsuario(usuario) {
     setUsuarios((usuariosAtuais) =>
@@ -74,18 +110,21 @@ function App() {
     );
   }
 
+
   function abrirEdicao(usuario) {
     setUsuarioSelecionado(usuario);
     setCurrentPage("editar-usuario");
   }
 
-  if (!isLoggedIn) {
+
+  if (!usuarioLogado) {
     return (
       <Login
-        onLogin={() => setIsLoggedIn(true)}
+        onLogin={handleLogin}
       />
     );
   }
+
 
   if (currentPage === "usuarios") {
     return (
@@ -98,6 +137,7 @@ function App() {
     );
   }
 
+
   if (currentPage === "novo-usuario") {
     return (
       <NovoUsuario
@@ -106,6 +146,7 @@ function App() {
       />
     );
   }
+
 
   if (currentPage === "editar-usuario") {
     return (
@@ -116,6 +157,14 @@ function App() {
       />
     );
   }
+
+
+  const nomeUsuario =
+    usuarioLogado?.nome || "Usuário";
+
+  const perfilUsuario =
+    usuarioLogado?.perfil || "Usuário";
+
 
   return (
     <div className="app">
@@ -135,6 +184,7 @@ function App() {
 
         </div>
 
+
         <nav className="menu">
 
           <button
@@ -144,29 +194,36 @@ function App() {
             Dashboard
           </button>
 
+
           <button className="menu-item">
             Pacientes
           </button>
+
 
           <button className="menu-item">
             Prontuários
           </button>
 
+
           <button className="menu-item">
             Agenda
           </button>
+
 
           <button className="menu-item">
             Financeiro
           </button>
 
+
           <button className="menu-item">
             Estoque
           </button>
 
+
           <button className="menu-item">
             Relatórios
           </button>
+
 
           <button
             className="menu-item"
@@ -177,19 +234,28 @@ function App() {
 
         </nav>
 
+
         <div className="sidebar-footer">
 
           <span>
-            Administrador
+            {perfilUsuario}
           </span>
 
           <strong>
-            Cuidare Clínica
+            {nomeUsuario}
           </strong>
+
+          <button
+            onClick={handleLogout}
+            className="logout-button"
+          >
+            Sair
+          </button>
 
         </div>
 
       </aside>
+
 
       <main className="main-content">
 
@@ -207,20 +273,22 @@ function App() {
 
           </div>
 
+
           <div className="user-area">
 
             <div className="avatar">
-              A
+              {nomeUsuario.charAt(0).toUpperCase()}
             </div>
+
 
             <div>
 
               <strong>
-                Administrador
+                {nomeUsuario}
               </strong>
 
               <span>
-                Acesso completo
+                {perfilUsuario}
               </span>
 
             </div>
@@ -228,6 +296,7 @@ function App() {
           </div>
 
         </header>
+
 
         <section className="dashboard">
 
@@ -239,9 +308,11 @@ function App() {
                 VISÃO GERAL
               </span>
 
+
               <h3>
                 Tenha o controle da sua clínica em um só lugar.
               </h3>
+
 
               <p>
                 O Cuidare foi desenvolvido para tornar a gestão
@@ -250,11 +321,13 @@ function App() {
 
             </div>
 
+
             <div className="card-symbol">
               ✚
             </div>
 
           </div>
+
 
           <div className="stats-grid">
 
@@ -274,6 +347,7 @@ function App() {
 
             </div>
 
+
             <div className="stat-card">
 
               <span>
@@ -290,6 +364,7 @@ function App() {
 
             </div>
 
+
             <div className="stat-card">
 
               <span>
@@ -305,6 +380,7 @@ function App() {
               </small>
 
             </div>
+
 
             <div className="stat-card">
 
@@ -324,6 +400,7 @@ function App() {
 
           </div>
 
+
           <div className="content-grid">
 
             <section className="panel">
@@ -342,11 +419,13 @@ function App() {
 
                 </div>
 
+
                 <button>
                   Ver agenda
                 </button>
 
               </div>
+
 
               <div className="empty-state">
 
@@ -354,9 +433,11 @@ function App() {
                   ◷
                 </div>
 
+
                 <strong>
                   Nenhum atendimento agendado
                 </strong>
+
 
                 <p>
                   Os próximos atendimentos aparecerão aqui.
@@ -365,6 +446,7 @@ function App() {
               </div>
 
             </section>
+
 
             <section className="panel">
 
@@ -384,19 +466,23 @@ function App() {
 
               </div>
 
+
               <div className="quick-actions">
 
                 <button>
                   Novo paciente
                 </button>
 
+
                 <button>
                   Novo atendimento
                 </button>
 
+
                 <button>
                   Novo lançamento
                 </button>
+
 
                 <button>
                   Registrar ocorrência
@@ -415,5 +501,6 @@ function App() {
     </div>
   );
 }
+
 
 export default App;

@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Banco de dados local
+*.db
+*.sqlite
+*.sqlite3
+
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Variáveis de ambiente
+.env
+.env.*
+
+# Node
+node_modules/
+dist/
+
+# Logs
+*.log
+
+# VS Code
+.vscode/

@@ -66,6 +66,19 @@ def criar_configuracao_fiscal(
     dados: ConfiguracaoFiscalCriar,
     db: Session = Depends(get_db),
 ):
+    configuracao_ativa = (
+        db.query(ConfiguracaoFiscal)
+        .filter(ConfiguracaoFiscal.ativo == True)
+        .first()
+    )
+
+    if configuracao_ativa:
+        raise HTTPException(
+            status_code=409,
+            detail="Já existe uma configuração fiscal ativa. "
+                   "Desative a configuração atual antes de cadastrar outra.",
+        )
+
     existente = (
         db.query(ConfiguracaoFiscal)
         .filter(

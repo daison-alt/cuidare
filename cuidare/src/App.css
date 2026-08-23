@@ -140,6 +140,35 @@ button {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* ========================================
+   LOGOUT
+======================================== */
+
+.logout-button {
+  width: 100%;
+
+  padding: 12px 14px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: #dbe7e2;
+
+  text-align: left;
+
+  font-size: 14px;
+
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background: rgba(220, 80, 80, 0.12);
+
+  color: #ffb3b3;
+}
+
 .sidebar-footer {
   margin-top: auto;
 

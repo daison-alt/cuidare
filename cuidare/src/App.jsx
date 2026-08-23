@@ -5,6 +5,7 @@ import Login from "./Login";
 import Usuarios from "./pages/Usuarios";
 import NovoUsuario from "./pages/NovoUsuario";
 import EditarUsuario from "./pages/EditarUsuario";
+import GestaoFiscal from "./pages/GestaoFiscal";
 
 
 function App() {
@@ -148,6 +149,10 @@ function App() {
   }
 
 
+  if (currentPage === "gestao-fiscal") {
+    return <GestaoFiscal />;
+  }
+
   if (currentPage === "editar-usuario") {
     return (
       <EditarUsuario
@@ -230,6 +235,13 @@ function App() {
             onClick={() => setCurrentPage("usuarios")}
           >
             Configurações
+          </button>
+
+          <button
+            className={`menu-item ${currentPage === "gestao-fiscal" ? "active" : ""}`}
+            onClick={() => setCurrentPage("gestao-fiscal")}
+          >
+            Gestão Fiscal
           </button>
 
         </nav>

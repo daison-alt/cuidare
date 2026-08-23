@@ -1,0 +1,270 @@
+.gestao-fiscal-page {
+  padding: 30px 34px 40px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-label {
+  color: #c29b47;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.page-header h2 {
+  margin: 6px 0 8px;
+  color: #2b2b2b;
+  font-size: 26px;
+}
+
+.page-header p {
+  max-width: 720px;
+  margin: 0;
+  color: #666666;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.fiscal-alert {
+  margin-bottom: 20px;
+  padding: 13px 16px;
+  border: 1px solid #e6caca;
+  border-radius: 10px;
+  background: #fff4f4;
+  color: #9b3d3d;
+  font-size: 13px;
+}
+
+.fiscal-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.4fr);
+  gap: 20px;
+}
+
+.fiscal-panel {
+  padding: 24px;
+  border: 1px solid #e4e4df;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 3px 14px rgba(14, 67, 52, 0.04);
+}
+
+.panel-title {
+  margin-bottom: 22px;
+}
+
+.panel-title span {
+  color: #c29b47;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.panel-title h3 {
+  margin: 5px 0 0;
+  color: #2b2b2b;
+  font-size: 18px;
+}
+
+.fiscal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.fiscal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #2b2b2b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.fiscal-form input,
+.fiscal-form select,
+.fiscal-form textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #dcdcd6;
+  border-radius: 9px;
+  outline: none;
+  background: #ffffff;
+  color: #2b2b2b;
+  font: inherit;
+  font-size: 13px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fiscal-form textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.fiscal-form input:focus,
+.fiscal-form select:focus,
+.fiscal-form textarea:focus {
+  border-color: #c29b47;
+  box-shadow: 0 0 0 3px rgba(194, 155, 71, 0.12);
+}
+
+.fiscal-save-button {
+  margin-top: 4px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 9px;
+  background: #0e4334;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.fiscal-save-button:hover {
+  background: #145a45;
+  transform: translateY(-1px);
+}
+
+.fiscal-empty {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #858585;
+  font-size: 13px;
+}
+
+.fiscal-empty strong {
+  color: #2b2b2b;
+  font-size: 14px;
+}
+
+.fiscal-empty p {
+  margin: 6px 0 0;
+  font-size: 12px;
+}
+
+.fiscal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.fiscal-item {
+  padding: 16px;
+  border: 1px solid #e7e7e2;
+  border-radius: 12px;
+  background: #fafaf8;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fiscal-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(14, 67, 52, 0.06);
+}
+
+.fiscal-item-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.fiscal-type {
+  color: #c29b47;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.fiscal-item h4 {
+  margin: 5px 0 5px;
+  color: #2b2b2b;
+  font-size: 14px;
+}
+
+.fiscal-item p {
+  margin: 0;
+  color: #858585;
+  font-size: 11px;
+}
+
+.fiscal-status {
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status-pendente {
+  background: #fff4d6;
+  color: #8b6b13;
+}
+
+.status-pago {
+  background: #e6f4e4;
+  color: #39743b;
+}
+
+.status-vencido {
+  background: #fde5e5;
+  color: #a13c3c;
+}
+
+.status-cancelado {
+  background: #eeeeee;
+  color: #666666;
+}
+
+.fiscal-item-details {
+  display: flex;
+  gap: 25px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e7e7e2;
+  color: #858585;
+  font-size: 11px;
+}
+
+.fiscal-item-details strong {
+  color: #2b2b2b;
+}
+
+@media (max-width: 1000px) {
+  .fiscal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .gestao-fiscal-page {
+    padding: 22px 18px 30px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .fiscal-item-main {
+    flex-direction: column;
+  }
+
+  .fiscal-item-details {
+    flex-direction: column;
+    gap: 7px;
+  }
+}

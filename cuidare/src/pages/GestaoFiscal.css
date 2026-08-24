@@ -2,6 +2,25 @@
   padding: 30px 34px 40px;
 }
 
+.fiscal-back-button {
+  margin-bottom: 18px;
+  padding: 8px 12px;
+  border: 1px solid #dcdcd6;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0e4334;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fiscal-back-button:hover {
+  border-color: #c29b47;
+  color: #c29b47;
+  transform: translateX(-2px);
+}
+
 .page-header {
   margin-bottom: 24px;
 }

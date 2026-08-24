@@ -3,7 +3,7 @@ import "./GestaoFiscal.css";
 
 const API_URL = "https://humble-waddle-97x5v4vpg7j73ppxq-8000.app.github.dev";
 
-function GestaoFiscal() {
+function GestaoFiscal({ onVoltar }) {
   const [registros, setRegistros] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -146,6 +146,14 @@ function GestaoFiscal() {
   return (
     <section className="gestao-fiscal-page">
       <div className="page-header">
+        <button
+          type="button"
+          className="fiscal-back-button"
+          onClick={onVoltar}
+        >
+          ← Voltar
+        </button>
+
         <div>
           <span className="page-label">GESTÃO FISCAL</span>
           <h2>Documentos e obrigações fiscais</h2>

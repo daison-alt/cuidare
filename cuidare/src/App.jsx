@@ -6,6 +6,7 @@ import Usuarios from "./pages/Usuarios";
 import NovoUsuario from "./pages/NovoUsuario";
 import EditarUsuario from "./pages/EditarUsuario";
 import GestaoFiscal from "./pages/GestaoFiscal";
+import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
 
 
 function App() {
@@ -28,6 +29,8 @@ function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
 
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+
+  const [configuracaoFiscalSelecionada, setConfiguracaoFiscalSelecionada] = useState(null);
 
   const [usuarios, setUsuarios] = useState([
     {
@@ -150,8 +153,22 @@ function App() {
 
 
   if (currentPage === "gestao-fiscal") {
-    return <GestaoFiscal />;
+    return (
+      <GestaoFiscal
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
   }
+
+  if (currentPage === "configuracao-fiscal") {
+    return (
+      <ConfiguracaoFiscal
+        configuracaoId={configuracaoFiscalSelecionada}
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
 
   if (currentPage === "editar-usuario") {
     return (
@@ -231,8 +248,10 @@ function App() {
 
 
           <button
-            className="menu-item"
-            onClick={() => setCurrentPage("usuarios")}
+            className={`menu-item ${
+              currentPage === "configuracao-fiscal" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("configuracao-fiscal")}
           >
             Configurações
           </button>

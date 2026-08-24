@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -16,20 +16,36 @@ router = APIRouter(
 )
 
 
+# =========================================================
+# LISTAR PACIENTES ATIVOS
+# =========================================================
+
 @router.get(
     "",
     response_model=list[PacienteResposta],
 )
 def listar_pacientes(
+    incluir_inativos: bool = Query(
+        default=False,
+        description="Inclui pacientes inativos na listagem.",
+    ),
     db: Session = Depends(get_db),
 ):
+    consulta = db.query(Paciente)
+
+    if not incluir_inativos:
+        consulta = consulta.filter(Paciente.ativo == True)
+
     return (
-        db.query(Paciente)
-        .filter(Paciente.ativo == True)
+        consulta
         .order_by(Paciente.nome.asc())
         .all()
     )
 
+
+# =========================================================
+# BUSCAR PACIENTE ATIVO
+# =========================================================
 
 @router.get(
     "/{paciente_id}",
@@ -56,6 +72,10 @@ def buscar_paciente(
 
     return paciente
 
+
+# =========================================================
+# CRIAR PACIENTE
+# =========================================================
 
 @router.post(
     "",
@@ -89,6 +109,10 @@ def criar_paciente(
 
     return paciente
 
+
+# =========================================================
+# ATUALIZAR PACIENTE
+# =========================================================
 
 @router.put(
     "/{paciente_id}",
@@ -148,6 +172,10 @@ def atualizar_paciente(
     return paciente
 
 
+# =========================================================
+# DESATIVAR PACIENTE
+# =========================================================
+
 @router.delete(
     "/{paciente_id}",
 )
@@ -178,3 +206,41 @@ def desativar_paciente(
         "status": "ok",
         "message": "Paciente desativado com sucesso.",
     }
+
+
+# =========================================================
+# REATIVAR PACIENTE
+# =========================================================
+
+@router.put(
+    "/{paciente_id}/reativar",
+    response_model=PacienteResposta,
+)
+def reativar_paciente(
+    paciente_id: int,
+    db: Session = Depends(get_db),
+):
+    paciente = (
+        db.query(Paciente)
+        .filter(Paciente.id == paciente_id)
+        .first()
+    )
+
+    if not paciente:
+        raise HTTPException(
+            status_code=404,
+            detail="Paciente não encontrado.",
+        )
+
+    if paciente.ativo:
+        raise HTTPException(
+            status_code=400,
+            detail="O paciente já está ativo.",
+        )
+
+    paciente.ativo = True
+
+    db.commit()
+    db.refresh(paciente)
+
+    return paciente

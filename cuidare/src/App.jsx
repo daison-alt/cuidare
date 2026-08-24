@@ -6,10 +6,16 @@ import Usuarios from "./pages/Usuarios";
 import NovoUsuario from "./pages/NovoUsuario";
 import EditarUsuario from "./pages/EditarUsuario";
 import GestaoFiscal from "./pages/GestaoFiscal";
+import Pacientes from "./pages/Pacientes";
+import NovoPaciente from "./pages/NovoPaciente";
 import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
+import VisualizarPaciente from "./pages/VisualizarPaciente";
+import EditarPaciente from "./pages/EditarPaciente";
 
 
 function App() {
+  const [pacienteSelecionado, setPacienteSelecionado] = useState(null);
+
   const [usuarioLogado, setUsuarioLogado] = useState(() => {
     const usuarioSalvo = localStorage.getItem("cuidare_usuario");
 
@@ -130,6 +136,59 @@ function App() {
   }
 
 
+  if (currentPage === "pacientes") {
+    return (
+      <Pacientes
+        onNovoPaciente={() => setCurrentPage("novo-paciente")}
+        onVisualizarPaciente={(pacienteId) => {
+          setPacienteSelecionado(pacienteId);
+          setCurrentPage("visualizar-paciente");
+        }}
+        onEditarPaciente={(pacienteId) => {
+          setPacienteSelecionado(pacienteId);
+          setCurrentPage("editar-paciente");
+        }}
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
+  if (currentPage === "novo-paciente") {
+    return (
+      <NovoPaciente
+        onVoltar={() => setCurrentPage("pacientes")}
+        onSalvo={() => setCurrentPage("pacientes")}
+      />
+    );
+  }
+
+  if (currentPage === "editar-paciente") {
+    return (
+      <EditarPaciente
+        pacienteId={pacienteSelecionado}
+        onVoltar={() => {
+          setCurrentPage("pacientes");
+        }}
+        onSalvo={() => {
+          setCurrentPage("pacientes");
+        }}
+      />
+    );
+  }
+
+  if (currentPage === "visualizar-paciente") {
+    return (
+      <VisualizarPaciente
+        pacienteId={pacienteSelecionado}
+        onVoltar={() => {
+          setPacienteSelecionado(null);
+          setCurrentPage("pacientes");
+        }}
+      />
+    );
+  }
+
+
   if (currentPage === "usuarios") {
     return (
       <Usuarios
@@ -217,7 +276,10 @@ function App() {
           </button>
 
 
-          <button className="menu-item">
+          <button
+            className={`menu-item ${currentPage === "pacientes" ? "active" : ""}`}
+            onClick={() => setCurrentPage("pacientes")}
+          >
             Pacientes
           </button>
 

@@ -11,6 +11,7 @@ import NovoPaciente from "./pages/NovoPaciente";
 import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
 import VisualizarPaciente from "./pages/VisualizarPaciente";
 import EditarPaciente from "./pages/EditarPaciente";
+import Prontuario from "./pages/Prontuario";
 
 
 function App() {
@@ -136,6 +137,18 @@ function App() {
   }
 
 
+
+  if (currentPage === "prontuario") {
+    return (
+      <Prontuario
+        pacienteId={pacienteSelecionado}
+        onVoltar={() => {
+          setCurrentPage("pacientes");
+        }}
+      />
+    );
+  }
+
   if (currentPage === "pacientes") {
     return (
       <Pacientes
@@ -183,6 +196,9 @@ function App() {
         onVoltar={() => {
           setPacienteSelecionado(null);
           setCurrentPage("pacientes");
+        }}
+        onAbrirProntuario={() => {
+          setCurrentPage("prontuario");
         }}
       />
     );

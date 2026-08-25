@@ -1,0 +1,215 @@
+.editar-paciente-page {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.editar-paciente-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.editar-paciente-header h2 {
+  margin: 6px 0 8px;
+  color: #2b2b2b;
+  font-size: 28px;
+}
+
+.editar-paciente-header p {
+  margin: 0;
+  color: #6f746f;
+  font-size: 14px;
+}
+
+.editar-paciente-back-button,
+.editar-paciente-cancel-button,
+.editar-paciente-save-button {
+  border-radius: 9px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editar-paciente-back-button,
+.editar-paciente-cancel-button {
+  border: 1px solid #d8ddd8;
+  background: #ffffff;
+  color: #0e4334;
+}
+
+.editar-paciente-save-button {
+  border: 1px solid #0e4334;
+  background: #0e4334;
+  color: #ffffff;
+}
+
+.editar-paciente-back-button:hover,
+.editar-paciente-cancel-button:hover {
+  background: #f3f5f2;
+}
+
+.editar-paciente-save-button:hover {
+  background: #0a3629;
+}
+
+.editar-paciente-alert {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 9px;
+  background: #fff3f1;
+  border: 1px solid #e5b9b3;
+  color: #9b3328;
+  font-size: 14px;
+}
+
+.editar-paciente-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.editar-paciente-card {
+  background: #ffffff;
+  border: 1px solid #e4e7e3;
+  border-radius: 14px;
+  padding: 26px;
+  box-shadow: 0 3px 12px rgba(35, 55, 45, 0.04);
+}
+
+.form-section-header {
+  margin-bottom: 24px;
+}
+
+.form-section-header h3 {
+  margin: 6px 0;
+  color: #2b2b2b;
+  font-size: 18px;
+}
+
+.form-section-header p {
+  margin: 0;
+  color: #747a75;
+  font-size: 13px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-field.field-wide {
+  grid-column: 1 / -1;
+}
+
+.form-field label {
+  color: #414641;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.form-field label span {
+  color: #b63e32;
+}
+
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d8ddd8;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #2b2b2b;
+  padding: 12px 13px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.form-field input {
+  min-height: 44px;
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-field input:focus,
+.form-field textarea:focus {
+  border-color: #0e4334;
+  box-shadow: 0 0 0 3px rgba(14, 67, 52, 0.08);
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: #a1a6a1;
+}
+
+.editar-paciente-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 4px 0 20px;
+}
+
+.editar-paciente-cancel-button:disabled,
+.editar-paciente-save-button:disabled,
+.editar-paciente-back-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.editar-paciente-loading {
+  padding: 60px 20px;
+  text-align: center;
+  color: #2b2b2b;
+}
+
+.editar-paciente-loading p {
+  margin-top: 8px;
+  color: #747a75;
+  font-size: 14px;
+}
+
+@media (max-width: 760px) {
+  .editar-paciente-page {
+    padding: 20px;
+  }
+
+  .editar-paciente-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .editar-paciente-back-button {
+    width: 100%;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-field.field-wide {
+    grid-column: auto;
+  }
+
+  .editar-paciente-actions {
+    flex-direction: column-reverse;
+  }
+
+  .editar-paciente-cancel-button,
+  .editar-paciente-save-button {
+    width: 100%;
+  }
+}

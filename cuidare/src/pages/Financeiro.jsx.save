@@ -1,0 +1,1297 @@
+import { useEffect, useMemo, useState } from "react";
+import "./Financeiro.css";
+
+const API_URL =
+  window.location.hostname.includes("app.github.dev")
+    ? `https://${window.location.hostname.replace(
+        "-5173.app.github.dev",
+        "-8000.app.github.dev"
+      )}`
+    : "http://localhost:8000";
+
+const STATUS_LABELS = {
+  pendente: "Pendente",
+  pago: "Pago",
+  vencido: "Vencido",
+  cancelado: "Cancelado",
+};
+
+const FORMAS_PAGAMENTO = {
+  dinheiro: "Dinheiro",
+  pix: "Pix",
+  cartao_credito: "Cartão de crédito",
+  cartao_debito: "Cartão de débito",
+  transferencia: "Transferência",
+  outro: "Outro",
+};
+
+function formatarMoeda(valor) {
+  const numero = Number(valor || 0);
+
+  return numero.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+function formatarData(data) {
+  if (!data) return "-";
+
+  const [ano, mes, dia] = String(data).split("-");
+
+  if (!ano || !mes || !dia) return data;
+
+  return `${dia}/${mes}/${ano}`;
+}
+
+function dataHoje() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+function calcularStatus(conta) {
+  if (conta.status === "pago") {
+    return "pago";
+  }
+
+  if (conta.status === "cancelado") {
+    return "cancelado";
+  }
+
+  if (
+    conta.vencimento &&
+    new Date(`${conta.vencimento}T23:59:59`) < new Date()
+  ) {
+    return "vencido";
+  }
+
+  return "pendente";
+}
+
+function Financeiro({ onVoltar }) {
+  const [contas, setContas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarPagamento, setMostrarPagamento] = useState(false);
+  const [mostrarEdicao, setMostrarEdicao] = useState(false);
+
+  const [contaSelecionada, setContaSelecionada] = useState(null);
+
+  const [filtro, setFiltro] = useState("todos");
+
+  const [formulario, setFormulario] = useState({
+    descricao: "",
+    categoria: "",
+    valor: "",
+    vencimento: "",
+    status: "pendente",
+    observacoes: "",
+  });
+
+  const [pagamento, setPagamento] = useState({
+    data_pagamento: dataHoje(),
+    valor_pago: "",
+    forma_pagamento: "",
+    observacoes: "",
+  });
+
+  async function carregarContas() {
+    try {
+      setCarregando(true);
+      setErro("");
+
+      const resposta = await fetch(`${API_URL}/contas-receber`);
+
+      if (!resposta.ok) {
+        throw new Error("Não foi possível carregar as contas.");
+      }
+
+      const dados = await resposta.json();
+
+      setContas(Array.isArray(dados) ? dados : []);
+    } catch (error) {
+      console.error(error);
+
+      setErro(
+        "Não foi possível conectar ao módulo financeiro."
+      );
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  useEffect(() => {
+    carregarContas();
+  }, []);
+
+  function limparMensagens() {
+    setErro("");
+    setSucesso("");
+  }
+
+  function alterarCampo(event) {
+    const { name, value } = event.target;
+
+    setFormulario((atual) => ({
+      ...atual,
+      [name]: value,
+    }));
+  }
+
+  function alterarPagamento(event) {
+    const { name, value } = event.target;
+
+    setPagamento((atual) => ({
+      ...atual,
+      [name]: value,
+    }));
+  }
+
+  function abrirEdicao(conta) {
+    limparMensagens();
+
+    setContaSelecionada(conta);
+
+    setFormulario({
+      descricao: conta.descricao || "",
+      categoria: conta.categoria || "",
+      valor: conta.valor || "",
+      vencimento: conta.vencimento || "",
+      status: conta.status || "pendente",
+      observacoes: conta.observacoes || "",
+    });
+
+    setMostrarEdicao(true);
+    setMostrarFormulario(false);
+    setMostrarPagamento(false);
+  }
+
+  function fecharEdicao() {
+    setMostrarEdicao(false);
+    setContaSelecionada(null);
+  }
+
+  function abrirPagamento(conta) {
+    limparMensagens();
+
+    setContaSelecionada(conta);
+
+    setPagamento({
+      data_pagamento: conta.data_pagamento || dataHoje(),
+      valor_pago: conta.valor_pago || conta.valor || "",
+      forma_pagamento: conta.forma_pagamento || "",
+      observacoes: conta.observacoes || "",
+    });
+
+    setMostrarPagamento(true);
+    setMostrarFormulario(false);
+    setMostrarEdicao(false);
+  }
+
+  function fecharPagamento() {
+    setMostrarPagamento(false);
+    setContaSelecionada(null);
+  }
+
+  async function salvarConta(event) {
+    event.preventDefault();
+
+    limparMensagens();
+
+    if (
+      !formulario.descricao.trim() ||
+      !formulario.valor ||
+      !formulario.vencimento
+    ) {
+      setErro(
+        "Preencha a descrição, o valor e o vencimento."
+      );
+      return;
+    }
+
+    try {
+      const resposta = await fetch(
+        `${API_URL}/contas-receber`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            descricao: formulario.descricao.trim(),
+            categoria:
+              formulario.categoria.trim() || null,
+            valor: Number(formulario.valor),
+            vencimento: formulario.vencimento,
+            status: formulario.status,
+            observacoes:
+              formulario.observacoes.trim() || null,
+          }),
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.detail ||
+            "Não foi possível cadastrar a conta."
+        );
+      }
+
+      setFormulario({
+        descricao: "",
+        categoria: "",
+        valor: "",
+        vencimento: "",
+        status: "pendente",
+        observacoes: "",
+      });
+
+      setMostrarFormulario(false);
+
+      setSucesso("Conta a receber cadastrada com sucesso.");
+
+      await carregarContas();
+    } catch (error) {
+      console.error(error);
+
+      setErro(
+        error.message ||
+          "Erro ao cadastrar conta."
+      );
+    }
+  }
+
+  async function salvarEdicao(event) {
+    event.preventDefault();
+
+    if (!contaSelecionada) return;
+
+    limparMensagens();
+
+    if (
+      !formulario.descricao.trim() ||
+      !formulario.valor ||
+      !formulario.vencimento
+    ) {
+      setErro(
+        "Preencha a descrição, o valor e o vencimento."
+      );
+      return;
+    }
+
+    try {
+      const resposta = await fetch(
+        `${API_URL}/contas-receber/${contaSelecionada.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            descricao: formulario.descricao.trim(),
+            categoria:
+              formulario.categoria.trim() || null,
+            valor: Number(formulario.valor),
+            vencimento: formulario.vencimento,
+            status: formulario.status,
+            observacoes:
+              formulario.observacoes.trim() || null,
+          }),
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.detail ||
+            "Não foi possível atualizar a conta."
+        );
+      }
+
+      fecharEdicao();
+
+      setSucesso("Conta atualizada com sucesso.");
+
+      await carregarContas();
+    } catch (error) {
+      console.error(error);
+
+      setErro(
+        error.message ||
+          "Erro ao atualizar conta."
+      );
+    }
+  }
+
+  async function confirmarPagamento(event) {
+    event.preventDefault();
+
+    if (!contaSelecionada) return;
+
+    limparMensagens();
+
+    if (
+      !pagamento.data_pagamento ||
+      !pagamento.valor_pago ||
+      !pagamento.forma_pagamento
+    ) {
+      setErro(
+        "Informe a data, o valor recebido e a forma de pagamento."
+      );
+      return;
+    }
+
+    try {
+      const resposta = await fetch(
+        `${API_URL}/contas-receber/${contaSelecionada.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "pago",
+            data_pagamento:
+              pagamento.data_pagamento,
+            valor_pago:
+              Number(pagamento.valor_pago),
+            forma_pagamento:
+              pagamento.forma_pagamento,
+            observacoes:
+              pagamento.observacoes.trim() || null,
+          }),
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.detail ||
+            "Não foi possível registrar o pagamento."
+        );
+      }
+
+      fecharPagamento();
+
+      setSucesso(
+        "Recebimento registrado com sucesso."
+      );
+
+      await carregarContas();
+    } catch (error) {
+      console.error(error);
+
+      setErro(
+        error.message ||
+          "Erro ao registrar pagamento."
+      );
+    }
+  }
+
+  async function cancelarConta(conta) {
+    limparMensagens();
+
+    const confirmar = window.confirm(
+      `Deseja realmente cancelar a conta "${conta.descricao}"?`
+    );
+
+    if (!confirmar) return;
+
+    try {
+      const resposta = await fetch(
+        `${API_URL}/contas-receber/${conta.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "cancelado",
+          }),
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.detail ||
+            "Não foi possível cancelar a conta."
+        );
+      }
+
+      setSucesso("Conta cancelada com sucesso.");
+
+      await carregarContas();
+    } catch (error) {
+      console.error(error);
+
+      setErro(
+        error.message ||
+          "Erro ao cancelar conta."
+      );
+    }
+  }
+
+  const contasFiltradas = useMemo(() => {
+    return contas.filter((conta) => {
+      const status = calcularStatus(conta);
+
+      if (filtro === "todos") {
+        return true;
+      }
+
+      if (filtro === "vencido") {
+        return status === "vencido";
+      }
+
+      return status === filtro;
+    });
+  }, [contas, filtro]);
+
+  const resumo = useMemo(() => {
+    let pendente = 0;
+    let recebido = 0;
+    let vencido = 0;
+    let cancelado = 0;
+
+    contas.forEach((conta) => {
+      const valor = Number(conta.valor || 0);
+      const status = calcularStatus(conta);
+
+      if (status === "pago") {
+        recebido += Number(
+          conta.valor_pago || conta.valor || 0
+        );
+      }
+
+      if (status === "pendente") {
+        pendente += valor;
+      }
+
+      if (status === "vencido") {
+        vencido += valor;
+      }
+
+      if (status === "cancelado") {
+        cancelado += valor;
+      }
+    });
+
+    return {
+      pendente,
+      recebido,
+      vencido,
+      cancelado,
+    };
+  }, [contas]);
+
+  return (
+    <div className="financeiro-page">
+
+      <header className="financeiro-header">
+
+        <div>
+          <span className="financeiro-kicker">
+            FINANCEIRO
+          </span>
+
+          <h1>
+            Gestão Financeira
+          </h1>
+
+          <p>
+            Controle de contas a receber e acompanhe
+            a situação financeira da clínica.
+          </p>
+        </div>
+
+        <div className="financeiro-header-actions">
+
+          <button
+            type="button"
+            className="financeiro-secondary-button"
+            onClick={onVoltar}
+          >
+            Voltar
+          </button>
+
+          <button
+            type="button"
+            className="financeiro-primary-button"
+            onClick={() => {
+              limparMensagens();
+              setMostrarFormulario(
+                (atual) => !atual
+              );
+              setMostrarEdicao(false);
+              setMostrarPagamento(false);
+            }}
+          >
+            {mostrarFormulario
+              ? "Fechar formulário"
+              : "+ Nova conta"}
+          </button>
+
+        </div>
+
+      </header>
+
+      {erro && (
+        <div className="financeiro-alert financeiro-alert-error">
+          {erro}
+        </div>
+      )}
+
+      {sucesso && (
+        <div className="financeiro-alert financeiro-alert-success">
+          {sucesso}
+        </div>
+      )}
+
+      <section className="financeiro-resumo">
+
+        <div className="financeiro-resumo-card">
+          <span>
+            A RECEBER
+          </span>
+
+          <strong>
+            {formatarMoeda(resumo.pendente)}
+          </strong>
+
+          <small>
+            Contas pendentes
+          </small>
+        </div>
+
+        <div className="financeiro-resumo-card">
+          <span>
+            RECEBIDO
+          </span>
+
+          <strong>
+            {formatarMoeda(resumo.recebido)}
+          </strong>
+
+          <small>
+            Contas pagas
+          </small>
+        </div>
+
+        <div className="financeiro-resumo-card">
+          <span>
+            VENCIDO
+          </span>
+
+          <strong>
+            {formatarMoeda(resumo.vencido)}
+          </strong>
+
+          <small>
+            Valores em atraso
+          </small>
+        </div>
+
+        <div className="financeiro-resumo-card">
+          <span>
+            CANCELADO
+          </span>
+
+          <strong>
+            {formatarMoeda(resumo.cancelado)}
+          </strong>
+
+          <small>
+            Lançamentos cancelados
+          </small>
+        </div>
+
+      </section>
+
+      {mostrarFormulario && (
+        <section className="financeiro-form-card">
+
+          <div className="financeiro-section-title">
+            <div>
+              <span>
+                NOVO LANÇAMENTO
+              </span>
+
+              <h2>
+                Conta a receber
+              </h2>
+            </div>
+          </div>
+
+          <form onSubmit={salvarConta}>
+
+            <div className="financeiro-form-grid">
+
+              <label>
+                Descrição
+
+                <input
+                  name="descricao"
+                  value={formulario.descricao}
+                  onChange={alterarCampo}
+                  placeholder="Ex.: Mensalidade Pilates"
+                />
+              </label>
+
+              <label>
+                Categoria
+
+                <input
+                  name="categoria"
+                  value={formulario.categoria}
+                  onChange={alterarCampo}
+                  placeholder="Ex.: Pilates"
+                />
+              </label>
+
+              <label>
+                Valor
+
+                <input
+                  name="valor"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formulario.valor}
+                  onChange={alterarCampo}
+                  placeholder="0,00"
+                />
+              </label>
+
+              <label>
+                Vencimento
+
+                <input
+                  name="vencimento"
+                  type="date"
+                  value={formulario.vencimento}
+                  onChange={alterarCampo}
+                />
+              </label>
+
+              <label>
+                Status
+
+                <select
+                  name="status"
+                  value={formulario.status}
+                  onChange={alterarCampo}
+                >
+                  <option value="pendente">
+                    Pendente
+                  </option>
+
+                  <option value="pago">
+                    Pago
+                  </option>
+
+                  <option value="cancelado">
+                    Cancelado
+                  </option>
+                </select>
+              </label>
+
+              <label className="financeiro-form-full">
+                Observações
+
+                <textarea
+                  name="observacoes"
+                  value={formulario.observacoes}
+                  onChange={alterarCampo}
+                  placeholder="Observações do lançamento..."
+                  rows="3"
+                />
+              </label>
+
+            </div>
+
+            <div className="financeiro-form-actions">
+
+              <button
+                type="button"
+                className="financeiro-secondary-button"
+                onClick={() =>
+                  setMostrarFormulario(false)
+                }
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                className="financeiro-primary-button"
+              >
+                Salvar conta
+              </button>
+
+            </div>
+
+          </form>
+
+        </section>
+      )}
+
+      {mostrarEdicao && contaSelecionada && (
+        <section className="financeiro-form-card financeiro-edit-card">
+
+          <div className="financeiro-section-title">
+            <div>
+              <span>
+                EDITAR LANÇAMENTO
+              </span>
+
+              <h2>
+                {contaSelecionada.descricao}
+              </h2>
+            </div>
+          </div>
+
+          <form onSubmit={salvarEdicao}>
+
+            <div className="financeiro-form-grid">
+
+              <label>
+                Descrição
+
+                <input
+                  name="descricao"
+                  value={formulario.descricao}
+                  onChange={alterarCampo}
+                />
+              </label>
+
+              <label>
+                Categoria
+
+                <input
+                  name="categoria"
+                  value={formulario.categoria}
+                  onChange={alterarCampo}
+                />
+              </label>
+
+              <label>
+                Valor
+
+                <input
+                  name="valor"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formulario.valor}
+                  onChange={alterarCampo}
+                />
+              </label>
+
+              <label>
+                Vencimento
+
+                <input
+                  name="vencimento"
+                  type="date"
+                  value={formulario.vencimento}
+                  onChange={alterarCampo}
+                />
+              </label>
+
+              <label>
+                Status
+
+                <select
+                  name="status"
+                  value={formulario.status}
+                  onChange={alterarCampo}
+                >
+                  <option value="pendente">
+                    Pendente
+                  </option>
+
+                  <option value="pago">
+                    Pago
+                  </option>
+
+                  <option value="cancelado">
+                    Cancelado
+                  </option>
+                </select>
+              </label>
+
+              <label className="financeiro-form-full">
+                Observações
+
+                <textarea
+                  name="observacoes"
+                  value={formulario.observacoes}
+                  onChange={alterarCampo}
+                  rows="3"
+                />
+              </label>
+
+            </div>
+
+            <div className="financeiro-form-actions">
+
+              <button
+                type="button"
+                className="financeiro-secondary-button"
+                onClick={fecharEdicao}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                className="financeiro-primary-button"
+              >
+                Salvar alterações
+              </button>
+
+            </div>
+
+          </form>
+
+        </section>
+      )}
+
+      {mostrarPagamento && contaSelecionada && (
+        <section className="financeiro-form-card financeiro-payment-card">
+
+          <div className="financeiro-section-title">
+            <div>
+              <span>
+                REGISTRAR RECEBIMENTO
+              </span>
+
+              <h2>
+                {contaSelecionada.descricao}
+              </h2>
+
+              <p className="financeiro-payment-reference">
+                Valor original:{" "}
+                <strong>
+                  {formatarMoeda(contaSelecionada.valor)}
+                </strong>
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={confirmarPagamento}>
+
+            <div className="financeiro-form-grid">
+
+              <label>
+                Data do pagamento
+
+                <input
+                  name="data_pagamento"
+                  type="date"
+                  value={pagamento.data_pagamento}
+                  onChange={alterarPagamento}
+                />
+              </label>
+
+              <label>
+                Valor recebido
+
+                <input
+                  name="valor_pago"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={pagamento.valor_pago}
+                  onChange={alterarPagamento}
+                />
+              </label>
+
+              <label>
+                Forma de pagamento
+
+                <select
+                  name="forma_pagamento"
+                  value={pagamento.forma_pagamento}
+                  onChange={alterarPagamento}
+                >
+                  <option value="">
+                    Selecione...
+                  </option>
+
+                  {Object.entries(
+                    FORMAS_PAGAMENTO
+                  ).map(
+                    ([valor, label]) => (
+                      <option
+                        key={valor}
+                        value={valor}
+                      >
+                        {label}
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+
+              <label className="financeiro-form-full">
+                Observações do recebimento
+
+                <textarea
+                  name="observacoes"
+                  value={pagamento.observacoes}
+                  onChange={alterarPagamento}
+                  rows="3"
+                  placeholder="Ex.: pagamento realizado via cartão..."
+                />
+              </label>
+
+            </div>
+
+            <div className="financeiro-form-actions">
+
+              <button
+                type="button"
+                className="financeiro-secondary-button"
+                onClick={fecharPagamento}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                className="financeiro-primary-button"
+              >
+                Confirmar recebimento
+              </button>
+
+            </div>
+
+          </form>
+
+        </section>
+      )}
+
+      <section className="financeiro-lista">
+
+        <div className="financeiro-section-title">
+
+          <div>
+            <span>
+              CONTAS A RECEBER
+            </span>
+
+            <h2>
+              Lançamentos
+            </h2>
+          </div>
+
+          <span>
+            {contasFiltradas.length}{" "}
+            {contasFiltradas.length === 1
+              ? "lançamento"
+              : "lançamentos"}
+          </span>
+
+        </div>
+
+        <div className="financeiro-filtros">
+
+          <button
+            type="button"
+            className={
+              filtro === "todos"
+                ? "financeiro-filtro ativo"
+                : "financeiro-filtro"
+            }
+            onClick={() => setFiltro("todos")}
+          >
+            Todas
+          </button>
+
+          <button
+            type="button"
+            className={
+              filtro === "pendente"
+                ? "financeiro-filtro ativo"
+                : "financeiro-filtro"
+            }
+            onClick={() => setFiltro("pendente")}
+          >
+            Pendentes
+          </button>
+
+          <button
+            type="button"
+            className={
+              filtro === "vencido"
+                ? "financeiro-filtro ativo"
+                : "financeiro-filtro"
+            }
+            onClick={() => setFiltro("vencido")}
+          >
+            Vencidas
+          </button>
+
+          <button
+            type="button"
+            className={
+              filtro === "pago"
+                ? "financeiro-filtro ativo"
+                : "financeiro-filtro"
+            }
+            onClick={() => setFiltro("pago")}
+          >
+            Pagas
+          </button>
+
+          <button
+            type="button"
+            className={
+              filtro === "cancelado"
+                ? "financeiro-filtro ativo"
+                : "financeiro-filtro"
+            }
+            onClick={() => setFiltro("cancelado")}
+          >
+            Canceladas
+          </button>
+
+        </div>
+
+        {carregando ? (
+
+          <div className="financeiro-empty">
+
+            <div className="financeiro-empty-icon">
+              ...
+            </div>
+
+            <strong>
+              Carregando contas
+            </strong>
+
+            <p>
+              Aguarde enquanto buscamos os lançamentos.
+            </p>
+
+          </div>
+
+        ) : contasFiltradas.length === 0 ? (
+
+          <div className="financeiro-empty">
+
+            <div className="financeiro-empty-icon">
+              $
+            </div>
+
+            <strong>
+              Nenhuma conta encontrada
+            </strong>
+
+            <p>
+              Não existem lançamentos para o filtro selecionado.
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div className="financeiro-table-wrapper">
+
+            <table className="financeiro-table">
+
+              <thead>
+                <tr>
+                  <th>
+                    Descrição
+                  </th>
+
+                  <th>
+                    Categoria
+                  </th>
+
+                  <th>
+                    Vencimento
+                  </th>
+
+                  <th>
+                    Valor
+                  </th>
+
+                  <th>
+                    Pagamento
+                  </th>
+
+                  <th>
+                    Status
+                  </th>
+
+                  <th>
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {contasFiltradas.map((conta) => {
+
+                  const status =
+                    calcularStatus(conta);
+
+                  return (
+                    <tr key={conta.id}>
+
+                      <td>
+                        <strong>
+                          {conta.descricao}
+                        </strong>
+
+                        {conta.observacoes && (
+                          <small>
+                            {conta.observacoes}
+                          </small>
+                        )}
+                      </td>
+
+                      <td>
+                        {conta.categoria || "-"}
+                      </td>
+
+                      <td>
+                        {formatarData(
+                          conta.vencimento
+                        )}
+                      </td>
+
+                      <td>
+                        <strong>
+                          {formatarMoeda(
+                            conta.valor
+                          )}
+                        </strong>
+                      </td>
+
+                      <td>
+                        {status === "pago" ? (
+                          <div className="financeiro-pagamento-info">
+                            <strong>
+                              {formatarMoeda(
+                                conta.valor_pago ||
+                                  conta.valor
+                              )}
+                            </strong>
+
+                            <small>
+                              {formatarData(
+                                conta.data_pagamento
+                              )}
+                            </small>
+
+                            <small>
+                              {FORMAS_PAGAMENTO[
+                                conta.forma_pagamento
+                              ] ||
+                                "-"}
+                            </small>
+                          </div>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+
+                      <td>
+                        <span
+                          className={`financeiro-status financeiro-status-${status}`}
+                        >
+                          {STATUS_LABELS[status] ||
+                            status}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="financeiro-acoes">
+
+                          <button
+                            type="button"
+                            className="financeiro-acao financeiro-acao-editar"
+                            onClick={() =>
+                              abrirEdicao(conta)
+                            }
+                          >
+                            Editar
+                          </button>
+
+                          {status !== "pago" &&
+                            status !== "cancelado" && (
+                              <button
+                                type="button"
+                                className="financeiro-acao financeiro-acao-pagar"
+                                onClick={() =>
+                                  abrirPagamento(conta)
+                                }
+                              >
+                                Receber
+                              </button>
+                            )}
+
+                          {status !== "cancelado" &&
+                            status !== "pago" && (
+                              <button
+                                type="button"
+                                className="financeiro-acao financeiro-acao-cancelar"
+                                onClick={() =>
+                                  cancelarConta(conta)
+                                }
+                              >
+                                Cancelar
+                              </button>
+                            )}
+
+                        </div>
+                      </td>
+
+                    </tr>
+                  );
+                })}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        )}
+
+      </section>
+
+    </div>
+  );
+}
+
+export default Financeiro;
+
+
+
+
+
+
+cd /workspaces/cuidare/cuidare
+nano src/pages/Financeiro.jsx
+
+
+

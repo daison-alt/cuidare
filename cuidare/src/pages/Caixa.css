@@ -1,0 +1,399 @@
+.caixa-page {
+  width: 100%;
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.caixa-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.caixa-kicker {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #26776e;
+}
+
+.caixa-header h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.2;
+  color: #1f2937;
+}
+
+.caixa-header p {
+  margin: 8px 0 0;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.caixa-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.caixa-primary-button,
+.caixa-secondary-button,
+.caixa-refresh-button,
+.caixa-danger-button {
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.caixa-primary-button {
+  background: #26776e;
+  color: white;
+}
+
+.caixa-primary-button:hover {
+  background: #1f655e;
+}
+
+.caixa-secondary-button,
+.caixa-refresh-button {
+  background: #eef4f3;
+  color: #26776e;
+}
+
+.caixa-secondary-button:hover,
+.caixa-refresh-button:hover {
+  background: #dfeeea;
+}
+
+.caixa-danger-button {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.caixa-danger-button:hover {
+  background: #ffe4e6;
+}
+
+.caixa-alert {
+  padding: 13px 16px;
+  margin-bottom: 20px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.caixa-alert-erro {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.caixa-alert-sucesso {
+  background: #eaf8f2;
+  color: #15803d;
+}
+
+.caixa-status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+}
+
+.caixa-status-card span,
+.caixa-status-saldo span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+}
+
+.caixa-status-card strong {
+  display: block;
+  color: #15803d;
+  font-size: 21px;
+}
+
+.caixa-status-card small {
+  display: block;
+  margin-top: 5px;
+  color: #6b7280;
+}
+
+.caixa-status-saldo {
+  text-align: right;
+}
+
+.caixa-status-saldo strong {
+  display: block;
+  color: #26776e;
+  font-size: 30px;
+}
+
+.caixa-resumo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.caixa-resumo-card {
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 13px;
+  background: white;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+}
+
+.caixa-resumo-card span {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+.caixa-resumo-card strong {
+  font-size: 23px;
+  color: #1f2937;
+}
+
+.caixa-card {
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+}
+
+.caixa-card-abertura {
+  max-width: 680px;
+  margin: 30px auto;
+  text-align: center;
+}
+
+.caixa-card-abertura h2 {
+  margin: 4px 0 10px;
+  color: #1f2937;
+}
+
+.caixa-card-abertura p {
+  margin: 0 auto 22px;
+  max-width: 540px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.caixa-card-fechamento {
+  border-color: #fecdd3;
+}
+
+.caixa-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.caixa-section-header h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 21px;
+}
+
+.caixa-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 22px;
+  text-align: left;
+}
+
+.caixa-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.caixa-form input,
+.caixa-form select,
+.caixa-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: white;
+  color: #1f2937;
+  font: inherit;
+  outline: none;
+}
+
+.caixa-form input:focus,
+.caixa-form select:focus,
+.caixa-form textarea:focus {
+  border-color: #26776e;
+  box-shadow: 0 0 0 3px rgba(38, 119, 110, 0.1);
+}
+
+.caixa-form-full {
+  grid-column: 1 / -1;
+}
+
+.caixa-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.caixa-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.caixa-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.caixa-table th {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.caixa-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #f0f1f3;
+  color: #4b5563;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.caixa-table td strong {
+  color: #1f2937;
+}
+
+.caixa-tipo {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.caixa-tipo-entrada,
+.caixa-tipo-suprimento {
+  background: #eaf8f2;
+  color: #15803d;
+}
+
+.caixa-tipo-saida,
+.caixa-tipo-sangria {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.caixa-empty {
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #6b7280;
+}
+
+.caixa-empty strong {
+  color: #374151;
+  font-size: 16px;
+}
+
+.caixa-empty p {
+  margin: 7px 0 0;
+}
+
+@media (max-width: 900px) {
+  .caixa-resumo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .caixa-header {
+    flex-direction: column;
+  }
+
+  .caixa-status-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .caixa-status-saldo {
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .caixa-page {
+    padding: 18px;
+  }
+
+  .caixa-header h1 {
+    font-size: 25px;
+  }
+
+  .caixa-resumo-grid,
+  .caixa-form {
+    grid-template-columns: 1fr;
+  }
+
+  .caixa-form-full {
+    grid-column: auto;
+  }
+
+  .caixa-form-actions {
+    grid-column: auto;
+    flex-direction: column-reverse;
+  }
+
+  .caixa-form-actions button {
+    width: 100%;
+  }
+
+  .caixa-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .caixa-section-header button {
+    width: 100%;
+  }
+}

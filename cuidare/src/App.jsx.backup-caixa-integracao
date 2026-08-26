@@ -16,7 +16,6 @@ import Agenda from "./pages/Agenda";
 import NovoAgendamento from "./pages/NovoAgendamento";
 import EditarAgendamento from "./pages/EditarAgendamento";
 import Financeiro from "./pages/Financeiro";
-import Caixa from "./pages/Caixa";
 
 const API_URL =
   window.location.hostname === "localhost"
@@ -371,14 +370,6 @@ function App() {
     );
   }
 
-  if (currentPage === "caixa") {
-    return (
-      <Caixa
-        onVoltar={() => setCurrentPage("dashboard")}
-      />
-    );
-  }
-
   const nomeUsuario = usuarioLogado?.nome || "Usuário";
   const perfilUsuario = usuarioLogado?.perfil || "Usuário";
 
@@ -469,15 +460,6 @@ function App() {
             onClick={() => setCurrentPage("financeiro")}
           >
             Financeiro
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "caixa" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("caixa")}
-          >
-            Caixa
           </button>
 
           <button className="menu-item">

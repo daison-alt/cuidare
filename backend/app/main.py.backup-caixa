@@ -9,8 +9,6 @@ from app.models.evolucao import Evolucao
 from app.models.agendamento import Agendamento
 from app.models.servico import Servico
 from app.models.conta_receber import ContaReceber
-from app.models.caixa import Caixa
-from app.models.movimentacao_caixa import MovimentacaoCaixa
 from app.routers.usuarios import router as usuarios_router
 from app.routers.auth import router as auth_router
 from app.routers.gestao_fiscal import router as gestao_fiscal_router
@@ -22,7 +20,6 @@ from app.routers.agendamentos import router as agendamentos_router
 from app.routers.servicos import router as servicos_router
 from app.routers.contas_receber import router as contas_receber_router
 from app.routers.contas_pagar import router as contas_pagar_router
-from app.routers.caixa import router as caixa_router
 
 
 # Cria as tabelas do banco de dados
@@ -57,7 +54,6 @@ app.include_router(agendamentos_router)
 app.include_router(servicos_router)
 app.include_router(contas_receber_router)
 app.include_router(contas_pagar_router)
-app.include_router(caixa_router)
 
 
 @app.get("/")

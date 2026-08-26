@@ -1,0 +1,369 @@
+.visualizar-agendamento-page {
+  min-height: 100%;
+  padding: 32px;
+  background: #f7f9fc;
+}
+
+.visualizar-agendamento-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.visualizar-agendamento-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #6b7a90;
+}
+
+.visualizar-agendamento-header h1 {
+  margin: 0;
+  color: #172033;
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.visualizar-agendamento-header p {
+  margin: 10px 0 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.visualizar-agendamento-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.visualizar-agendamento-primary-button,
+.visualizar-agendamento-secondary-button {
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 17px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.visualizar-agendamento-primary-button {
+  background: #2f7d72;
+  color: #ffffff;
+}
+
+.visualizar-agendamento-primary-button:hover {
+  background: #286b62;
+  transform: translateY(-1px);
+}
+
+.visualizar-agendamento-secondary-button {
+  background: #ffffff;
+  color: #405066;
+  border: 1px solid #dbe2ea;
+}
+
+.visualizar-agendamento-secondary-button:hover {
+  background: #f2f5f8;
+}
+
+.visualizar-agendamento-status-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px;
+  margin-bottom: 22px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(30, 50, 80, 0.05);
+}
+
+.visualizar-agendamento-status-icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: #edf7f5;
+  color: #2f7d72;
+  font-size: 24px;
+}
+
+.visualizar-agendamento-status-card > div:nth-child(2) {
+  flex: 1;
+}
+
+.visualizar-agendamento-status-card > div:nth-child(2) > span {
+  display: block;
+  margin-bottom: 4px;
+  color: #8a97a8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.visualizar-agendamento-status-card h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 20px;
+}
+
+.visualizar-agendamento-status-card p {
+  margin: 5px 0 0;
+  color: #718096;
+  font-size: 13px;
+}
+
+.visualizar-agendamento-status {
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.visualizar-agendamento-status-agendado {
+  background: #edf4ff;
+  color: #3266a8;
+}
+
+.visualizar-agendamento-status-confirmado {
+  background: #eaf8f1;
+  color: #287653;
+}
+
+.visualizar-agendamento-status-em_atendimento {
+  background: #fff5df;
+  color: #a36a10;
+}
+
+.visualizar-agendamento-status-concluido {
+  background: #e9f7f2;
+  color: #287563;
+}
+
+.visualizar-agendamento-status-cancelado {
+  background: #fff0f0;
+  color: #b24a4a;
+}
+
+.visualizar-agendamento-status-faltou {
+  background: #f3f1f1;
+  color: #696969;
+}
+
+.visualizar-agendamento-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.visualizar-agendamento-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgba(30, 50, 80, 0.04);
+}
+
+.visualizar-agendamento-card-full {
+  grid-column: 1 / -1;
+}
+
+.visualizar-agendamento-card-header {
+  margin-bottom: 22px;
+}
+
+.visualizar-agendamento-card-header span {
+  display: block;
+  margin-bottom: 6px;
+  color: #8a97a8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.visualizar-agendamento-card-header h3 {
+  margin: 0;
+  color: #1c2738;
+  font-size: 18px;
+}
+
+.visualizar-agendamento-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.visualizar-agendamento-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.visualizar-agendamento-info-item span {
+  color: #8a97a8;
+  font-size: 12px;
+}
+
+.visualizar-agendamento-info-item strong {
+  color: #253247;
+  font-size: 14px;
+}
+
+.visualizar-agendamento-paciente {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.visualizar-agendamento-avatar {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e8f3f1;
+  color: #2f7d72;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.visualizar-agendamento-paciente > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.visualizar-agendamento-paciente strong {
+  color: #253247;
+  font-size: 15px;
+}
+
+.visualizar-agendamento-paciente span {
+  color: #7a8798;
+  font-size: 12px;
+}
+
+.visualizar-agendamento-link-button {
+  margin-top: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2f7d72;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.visualizar-agendamento-link-button:hover {
+  text-decoration: underline;
+}
+
+.visualizar-agendamento-observacoes {
+  min-height: 90px;
+  padding: 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.visualizar-agendamento-observacoes p {
+  margin: 0;
+  color: #4d5c70;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.visualizar-agendamento-sem-observacao {
+  color: #8a97a8 !important;
+}
+
+.visualizar-agendamento-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.visualizar-agendamento-loading {
+  padding: 70px 20px;
+  text-align: center;
+}
+
+.visualizar-agendamento-loading strong {
+  display: block;
+  color: #253247;
+  font-size: 16px;
+}
+
+.visualizar-agendamento-loading p {
+  margin-top: 8px;
+  color: #7a8798;
+  font-size: 13px;
+}
+
+.visualizar-agendamento-alert {
+  padding: 16px;
+  border: 1px solid #f0caca;
+  border-radius: 10px;
+  background: #fff4f4;
+  color: #a94442;
+  font-size: 14px;
+}
+
+@media (max-width: 800px) {
+  .visualizar-agendamento-page {
+    padding: 20px;
+  }
+
+  .visualizar-agendamento-header {
+    flex-direction: column;
+  }
+
+  .visualizar-agendamento-header-actions {
+    width: 100%;
+  }
+
+  .visualizar-agendamento-header-actions button {
+    flex: 1;
+  }
+
+  .visualizar-agendamento-status-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .visualizar-agendamento-status {
+    margin-left: 70px;
+  }
+
+  .visualizar-agendamento-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .visualizar-agendamento-card-full {
+    grid-column: auto;
+  }
+
+  .visualizar-agendamento-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .visualizar-agendamento-footer {
+    flex-direction: column;
+  }
+
+  .visualizar-agendamento-footer button {
+    width: 100%;
+  }
+}

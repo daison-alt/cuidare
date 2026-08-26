@@ -25,7 +25,7 @@ function formatarData(data) {
   return `${dia}/${mes}/${ano}`;
 }
 
-function Agenda({ onVoltar }) {
+function Agenda({ onVoltar, onNovoAgendamento, onEditarAgendamento, onVisualizarAgendamento }) {
   const hoje = new Date().toISOString().slice(0, 10);
 
   const [dataSelecionada, setDataSelecionada] = useState(hoje);
@@ -139,9 +139,7 @@ function Agenda({ onVoltar }) {
           <button
             type="button"
             className="agenda-primary-button"
-            onClick={() => {
-              alert("O formulário de novo agendamento será adicionado na próxima etapa.");
-            }}
+            onClick={onNovoAgendamento}
           >
             + Novo agendamento
           </button>
@@ -197,9 +195,7 @@ function Agenda({ onVoltar }) {
             <button
               type="button"
               className="agenda-primary-button"
-              onClick={() => {
-                alert("O formulário de novo agendamento será adicionado na próxima etapa.");
-              }}
+              onClick={onNovoAgendamento}
             >
               + Criar agendamento
             </button>
@@ -271,11 +267,25 @@ function Agenda({ onVoltar }) {
                   </div>
 
                   <div className="agenda-card-actions">
-                    <button type="button">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onVisualizarAgendamento(
+                          agendamento.id
+                        )
+                      }
+                    >
                       Visualizar
                     </button>
 
-                    <button type="button">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onEditarAgendamento(
+                          agendamento.id
+                        )
+                      }
+                    >
                       Editar
                     </button>
                   </div>

@@ -1,0 +1,193 @@
+import { useEffect, useState } from "react";
+import "./Pacientes.css";
+
+const API_URL =
+  "https://humble-waddle-97x5v4vpg7j73ppxq-8000.app.github.dev";
+
+function Pacientes({ onNovoPaciente, onVoltar, onVisualizarPaciente, onEditarPaciente }) {
+  const [pacientes, setPacientes] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [busca, setBusca] = useState("");
+
+  async function carregarPacientes() {
+    try {
+      setCarregando(true);
+      setErro("");
+
+      const resposta = await fetch(`${API_URL}/pacientes`);
+
+      if (!resposta.ok) {
+        throw new Error("Não foi possível carregar os pacientes.");
+      }
+
+      const dados = await resposta.json();
+      setPacientes(dados);
+    } catch (error) {
+      setErro(error.message);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  useEffect(() => {
+    carregarPacientes();
+  }, []);
+
+  const pacientesFiltrados = pacientes.filter((paciente) => {
+    const termo = busca.toLowerCase().trim();
+
+    if (!termo) {
+      return true;
+    }
+
+    return (
+      paciente.nome?.toLowerCase().includes(termo) ||
+      paciente.cpf?.toLowerCase().includes(termo) ||
+      paciente.telefone?.toLowerCase().includes(termo)
+    );
+  });
+
+  function formatarData(data) {
+    if (!data) {
+      return "—";
+    }
+
+    return new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR");
+  }
+
+  return (
+    <section className="pacientes-page">
+      <div className="pacientes-header">
+        <div>
+          <span className="page-label">PACIENTES</span>
+
+          <h2>Pacientes</h2>
+
+          <p>
+            Consulte, pesquise e gerencie os pacientes cadastrados na Cuidare.
+          </p>
+        </div>
+
+        <div className="pacientes-header-actions">
+          <button
+            type="button"
+            className="pacientes-back-button"
+            onClick={onVoltar}
+          >
+            Voltar
+          </button>
+
+          <button
+            type="button"
+            className="pacientes-new-button"
+            onClick={onNovoPaciente}
+          >
+            + Novo paciente
+          </button>
+        </div>
+      </div>
+
+      {erro && <div className="pacientes-alert">{erro}</div>}
+
+      <div className="pacientes-panel">
+        <div className="pacientes-toolbar">
+          <div>
+            <span className="toolbar-label">CADASTRO</span>
+            <h3>Lista de pacientes</h3>
+          </div>
+
+          <div className="pacientes-search">
+            <span>⌕</span>
+
+            <input
+              type="text"
+              placeholder="Buscar por nome, CPF ou telefone..."
+              value={busca}
+              onChange={(event) => setBusca(event.target.value)}
+            />
+          </div>
+        </div>
+
+        {carregando ? (
+          <div className="pacientes-empty">
+            <strong>Carregando pacientes...</strong>
+          </div>
+        ) : pacientesFiltrados.length === 0 ? (
+          <div className="pacientes-empty">
+            <div className="empty-icon">+</div>
+
+            <strong>
+              {busca
+                ? "Nenhum paciente encontrado"
+                : "Nenhum paciente cadastrado"}
+            </strong>
+
+            <p>
+              {busca
+                ? "Tente buscar por outro nome, CPF ou telefone."
+                : "Os pacientes cadastrados aparecerão aqui."}
+            </p>
+          </div>
+        ) : (
+          <div className="pacientes-list">
+            <div className="pacientes-list-header">
+              <span>Paciente</span>
+              <span>Contato</span>
+              <span>Nascimento</span>
+              <span>Status</span>
+              <span>Ações</span>
+            </div>
+
+            {pacientesFiltrados.map((paciente) => (
+              <article className="paciente-row" key={paciente.id}>
+                <div className="paciente-info">
+                  <div className="paciente-avatar">
+                    {paciente.nome?.charAt(0)?.toUpperCase() || "P"}
+                  </div>
+
+                  <div>
+                    <strong>{paciente.nome}</strong>
+                    <span>{paciente.cpf || "CPF não informado"}</span>
+                  </div>
+                </div>
+
+                <div className="paciente-contact">
+                  <strong>{paciente.telefone || "—"}</strong>
+                  <span>{paciente.email || "E-mail não informado"}</span>
+                </div>
+
+                <div className="paciente-birth">
+                  {formatarData(paciente.data_nascimento)}
+                </div>
+
+                <div>
+                  <span className="paciente-status">
+                    {paciente.ativo ? "Ativo" : "Inativo"}
+                  </span>
+                </div>
+
+                <div className="paciente-actions">
+                  <button
+                    type="button"
+                    onClick={() => onVisualizarPaciente(paciente.id)}
+                  >
+                    Visualizar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onEditarPaciente(paciente.id)}
+                  >
+                    Editar
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export default Pacientes;

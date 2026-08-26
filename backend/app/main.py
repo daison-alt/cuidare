@@ -6,6 +6,8 @@ from app.models.configuracao_fiscal import ConfiguracaoFiscal
 from app.models.paciente import Paciente
 from app.models.prontuario import Prontuario
 from app.models.evolucao import Evolucao
+from app.models.agendamento import Agendamento
+from app.models.servico import Servico
 from app.routers.usuarios import router as usuarios_router
 from app.routers.auth import router as auth_router
 from app.routers.gestao_fiscal import router as gestao_fiscal_router
@@ -13,6 +15,8 @@ from app.routers.configuracao_fiscal import router as configuracao_fiscal_router
 from app.routers.pacientes import router as pacientes_router
 from app.routers.prontuarios import router as prontuarios_router
 from app.routers.evolucoes import router as evolucoes_router
+from app.routers.agendamentos import router as agendamentos_router
+from app.routers.servicos import router as servicos_router
 
 
 # Cria as tabelas do banco de dados
@@ -43,6 +47,8 @@ app.include_router(configuracao_fiscal_router)
 app.include_router(pacientes_router)
 app.include_router(prontuarios_router)
 app.include_router(evolucoes_router)
+app.include_router(agendamentos_router)
+app.include_router(servicos_router)
 
 
 @app.get("/")

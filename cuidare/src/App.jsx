@@ -12,6 +12,7 @@ import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
 import VisualizarPaciente from "./pages/VisualizarPaciente";
 import EditarPaciente from "./pages/EditarPaciente";
 import Prontuario from "./pages/Prontuario";
+import Agenda from "./pages/Agenda";
 
 
 function App() {
@@ -145,6 +146,14 @@ function App() {
         onVoltar={() => {
           setCurrentPage("pacientes");
         }}
+      />
+    );
+  }
+
+  if (currentPage === "agenda") {
+    return (
+      <Agenda
+        onVoltar={() => setCurrentPage("dashboard")}
       />
     );
   }
@@ -305,7 +314,10 @@ function App() {
           </button>
 
 
-          <button className="menu-item">
+          <button
+            className={`menu-item ${currentPage === "agenda" ? "active" : ""}`}
+            onClick={() => setCurrentPage("agenda")}
+          >
             Agenda
           </button>
 

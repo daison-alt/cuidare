@@ -23,14 +23,8 @@ import Servicos from "./pages/Servicos";
 import PlanosPilates from "./pages/PlanosPilates";
 import AlunosPilates from "./pages/AlunosPilates";
 import Campanhas from "./pages/Campanhas";
+import { API_URL } from "./config";
 
-const API_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : `https://${window.location.hostname.replace(
-        /-5173\.app\.github\.dev$/,
-        "-8000.app.github.dev"
-      )}`;
 
 const STATUS_LABELS = {
   agendado: "Agendado",

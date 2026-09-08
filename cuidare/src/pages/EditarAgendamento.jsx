@@ -1,13 +1,7 @@
 import "./NovoAgendamento.css";
 import { useEffect, useMemo, useState } from "react";
+import { API_URL } from "../config";
 
-const API_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : `https://${window.location.hostname.replace(
-        /-5173\.app\.github\.dev$/,
-        "-8000.app.github.dev"
-      )}`;
 
 const STATUS_OPTIONS = [
   { value: "agendado", label: "Agendado" },

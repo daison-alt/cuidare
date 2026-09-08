@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import "./VisualizarPaciente.css";
+import { API_URL } from "../config";
 
-const API_URL =
-  "https://humble-waddle-97x5v4vpg7j73ppxq-8000.app.github.dev";
 
 function VisualizarPaciente({ pacienteId, onVoltar, onAbrirProntuario }) {
   const [paciente, setPaciente] = useState(null);

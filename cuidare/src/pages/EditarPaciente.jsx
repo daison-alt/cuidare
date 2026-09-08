@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import "./EditarPaciente.css";
+import { API_URL } from "../config";
 
-const API_URL =
-  "https://humble-waddle-97x5v4vpg7j73ppxq-8000.app.github.dev";
 
 const formularioInicial = {
   nome: "",

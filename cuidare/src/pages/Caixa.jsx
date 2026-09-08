@@ -1,13 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./Caixa.css";
+import { API_URL } from "../config";
 
-const API_URL =
-  window.location.hostname.includes("app.github.dev")
-    ? `https://${window.location.hostname.replace(
-        "-5173.app.github.dev",
-        "-8000.app.github.dev"
-      )}`
-    : "http://localhost:8000";
 
 const TIPOS = {
   entrada: "Entrada",

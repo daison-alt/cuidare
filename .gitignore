@@ -27,3 +27,8 @@ dist/
 
 # VS Code
 .vscode/
+
+# Backups manuais (usar o histórico do Git em vez disso)
+*.backup
+*.backup-*
+backups/

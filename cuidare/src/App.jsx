@@ -23,6 +23,8 @@ import Servicos from "./pages/Servicos";
 import PlanosPilates from "./pages/PlanosPilates";
 import AlunosPilates from "./pages/AlunosPilates";
 import Campanhas from "./pages/Campanhas";
+import CentralRecibos from "./CentralRecibos";
+import NotasNFSe from "./NotasNFSe";
 import { API_URL } from "./config";
 
 
@@ -664,6 +666,22 @@ function App() {
     );
   }
 
+  if (currentPage === "recibos") {
+    return (
+      <CentralRecibos
+        onVoltar={() => setCurrentPage("financeiro")}
+      />
+    );
+  }
+
+  if (currentPage === "notas") {
+    return (
+      <NotasNFSe
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
   if (currentPage === "servicos") {
     return (
       <Servicos
@@ -789,6 +807,24 @@ function App() {
             onClick={() => setCurrentPage("financeiro")}
           >
             Financeiro
+          </button>
+
+          <button
+            className={`menu-item ${
+              currentPage === "recibos" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("recibos")}
+          >
+            Recibos
+          </button>
+
+          <button
+            className={`menu-item ${
+              currentPage === "notas" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("notas")}
+          >
+            Notas / NFS-e
           </button>
 
           <button

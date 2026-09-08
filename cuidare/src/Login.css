@@ -344,88 +344,11 @@
    PROTÓTIPO
 ======================================== */
 
-.prototype-button {
-  width: 100%;
-
-  height: 48px;
-
-  margin-top: 10px;
-
-  border: 1px solid #d5e0db;
-  border-radius: 10px;
-
-  background: #ffffff;
-
-  color: #0e4334;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.prototype-button:hover {
-  background: #f2f7f4;
-
-  border-color: #b8cbc2;
-}
 
 /* ========================================
    SEGURANÇA
 ======================================== */
 
-.login-security {
-  display: flex;
-  align-items: center;
-
-  gap: 12px;
-
-  margin-top: 30px;
-
-  padding: 14px;
-
-  border-radius: 10px;
-
-  background: #f5f8f6;
-}
-
-.security-icon {
-  width: 34px;
-  height: 34px;
-
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 9px;
-
-  background: #e5efe9;
-
-  font-size: 15px;
-}
-
-.login-security strong {
-  display: block;
-
-  color: #355248;
-
-  font-size: 12px;
-}
-
-.login-security p {
-  margin: 3px 0 0;
-
-  color: #899690;
-
-  font-size: 11px;
-
-  line-height: 1.4;
-}
 
 /* ========================================
    RODAPÉ
@@ -573,4 +496,49 @@
   .forgot-password {
     align-self: flex-end;
   }
+}
+
+.prototype-link {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0e4334;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.prototype-link:hover {
+  text-decoration: underline;
+}
+
+.security-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: #e5efe9;
+  font-size: 15px;
+}
+
+.login-security {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 0;
+  background: transparent;
+}
+
+.login-security span:last-child {
+  color: #899690;
+  font-size: 12px;
 }

@@ -1,19 +1,22 @@
-from datetime import date
 from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
 
-class CampanhaCriar(BaseModel):
+class CampanhaBase(BaseModel):
     nome: str
-    tipo: str
-    data_inicio: date
-    data_fim: date | None = None
-    regra: str | None = None
-    beneficio: str | None = None
-    percentual_desconto: float | None = None
-    publico: str = "Todos"
-    ativo: bool = True
+    segmento_alvo: str
+    canal_envio: str
+    mensagem_template: str
 
-class CampanhaResposta(CampanhaCriar):
+class CampanhaCreate(CampanhaBase):
+    pass
+
+class CampanhaResponse(CampanhaBase):
     id: int
+    status: str
+    total_destinatarios: int
+    data_criacao: datetime
+    data_envio: Optional[datetime] = None
 
     class Config:
         from_attributes = True

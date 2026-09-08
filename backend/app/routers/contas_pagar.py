@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.caixa import Caixa
 from app.models.conta_pagar import ContaPagar
 from app.models.movimentacao_caixa import MovimentacaoCaixa
+from app.security.autorizacao import exigir_permissao
 from app.schemas.conta_pagar import (
     ContaPagarAtualizar,
     ContaPagarCriar,
@@ -109,6 +110,7 @@ def criar_conta_pagar(
     dados: ContaPagarCriar,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_pagar.criar")),
     status = validar_status(dados.status)
 
     forma_pagamento = validar_forma_pagamento(
@@ -196,6 +198,7 @@ def listar_contas_pagar(
     incluir_inativos: bool = Query(default=False),
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_pagar.visualizar")),
     consulta = db.query(ContaPagar)
 
     if not incluir_inativos:
@@ -240,6 +243,7 @@ def buscar_conta_pagar(
     conta_id: int,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_pagar.visualizar")),
     conta = (
         db.query(ContaPagar)
         .filter(
@@ -267,6 +271,7 @@ def atualizar_conta_pagar(
     dados: ContaPagarAtualizar,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_pagar.editar")),
     conta = (
         db.query(ContaPagar)
         .filter(
@@ -452,6 +457,7 @@ def desativar_conta_pagar(
     conta_id: int,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_pagar.editar")),
     conta = (
         db.query(ContaPagar)
         .filter(

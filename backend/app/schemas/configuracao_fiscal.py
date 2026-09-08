@@ -35,6 +35,31 @@ class ConfiguracaoFiscalCriar(BaseModel):
 
     provedor_nfse: str | None = Field(default=None, max_length=100)
 
+    porte_empresa: str | None = None
+    natureza_juridica: str | None = None
+    enquadramento_tributario: str | None = None
+
+    optante_simples_nacional: bool = False
+    anexo_simples: str | None = None
+    faixa_simples: str | None = None
+    aliquota_nominal_simples: str | None = None
+    aliquota_efetiva_simples: str | None = None
+
+    iss_retido: bool = False
+    irrf_aliquota: str | None = None
+    pis_aliquota: str | None = None
+    cofins_aliquota: str | None = None
+    csll_aliquota: str | None = None
+    inss_aliquota: str | None = None
+
+    ibs_aliquota: str | None = None
+    cbs_aliquota: str | None = None
+
+    serie_nfse: str | None = None
+    ultimo_numero_nfse: int = 0
+    tipo_emissao_nfse: str | None = None
+    integracao_nfse_ativa: bool = False
+
     observacoes: str | None = None
 
 
@@ -69,6 +94,31 @@ class ConfiguracaoFiscalAtualizar(BaseModel):
     ambiente_nfse: str | None = Field(default=None, max_length=20)
 
     provedor_nfse: str | None = Field(default=None, max_length=100)
+
+    porte_empresa: str | None = None
+    natureza_juridica: str | None = None
+    enquadramento_tributario: str | None = None
+
+    optante_simples_nacional: bool = False
+    anexo_simples: str | None = None
+    faixa_simples: str | None = None
+    aliquota_nominal_simples: str | None = None
+    aliquota_efetiva_simples: str | None = None
+
+    iss_retido: bool = False
+    irrf_aliquota: str | None = None
+    pis_aliquota: str | None = None
+    cofins_aliquota: str | None = None
+    csll_aliquota: str | None = None
+    inss_aliquota: str | None = None
+
+    ibs_aliquota: str | None = None
+    cbs_aliquota: str | None = None
+
+    serie_nfse: str | None = None
+    ultimo_numero_nfse: int = 0
+    tipo_emissao_nfse: str | None = None
+    integracao_nfse_ativa: bool = False
 
     observacoes: str | None = None
 

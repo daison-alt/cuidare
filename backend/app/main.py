@@ -1,3 +1,6 @@
+from app.routers import contrato
+from app.routers import recibo_nfse
+from app.routers import configuracao
 from app.routers import campanhas
 from app.routers import indicacoes
 from fastapi import FastAPI
@@ -76,8 +79,8 @@ app.include_router(prontuarios_router)
 app.include_router(evolucoes_router)
 app.include_router(agendamentos_router)
 app.include_router(servicos_router)
-app.include_router(contas_receber_router)
 app.include_router(recebimentos_conta_router)
+app.include_router(contas_receber_router)
 app.include_router(contas_pagar_router)
 app.include_router(caixa_router)
 app.include_router(conferencia_caixa_router)
@@ -109,3 +112,10 @@ app.include_router(recibo_pdf_router)
 app.include_router(campanhas.router)
 
 app.include_router(indicacoes.router)
+
+app.include_router(configuracao.router)
+
+app.include_router(recibo_nfse.router)
+
+app.include_router(contrato.router)
+

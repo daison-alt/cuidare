@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.caixa import Caixa
 from app.models.conta_receber import ContaReceber
 from app.models.movimentacao_caixa import MovimentacaoCaixa
+from app.security.autorizacao import exigir_permissao
 from app.schemas.conta_receber import (
     ContaReceberAtualizar,
     ContaReceberCriar,
@@ -109,6 +110,7 @@ def criar_conta_receber(
     dados: ContaReceberCriar,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_receber.criar")),
     status = validar_status(dados.status)
 
     forma_pagamento = validar_forma_pagamento(
@@ -190,6 +192,7 @@ def listar_contas_receber(
     incluir_inativos: bool = Query(default=False),
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_receber.visualizar")),
     consulta = db.query(ContaReceber)
 
     if not incluir_inativos:
@@ -232,6 +235,7 @@ def buscar_conta_receber(
     conta_id: int,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_receber.visualizar")),
     conta = (
         db.query(ContaReceber)
         .filter(
@@ -259,6 +263,7 @@ def atualizar_conta_receber(
     dados: ContaReceberAtualizar,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_receber.editar")),
     conta = (
         db.query(ContaReceber)
         .filter(
@@ -438,6 +443,7 @@ def desativar_conta_receber(
     conta_id: int,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("contas_receber.editar")),
     conta = (
         db.query(ContaReceber)
         .filter(

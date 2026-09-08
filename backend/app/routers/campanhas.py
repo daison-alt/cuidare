@@ -3,18 +3,18 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.campanha import Campanha
-from app.schemas.campanha import CampanhaCriar, CampanhaResposta
+from app.schemas.campanha import CampanhaCreate, CampanhaResponse
 from app.models.paciente import Paciente
 from datetime import date
 
 router = APIRouter(prefix="/campanhas", tags=["Campanhas"])
 
-@router.get("", response_model=list[CampanhaResposta])
+@router.get("", response_model=list[CampanhaResponse])
 def listar_campanhas(db: Session = Depends(get_db)):
     return db.query(Campanha).order_by(Campanha.id.desc()).all()
 
-@router.post("", response_model=CampanhaResposta)
-def criar_campanha(dados: CampanhaCriar, db: Session = Depends(get_db)):
+@router.post("", response_model=CampanhaResponse)
+def criar_campanha(dados: CampanhaCreate, db: Session = Depends(get_db)):
     campanha = Campanha(**dados.model_dump())
     db.add(campanha)
     db.commit()

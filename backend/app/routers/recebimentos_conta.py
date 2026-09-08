@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.caixa import Caixa
 from app.models.conta_receber import ContaReceber
 from app.models.movimentacao_caixa import MovimentacaoCaixa
+from app.models.paciente import Paciente
 from app.models.recebimento_conta import RecebimentoConta
 from app.models.recebimento_conta_forma import RecebimentoContaForma
 from app.schemas.recebimento_conta import (
@@ -82,6 +83,73 @@ def montar_resposta(
         "observacoes": recebimento.observacoes,
         "pagamentos": pagamentos,
     }
+
+
+@router.get("/recibos")
+def listar_recibos_financeiros(
+    db: Session = Depends(get_db),
+):
+    registros = (
+        db.query(RecebimentoConta, ContaReceber, Paciente)
+        .outerjoin(
+            ContaReceber,
+            ContaReceber.id == RecebimentoConta.conta_receber_id,
+        )
+        .outerjoin(
+            Paciente,
+            Paciente.id == ContaReceber.paciente_id,
+        )
+        .filter(
+            RecebimentoConta.ativo.is_(True),
+        )
+        .order_by(
+            RecebimentoConta.id.desc()
+        )
+        .all()
+    )
+
+    resultado = []
+
+    for recebimento, conta, paciente in registros:
+        valor_total_conta = Decimal(str(conta.valor or 0))
+        valor_recebido_acumulado = Decimal(str(conta.valor_pago or 0))
+        valor_pendente = valor_total_conta - valor_recebido_acumulado
+
+        if valor_pendente < 0:
+            valor_pendente = Decimal("0.00")
+
+        pagamentos = (
+            db.query(RecebimentoContaForma)
+            .filter(
+                RecebimentoContaForma.recebimento_id == recebimento.id,
+                RecebimentoContaForma.ativo.is_(True),
+            )
+            .order_by(RecebimentoContaForma.id.asc())
+            .all()
+        )
+
+        resultado.append({
+            "id": recebimento.id,
+            "numero_recibo": f"{recebimento.id:06d}",
+            "data_recebimento": recebimento.data_recebimento,
+            "paciente_nome": paciente.nome if paciente else "Não informado",
+            "paciente_cpf": paciente.cpf if paciente else None,
+            "descricao": conta.descricao if conta else "Recebimento",
+            "valor_total_conta": float(valor_total_conta),
+            "valor_recebimento": float(recebimento.valor_total or 0),
+            "valor_recebido_acumulado": float(valor_recebido_acumulado),
+            "valor_pendente": float(valor_pendente),
+            "observacoes": recebimento.observacoes,
+            "pagamentos": [
+                {
+                    "forma_pagamento": pagamento.forma_pagamento,
+                    "valor": float(pagamento.valor or 0),
+                }
+                for pagamento in pagamentos
+            ],
+        })
+
+    return resultado
 
 
 @router.post(

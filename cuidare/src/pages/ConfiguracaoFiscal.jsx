@@ -21,6 +21,26 @@ const formularioInicial = {
   codigo_servico: "",
   descricao_servico: "",
   aliquota_iss: "",
+  porte_empresa: "",
+  natureza_juridica: "",
+  enquadramento_tributario: "",
+  optante_simples_nacional: false,
+  anexo_simples: "",
+  faixa_simples: "",
+  aliquota_nominal_simples: "",
+  aliquota_efetiva_simples: "",
+  iss_retido: false,
+  irrf_aliquota: "",
+  pis_aliquota: "",
+  cofins_aliquota: "",
+  csll_aliquota: "",
+  inss_aliquota: "",
+  ibs_aliquota: "",
+  cbs_aliquota: "",
+  serie_nfse: "",
+  ultimo_numero_nfse: 0,
+  tipo_emissao_nfse: "",
+  integracao_nfse_ativa: false,
   emissao_nfse_ativa: false,
   ambiente_nfse: "homologacao",
   provedor_nfse: "",
@@ -94,6 +114,46 @@ function ConfiguracaoFiscal({ onVoltar }) {
             configuracao.descricao_servico || "",
           aliquota_iss:
             configuracao.aliquota_iss || "",
+          porte_empresa:
+            configuracao.porte_empresa || "",
+          natureza_juridica:
+            configuracao.natureza_juridica || "",
+          enquadramento_tributario:
+            configuracao.enquadramento_tributario || "",
+          optante_simples_nacional:
+            configuracao.optante_simples_nacional || false,
+          anexo_simples:
+            configuracao.anexo_simples || "",
+          faixa_simples:
+            configuracao.faixa_simples || "",
+          aliquota_nominal_simples:
+            configuracao.aliquota_nominal_simples || "",
+          aliquota_efetiva_simples:
+            configuracao.aliquota_efetiva_simples || "",
+          iss_retido:
+            configuracao.iss_retido || false,
+          irrf_aliquota:
+            configuracao.irrf_aliquota || "",
+          pis_aliquota:
+            configuracao.pis_aliquota || "",
+          cofins_aliquota:
+            configuracao.cofins_aliquota || "",
+          csll_aliquota:
+            configuracao.csll_aliquota || "",
+          inss_aliquota:
+            configuracao.inss_aliquota || "",
+          ibs_aliquota:
+            configuracao.ibs_aliquota || "",
+          cbs_aliquota:
+            configuracao.cbs_aliquota || "",
+          serie_nfse:
+            configuracao.serie_nfse || "",
+          ultimo_numero_nfse:
+            configuracao.ultimo_numero_nfse || 0,
+          tipo_emissao_nfse:
+            configuracao.tipo_emissao_nfse || "",
+          integracao_nfse_ativa:
+            configuracao.integracao_nfse_ativa || false,
           emissao_nfse_ativa:
             configuracao.emissao_nfse_ativa || false,
           ambiente_nfse:
@@ -519,8 +579,8 @@ function ConfiguracaoFiscal({ onVoltar }) {
             <span>03</span>
 
             <div>
-              <h3>Tributação</h3>
-              <p>Parâmetros utilizados na operação fiscal.</p>
+              <h3>Tributação e enquadramento</h3>
+              <p>Parâmetros tributários da empresa.</p>
             </div>
           </div>
 
@@ -532,22 +592,44 @@ function ConfiguracaoFiscal({ onVoltar }) {
                 value={formulario.regime_tributario}
                 onChange={alterarCampo}
               >
-                <option value="">
-                  Selecione
-                </option>
-
-                <option value="Simples Nacional">
-                  Simples Nacional
-                </option>
-
-                <option value="Lucro Presumido">
-                  Lucro Presumido
-                </option>
-
-                <option value="Lucro Real">
-                  Lucro Real
-                </option>
+                <option value="">Selecione</option>
+                <option value="Simples Nacional">Simples Nacional</option>
+                <option value="Lucro Presumido">Lucro Presumido</option>
+                <option value="Lucro Real">Lucro Real</option>
               </select>
+            </label>
+
+            <label>
+              Porte da empresa
+              <select
+                name="porte_empresa"
+                value={formulario.porte_empresa}
+                onChange={alterarCampo}
+              >
+                <option value="">Selecione</option>
+                <option value="MEI">MEI</option>
+                <option value="ME">Microempresa (ME)</option>
+                <option value="EPP">Empresa de Pequeno Porte (EPP)</option>
+                <option value="Demais">Demais empresas</option>
+              </select>
+            </label>
+
+            <label>
+              Natureza jurídica
+              <input
+                name="natureza_juridica"
+                value={formulario.natureza_juridica}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label>
+              Enquadramento tributário
+              <input
+                name="enquadramento_tributario"
+                value={formulario.enquadramento_tributario}
+                onChange={alterarCampo}
+              />
             </label>
 
             <label>
@@ -555,15 +637,6 @@ function ConfiguracaoFiscal({ onVoltar }) {
               <input
                 name="codigo_servico"
                 value={formulario.codigo_servico}
-                onChange={alterarCampo}
-              />
-            </label>
-
-            <label className="field-wide">
-              Descrição do serviço
-              <input
-                name="descricao_servico"
-                value={formulario.descricao_servico}
                 onChange={alterarCampo}
               />
             </label>
@@ -579,6 +652,61 @@ function ConfiguracaoFiscal({ onVoltar }) {
                 onChange={alterarCampo}
               />
             </label>
+
+            <label className="field-wide">
+              Descrição do serviço
+              <input
+                name="descricao_servico"
+                value={formulario.descricao_servico}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label className="checkbox-field">
+              <input
+                type="checkbox"
+                name="optante_simples_nacional"
+                checked={formulario.optante_simples_nacional}
+                onChange={alterarCampo}
+              />
+              Optante pelo Simples Nacional
+            </label>
+
+            <label>
+              Anexo do Simples
+              <input
+                name="anexo_simples"
+                value={formulario.anexo_simples}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label>
+              Faixa do Simples
+              <input
+                name="faixa_simples"
+                value={formulario.faixa_simples}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label>
+              Alíquota nominal (%)
+              <input
+                name="aliquota_nominal_simples"
+                value={formulario.aliquota_nominal_simples}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label>
+              Alíquota efetiva (%)
+              <input
+                name="aliquota_efetiva_simples"
+                value={formulario.aliquota_efetiva_simples}
+                onChange={alterarCampo}
+              />
+            </label>
           </div>
         </section>
 
@@ -587,10 +715,109 @@ function ConfiguracaoFiscal({ onVoltar }) {
             <span>04</span>
 
             <div>
+              <h3>Retenções e tributos</h3>
+              <p>Impostos e retenções aplicáveis à empresa.</p>
+            </div>
+          </div>
+
+          <div className="config-grid">
+            <label className="checkbox-field">
+              <input
+                type="checkbox"
+                name="iss_retido"
+                checked={formulario.iss_retido}
+                onChange={alterarCampo}
+              />
+              ISS retido
+            </label>
+
+            <label>
+              IRRF (%)
+              <input
+                name="irrf_aliquota"
+                value={formulario.irrf_aliquota}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label>
+              PIS (%)
+              <input
+                name="pis_aliquota"
+                value={formulario.pis_aliquota}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label>
+              COFINS (%)
+              <input
+                name="cofins_aliquota"
+                value={formulario.cofins_aliquota}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label>
+              CSLL (%)
+              <input
+                name="csll_aliquota"
+                value={formulario.csll_aliquota}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label>
+              INSS (%)
+              <input
+                name="inss_aliquota"
+                value={formulario.inss_aliquota}
+                onChange={alterarCampo}
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="config-card">
+          <div className="config-card-title">
+            <span>05</span>
+
+            <div>
+              <h3>IBS e CBS</h3>
+              <p>Campos preparados para a transição tributária.</p>
+            </div>
+          </div>
+
+          <div className="config-grid">
+            <label>
+              IBS (%)
+              <input
+                name="ibs_aliquota"
+                value={formulario.ibs_aliquota}
+                onChange={alterarCampo}
+                placeholder="Conforme orientação contábil"
+              />
+            </label>
+
+            <label>
+              CBS (%)
+              <input
+                name="cbs_aliquota"
+                value={formulario.cbs_aliquota}
+                onChange={alterarCampo}
+                placeholder="Conforme orientação contábil"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="config-card">
+          <div className="config-card-title">
+            <span>06</span>
+
+            <div>
               <h3>NFS-e</h3>
-              <p>
-                Configuração da emissão de nota fiscal de serviço.
-              </p>
+              <p>Configuração da emissão de nota fiscal de serviço.</p>
             </div>
           </div>
 
@@ -611,7 +838,6 @@ function ConfiguracaoFiscal({ onVoltar }) {
                 checked={formulario.emissao_nfse_ativa}
                 onChange={alterarCampo}
               />
-
               <span></span>
             </label>
           </div>
@@ -624,13 +850,21 @@ function ConfiguracaoFiscal({ onVoltar }) {
                 value={formulario.ambiente_nfse}
                 onChange={alterarCampo}
               >
-                <option value="homologacao">
-                  Homologação
-                </option>
+                <option value="homologacao">Homologação</option>
+                <option value="producao">Produção</option>
+              </select>
+            </label>
 
-                <option value="producao">
-                  Produção
-                </option>
+            <label>
+              Tipo de emissão
+              <select
+                name="tipo_emissao_nfse"
+                value={formulario.tipo_emissao_nfse}
+                onChange={alterarCampo}
+              >
+                <option value="">Selecione</option>
+                <option value="NFS-e Nacional">NFS-e Nacional</option>
+                <option value="Provedor municipal">Provedor municipal</option>
               </select>
             </label>
 
@@ -640,21 +874,49 @@ function ConfiguracaoFiscal({ onVoltar }) {
                 name="provedor_nfse"
                 value={formulario.provedor_nfse}
                 onChange={alterarCampo}
-                placeholder="Ex.: Betha, IPM..."
+                placeholder="Ex.: provedor municipal"
               />
+            </label>
+
+            <label>
+              Série da NFS-e
+              <input
+                name="serie_nfse"
+                value={formulario.serie_nfse}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label>
+              Último número utilizado
+              <input
+                name="ultimo_numero_nfse"
+                type="number"
+                min="0"
+                value={formulario.ultimo_numero_nfse}
+                onChange={alterarCampo}
+              />
+            </label>
+
+            <label className="checkbox-field">
+              <input
+                type="checkbox"
+                name="integracao_nfse_ativa"
+                checked={formulario.integracao_nfse_ativa}
+                onChange={alterarCampo}
+              />
+              Integração NFS-e configurada
             </label>
           </div>
         </section>
 
         <section className="config-card">
           <div className="config-card-title">
-            <span>05</span>
+            <span>07</span>
 
             <div>
-              <h3>Observações</h3>
-              <p>
-                Informações complementares da configuração.
-              </p>
+              <h3>Observações fiscais</h3>
+              <p>Informações complementares da configuração.</p>
             </div>
           </div>
 
@@ -664,13 +926,13 @@ function ConfiguracaoFiscal({ onVoltar }) {
             rows="4"
             value={formulario.observacoes}
             onChange={alterarCampo}
-            placeholder="Digite observações importantes..."
+            placeholder="Orientações do contador, regras específicas e observações tributárias..."
           />
         </section>
 
-        <section className="config-card identidade-visual-card">
+<section className="config-card identidade-visual-card">
           <div className="config-card-title">
-            <span>06</span>
+            <span>08</span>
 
             <div>
               <h3>Identidade visual</h3>

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.configuracao_fiscal import ConfiguracaoFiscal
+from app.security.autorizacao import exigir_permissao
 from app.schemas.configuracao_fiscal import (
     ConfiguracaoFiscalAtualizar,
     ConfiguracaoFiscalCriar,
@@ -23,6 +24,7 @@ router = APIRouter(
 def listar_configuracoes_fiscais(
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("gestao_fiscal.visualizar")),
     return (
         db.query(ConfiguracaoFiscal)
         .filter(ConfiguracaoFiscal.ativo == True)
@@ -39,6 +41,7 @@ def buscar_configuracao_fiscal(
     configuracao_id: int,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("gestao_fiscal.visualizar")),
     configuracao = (
         db.query(ConfiguracaoFiscal)
         .filter(
@@ -66,6 +69,7 @@ def criar_configuracao_fiscal(
     dados: ConfiguracaoFiscalCriar,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("gestao_fiscal.criar")),
     configuracao_ativa = (
         db.query(ConfiguracaoFiscal)
         .filter(ConfiguracaoFiscal.ativo == True)
@@ -155,6 +159,26 @@ def criar_configuracao_fiscal(
             if dados.provedor_nfse
             else None
         ),
+        porte_empresa=dados.porte_empresa,
+        natureza_juridica=dados.natureza_juridica,
+        enquadramento_tributario=dados.enquadramento_tributario,
+        optante_simples_nacional=dados.optante_simples_nacional,
+        anexo_simples=dados.anexo_simples,
+        faixa_simples=dados.faixa_simples,
+        aliquota_nominal_simples=dados.aliquota_nominal_simples,
+        aliquota_efetiva_simples=dados.aliquota_efetiva_simples,
+        iss_retido=dados.iss_retido,
+        irrf_aliquota=dados.irrf_aliquota,
+        pis_aliquota=dados.pis_aliquota,
+        cofins_aliquota=dados.cofins_aliquota,
+        csll_aliquota=dados.csll_aliquota,
+        inss_aliquota=dados.inss_aliquota,
+        ibs_aliquota=dados.ibs_aliquota,
+        cbs_aliquota=dados.cbs_aliquota,
+        serie_nfse=dados.serie_nfse,
+        ultimo_numero_nfse=dados.ultimo_numero_nfse,
+        tipo_emissao_nfse=dados.tipo_emissao_nfse,
+        integracao_nfse_ativa=dados.integracao_nfse_ativa,
         observacoes=(
             dados.observacoes.strip()
             if dados.observacoes
@@ -178,6 +202,7 @@ def atualizar_configuracao_fiscal(
     dados: ConfiguracaoFiscalAtualizar,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("gestao_fiscal.editar")),
     configuracao = (
         db.query(ConfiguracaoFiscal)
         .filter(
@@ -233,6 +258,22 @@ def atualizar_configuracao_fiscal(
         "descricao_servico",
         "aliquota_iss",
         "provedor_nfse",
+        "porte_empresa",
+        "natureza_juridica",
+        "enquadramento_tributario",
+        "anexo_simples",
+        "faixa_simples",
+        "aliquota_nominal_simples",
+        "aliquota_efetiva_simples",
+        "irrf_aliquota",
+        "pis_aliquota",
+        "cofins_aliquota",
+        "csll_aliquota",
+        "inss_aliquota",
+        "ibs_aliquota",
+        "cbs_aliquota",
+        "serie_nfse",
+        "tipo_emissao_nfse",
         "observacoes",
     ]
 
@@ -267,6 +308,7 @@ def excluir_configuracao_fiscal(
     configuracao_id: int,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("gestao_fiscal.editar")),
     configuracao = (
         db.query(ConfiguracaoFiscal)
         .filter(

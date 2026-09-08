@@ -596,6 +596,33 @@ function Financeiro({ onVoltar }) {
       }
 
       // ------------------------------------------------------
+      // NFS-e - CRIAR A PARTIR DO RECEBIMENTO
+      // ------------------------------------------------------
+
+      try {
+        const respostaNFSe = await fetch(
+          `${API_URL}/recibos/recebimento/${dados.id}`,
+          {
+            method: "POST",
+          }
+        );
+
+        if (!respostaNFSe.ok) {
+          const erroNFSe = await respostaNFSe.text();
+          console.error("Erro ao criar NFS-e:", erroNFSe);
+        } else {
+          console.log(
+            `🟢 NFS-e preparada para o recebimento #${dados.numero_recibo}`
+          );
+        }
+      } catch (erroNFSe) {
+        console.error(
+          "Erro de comunicação ao preparar NFS-e:",
+          erroNFSe
+        );
+      }
+
+      // ------------------------------------------------------
       // RECIBO PDF - DOWNLOAD AUTOMÁTICO
       // ------------------------------------------------------
 

@@ -182,8 +182,7 @@ function Login({ onLogin }) {
             </h2>
 
             <p>
-              Entre com suas credenciais para acessar
-              o sistema da clínica.
+              Entre com seu usuário e senha.
             </p>
 
           </div>
@@ -275,33 +274,19 @@ function Login({ onLogin }) {
               {carregando ? "Entrando..." : "Entrar"}
             </button>
 
-            <button
-              type="button"
-              className="prototype-button"
-              onClick={abrirPrototipo}
-            >
-              Abrir protótipo
-            </button>
-
           </form>
 
+          <button
+            type="button"
+            className="prototype-link"
+            onClick={abrirPrototipo}
+          >
+            Abrir protótipo
+          </button>
+
           <div className="login-security">
-
-            <span className="security-icon">
-              🔒
-            </span>
-
-            <div>
-              <strong>
-                Ambiente protegido
-              </strong>
-
-              <p>
-                Seus dados são tratados com segurança
-                e acesso restrito.
-              </p>
-            </div>
-
+            <span className="security-icon">🔒</span>
+            <span>Autenticação e permissões ficam no backend.</span>
           </div>
 
         </div>

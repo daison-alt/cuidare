@@ -37,7 +37,20 @@ PERMISSOES = {
         "agenda.criar",
         "agenda.editar",
 
+        "financeiro.visualizar",
         "financeiro.receber",
+        "contas_receber.visualizar",
+        "contas_receber.criar",
+        "contas_receber.editar",
+
+        "caixa.visualizar",
+        "caixa.abrir",
+        "caixa.fechar",
+        "caixa.entrada",
+        "caixa.saida",
+        "caixa.sangria",
+        "caixa.suprimento",
+        "caixa.conferencia",
     },
 
     "contabilidade": {

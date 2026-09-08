@@ -13,6 +13,7 @@ from app.schemas.caixa import (
     CaixaFechar,
     CaixaResposta,
 )
+from app.security.autorizacao import exigir_permissao
 from app.schemas.movimentacao_caixa import (
     MovimentacaoCaixaCriar,
     MovimentacaoCaixaResposta,
@@ -202,6 +203,7 @@ def calcular_saldo(
 def consultar_proximo_troco(
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("caixa.visualizar")),
     """
     Consulta quanto foi deixado no último caixa fechado
     para servir como troco na próxima abertura.
@@ -238,6 +240,7 @@ def consultar_proximo_troco(
 def consultar_caixa_aberto(
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("caixa.visualizar")),
     caixa = obter_caixa_aberto(db)
 
     if not caixa:
@@ -261,6 +264,7 @@ def abrir_caixa(
     dados: CaixaCriar,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("caixa.abrir")),
     caixa_aberto = obter_caixa_aberto(db)
 
     if caixa_aberto:
@@ -320,6 +324,7 @@ def fechar_caixa(
     dados: CaixaFechar,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("caixa.fechar")),
     caixa = obter_caixa_aberto(db)
 
     if not caixa:
@@ -434,6 +439,7 @@ def fechar_caixa(
 def listar_movimentacoes(
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("caixa.visualizar")),
     caixa = obter_caixa_aberto(db)
 
     if not caixa:
@@ -460,6 +466,7 @@ def criar_movimentacao(
     dados: MovimentacaoCaixaCriar,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("caixa.entrada")),
     caixa = obter_caixa_aberto(db)
 
     if not caixa:
@@ -541,6 +548,7 @@ def criar_movimentacao(
 def consultar_saldo(
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("caixa.visualizar")),
     caixa = obter_caixa_aberto(db)
 
     if not caixa:
@@ -573,6 +581,7 @@ def consultar_saldo(
 def listar_caixas_fechados(
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("caixa.visualizar")),
     return (
         db.query(Caixa)
         .filter(
@@ -594,6 +603,7 @@ def detalhes_caixa_historico(
     caixa_id: int,
     db: Session = Depends(get_db),
 ):
+    usuario=Depends(exigir_permissao("caixa.visualizar")),
     caixa = (
         db.query(Caixa)
         .filter(

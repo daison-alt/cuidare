@@ -346,3 +346,69 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   CONTROLES FISCAIS NOVOS
+   ========================================================= */
+
+.checkbox-field {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding-top: 22px;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px;
+  margin: 0;
+  accent-color: #2f80ed;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.15);
+}
+
+.config-grid label {
+  box-sizing: border-box;
+}
+
+.config-grid input,
+.config-grid select,
+.config-grid textarea {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.nfse-status-box {
+  align-items: center;
+}
+
+.config-card .config-grid {
+  align-items: end;
+}
+
+.config-card-title {
+  margin-bottom: 20px;
+}
+
+.config-card-title h3 {
+  margin-bottom: 4px;
+}
+
+.config-card-title p {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .checkbox-field {
+    padding-top: 8px;
+    min-height: 44px;
+  }
+}
+

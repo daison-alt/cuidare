@@ -29,7 +29,6 @@ const FORMAS_PAGAMENTO = {
   cartao_credito: "Cartão de crédito",
   cartao_debito: "Cartão de débito",
   transferencia: "Transferência",
-  outro: "Outro",
 };
 
 function formatarMoeda(valor) {
@@ -46,11 +45,14 @@ function formatarData(data) {
     return "-";
   }
 
-  const [ano, mes, dia] = data.split("-");
+  const texto = String(data).slice(0, 10);
+  const partes = texto.split("-");
 
-  if (!ano || !mes || !dia) {
+  if (partes.length !== 3) {
     return data;
   }
+
+  const [ano, mes, dia] = partes;
 
   return `${dia}/${mes}/${ano}`;
 }
@@ -69,7 +71,7 @@ function statusAutomatico(conta) {
   if (
     conta.status === "pendente" &&
     conta.vencimento &&
-    conta.vencimento < obterHoje()
+    String(conta.vencimento).slice(0, 10) < obterHoje()
   ) {
     return "vencido";
   }
@@ -85,8 +87,11 @@ function ContasReceber({ onVoltar }) {
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");
 
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarFormulario, setMostrarFormulario] =
+    useState(false);
+
   const [salvando, setSalvando] = useState(false);
+  const [recebendoId, setRecebendoId] = useState(null);
 
   const [formulario, setFormulario] = useState({
     descricao: "",
@@ -103,19 +108,29 @@ function ContasReceber({ onVoltar }) {
       setCarregando(true);
       setErro("");
 
-      const resposta = await fetch(`${API_URL}/contas-receber`);
-
-      if (!resposta.ok) {
-        throw new Error("Não foi possível carregar as contas.");
-      }
+      const resposta = await fetch(
+        `${API_URL}/contas-receber`
+      );
 
       const dados = await resposta.json();
 
+      if (!resposta.ok) {
+        throw new Error(
+          dados?.detail ||
+            "Não foi possível carregar as contas."
+        );
+      }
+
       setContas(Array.isArray(dados) ? dados : []);
     } catch (error) {
-      console.error("Erro ao carregar contas a receber:", error);
+      console.error(
+        "Erro ao carregar contas a receber:",
+        error
+      );
+
       setErro(
-        "Não foi possível carregar as contas a receber. Verifique se a API está funcionando."
+        error.message ||
+          "Não foi possível carregar as contas a receber. Verifique se a API está funcionando."
       );
     } finally {
       setCarregando(false);
@@ -135,8 +150,35 @@ function ContasReceber({ onVoltar }) {
     }));
   }
 
+  function abrirNovoLancamento() {
+    setErro("");
+
+    setFormulario({
+      descricao: "",
+      categoria: "",
+      valor: "",
+      vencimento: "",
+      status: "pendente",
+      forma_pagamento: "",
+      observacoes: "",
+    });
+
+    setMostrarFormulario(true);
+  }
+
+  function fecharFormulario() {
+    if (salvando) {
+      return;
+    }
+
+    setMostrarFormulario(false);
+    setErro("");
+  }
+
   async function salvarConta(event) {
     event.preventDefault();
+
+    setErro("");
 
     if (!formulario.descricao.trim()) {
       setErro("Informe a descrição da conta.");
@@ -148,32 +190,58 @@ function ContasReceber({ onVoltar }) {
       return;
     }
 
+    if (Number(formulario.valor) <= 0) {
+      setErro("O valor da conta deve ser maior que zero.");
+      return;
+    }
+
     if (!formulario.vencimento) {
       setErro("Informe o vencimento.");
       return;
     }
 
+    if (
+      formulario.status === "pago" &&
+      !formulario.forma_pagamento
+    ) {
+      setErro(
+        "Informe a forma de pagamento para uma conta paga."
+      );
+      return;
+    }
+
     try {
       setSalvando(true);
-      setErro("");
 
-      const resposta = await fetch(`${API_URL}/contas-receber`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          descricao: formulario.descricao.trim(),
-          categoria: formulario.categoria.trim() || null,
-          valor: Number(formulario.valor),
-          vencimento: formulario.vencimento,
-          status: formulario.status,
-          forma_pagamento:
-            formulario.forma_pagamento || null,
-          observacoes:
-            formulario.observacoes.trim() || null,
-        }),
-      });
+      const resposta = await fetch(
+        `${API_URL}/contas-receber`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            descricao: formulario.descricao.trim(),
+            categoria:
+              formulario.categoria.trim() || null,
+            valor: Number(formulario.valor),
+            vencimento: formulario.vencimento,
+            status: formulario.status,
+            forma_pagamento:
+              formulario.forma_pagamento || null,
+            data_pagamento:
+              formulario.status === "pago"
+                ? obterHoje()
+                : null,
+            valor_pago:
+              formulario.status === "pago"
+                ? Number(formulario.valor)
+                : null,
+            observacoes:
+              formulario.observacoes.trim() || null,
+          }),
+        }
+      );
 
       const dados = await resposta.json();
 
@@ -198,7 +266,10 @@ function ContasReceber({ onVoltar }) {
 
       await carregarContas();
     } catch (error) {
-      console.error("Erro ao salvar conta:", error);
+      console.error(
+        "Erro ao salvar conta:",
+        error
+      );
 
       setErro(
         error.message ||
@@ -212,9 +283,13 @@ function ContasReceber({ onVoltar }) {
   async function marcarComoPaga(conta) {
     const hoje = obterHoje();
 
+    const valorReceber = Number(
+      conta.valor || 0
+    );
+
     const confirmar = window.confirm(
       `Confirmar recebimento de ${formatarMoeda(
-        conta.valor
+        valorReceber
       )} referente a "${conta.descricao}"?`
     );
 
@@ -224,6 +299,7 @@ function ContasReceber({ onVoltar }) {
 
     try {
       setErro("");
+      setRecebendoId(conta.id);
 
       const resposta = await fetch(
         `${API_URL}/contas-receber/${conta.id}`,
@@ -234,8 +310,10 @@ function ContasReceber({ onVoltar }) {
           },
           body: JSON.stringify({
             status: "pago",
+            forma_pagamento:
+              conta.forma_pagamento || "pix",
             data_pagamento: hoje,
-            valor_pago: Number(conta.valor),
+            valor_pago: valorReceber,
           }),
         }
       );
@@ -245,21 +323,23 @@ function ContasReceber({ onVoltar }) {
       if (!resposta.ok) {
         throw new Error(
           dados?.detail ||
-            "Não foi possível registrar o pagamento."
+            "Não foi possível registrar o recebimento."
         );
       }
 
       await carregarContas();
     } catch (error) {
       console.error(
-        "Erro ao marcar conta como paga:",
+        "Erro ao registrar recebimento:",
         error
       );
 
       setErro(
         error.message ||
-          "Não foi possível registrar o pagamento."
+          "Não foi possível registrar o recebimento."
       );
+    } finally {
+      setRecebendoId(null);
     }
   }
 
@@ -286,6 +366,9 @@ function ContasReceber({ onVoltar }) {
           ?.toLowerCase()
           .includes(termo) ||
         conta.categoria
+          ?.toLowerCase()
+          .includes(termo) ||
+        conta.observacoes
           ?.toLowerCase()
           .includes(termo)
       );
@@ -314,7 +397,9 @@ function ContasReceber({ onVoltar }) {
 
       if (status === "pago") {
         recebido += Number(
-          conta.valor_pago ?? conta.valor ?? 0
+          conta.valor_pago ??
+            conta.valor ??
+            0
         );
       }
     });
@@ -355,9 +440,7 @@ function ContasReceber({ onVoltar }) {
           <button
             type="button"
             className="finance-button primary"
-            onClick={() =>
-              setMostrarFormulario(true)
-            }
+            onClick={abrirNovoLancamento}
           >
             + Nova conta
           </button>
@@ -367,22 +450,34 @@ function ContasReceber({ onVoltar }) {
       <section className="finance-summary">
         <article className="finance-summary-card">
           <span>Total lançado</span>
-          <strong>{formatarMoeda(resumo.total)}</strong>
+
+          <strong>
+            {formatarMoeda(resumo.total)}
+          </strong>
         </article>
 
         <article className="finance-summary-card">
           <span>A receber</span>
-          <strong>{formatarMoeda(resumo.pendente)}</strong>
+
+          <strong>
+            {formatarMoeda(resumo.pendente)}
+          </strong>
         </article>
 
         <article className="finance-summary-card">
           <span>Vencido</span>
-          <strong>{formatarMoeda(resumo.vencido)}</strong>
+
+          <strong>
+            {formatarMoeda(resumo.vencido)}
+          </strong>
         </article>
 
         <article className="finance-summary-card">
           <span>Recebido</span>
-          <strong>{formatarMoeda(resumo.recebido)}</strong>
+
+          <strong>
+            {formatarMoeda(resumo.recebido)}
+          </strong>
         </article>
       </section>
 
@@ -394,15 +489,16 @@ function ContasReceber({ onVoltar }) {
                 NOVO LANÇAMENTO
               </span>
 
-              <h2>Adicionar conta a receber</h2>
+              <h2>
+                Adicionar conta a receber
+              </h2>
             </div>
 
             <button
               type="button"
               className="finance-close-button"
-              onClick={() =>
-                setMostrarFormulario(false)
-              }
+              onClick={fecharFormulario}
+              disabled={salvando}
             >
               ×
             </button>
@@ -412,53 +508,63 @@ function ContasReceber({ onVoltar }) {
             <div className="finance-form-grid">
               <label>
                 Descrição
+
                 <input
                   name="descricao"
                   value={formulario.descricao}
                   onChange={alterarCampo}
                   placeholder="Ex.: Mensalidade Pilates"
+                  disabled={salvando}
                 />
               </label>
 
               <label>
                 Categoria
+
                 <input
                   name="categoria"
                   value={formulario.categoria}
                   onChange={alterarCampo}
                   placeholder="Ex.: Pilates"
+                  disabled={salvando}
                 />
               </label>
 
               <label>
                 Valor
+
                 <input
                   name="valor"
                   type="number"
-                  min="0"
+                  min="0.01"
                   step="0.01"
                   value={formulario.valor}
                   onChange={alterarCampo}
                   placeholder="0,00"
+                  disabled={salvando}
                 />
               </label>
 
               <label>
                 Vencimento
+
                 <input
                   name="vencimento"
                   type="date"
                   value={formulario.vencimento}
                   onChange={alterarCampo}
+                  disabled={salvando}
                 />
               </label>
 
               <label>
                 Status
+
                 <select
                   name="status"
                   value={formulario.status}
                   onChange={alterarCampo}
+                  disabled={salvando}
                 >
                   <option value="pendente">
                     Pendente
@@ -472,12 +578,17 @@ function ContasReceber({ onVoltar }) {
 
               <label>
                 Forma de pagamento
+
                 <select
                   name="forma_pagamento"
                   value={
                     formulario.forma_pagamento
                   }
                   onChange={alterarCampo}
+                  required={
+                    formulario.status === "pago"
+                  }
+                  disabled={salvando}
                 >
                   <option value="">
                     Não definida
@@ -502,21 +613,19 @@ function ContasReceber({ onVoltar }) {
                   <option value="transferencia">
                     Transferência
                   </option>
-
-                  <option value="outro">
-                    Outro
-                  </option>
                 </select>
               </label>
 
               <label className="finance-form-full">
                 Observações
+
                 <textarea
                   name="observacoes"
                   value={formulario.observacoes}
                   onChange={alterarCampo}
                   rows="3"
                   placeholder="Observações da conta..."
+                  disabled={salvando}
                 />
               </label>
             </div>
@@ -525,9 +634,8 @@ function ContasReceber({ onVoltar }) {
               <button
                 type="button"
                 className="finance-button secondary"
-                onClick={() =>
-                  setMostrarFormulario(false)
-                }
+                onClick={fecharFormulario}
+                disabled={salvando}
               >
                 Cancelar
               </button>
@@ -569,17 +677,27 @@ function ContasReceber({ onVoltar }) {
             <select
               value={filtroStatus}
               onChange={(event) =>
-                setFiltroStatus(event.target.value)
+                setFiltroStatus(
+                  event.target.value
+                )
               }
             >
-              <option value="todos">Todos</option>
+              <option value="todos">
+                Todos
+              </option>
+
               <option value="pendente">
                 Pendentes
               </option>
+
               <option value="vencido">
                 Vencidas
               </option>
-              <option value="pago">Pagas</option>
+
+              <option value="pago">
+                Pagas
+              </option>
+
               <option value="cancelado">
                 Canceladas
               </option>
@@ -608,8 +726,8 @@ function ContasReceber({ onVoltar }) {
             </strong>
 
             <p>
-              Cadastre uma nova conta para começar a
-              controlar os recebimentos da clínica.
+              Cadastre uma nova conta para começar
+              a controlar os recebimentos da clínica.
             </p>
           </div>
         ) : (
@@ -631,6 +749,9 @@ function ContasReceber({ onVoltar }) {
                 {contasFiltradas.map((conta) => {
                   const status =
                     statusAutomatico(conta);
+
+                  const recebendo =
+                    recebendoId === conta.id;
 
                   return (
                     <tr key={conta.id}>
@@ -667,12 +788,14 @@ function ContasReceber({ onVoltar }) {
                       <td>
                         <span
                           className={`finance-status ${
-                            STATUS_CLASSES[status] ||
-                            ""
+                            STATUS_CLASSES[
+                              status
+                            ] || ""
                           }`}
                         >
-                          {STATUS_LABELS[status] ||
-                            status}
+                          {STATUS_LABELS[
+                            status
+                          ] || status}
                         </span>
                       </td>
 
@@ -697,8 +820,13 @@ function ContasReceber({ onVoltar }) {
                                     conta
                                   )
                                 }
+                                disabled={
+                                  recebendo
+                                }
                               >
-                                Receber
+                                {recebendo
+                                  ? "Recebendo..."
+                                  : "Receber"}
                               </button>
                             )}
                         </div>

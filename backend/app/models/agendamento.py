@@ -1,6 +1,18 @@
 from datetime import date, datetime, time
+from decimal import Decimal
 
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text, Time
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    Time,
+)
 
 from app.database import Base
 
@@ -52,6 +64,34 @@ class Agendamento(Base):
         nullable=False,
         default="agendado",
         index=True,
+    )
+
+    tipo_atendimento = Column(
+        String(20),
+        nullable=False,
+        default="normal",
+        index=True,
+    )
+
+    motivo_cortesia = Column(
+        String(255),
+        nullable=True,
+    )
+
+    campanha_cortesia = Column(
+        String(150),
+        nullable=True,
+    )
+
+    valor_tabela = Column(
+        Numeric(12, 2),
+        nullable=True,
+        default=Decimal("0.00"),
+    )
+
+    valor_cobrado = Column(
+        Numeric(12, 2),
+        nullable=True,
     )
 
     observacoes = Column(

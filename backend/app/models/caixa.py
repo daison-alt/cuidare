@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text
 
 from app.database import Base
 
@@ -16,6 +16,32 @@ class Caixa(Base):
 
     saldo_inicial = Column(Numeric(12, 2), nullable=False, default=Decimal("0.00"))
     saldo_final = Column(Numeric(12, 2), nullable=True)
+
+    # ========================================================
+    # CONTROLE DE TROCO
+    # ========================================================
+    # Valor físico deixado no caixa para a próxima abertura.
+    troco_proxima_abertura = Column(
+        Numeric(12, 2),
+        nullable=False,
+        default=Decimal("0.00"),
+    )
+
+    # Valor físico retirado no fechamento:
+    # dinheiro contado - troco deixado.
+    valor_retirado = Column(
+        Numeric(12, 2),
+        nullable=False,
+        default=Decimal("0.00"),
+    )
+
+    # Identifica de qual caixa veio o troco utilizado
+    # como saldo inicial desta abertura.
+    caixa_origem_troco_id = Column(
+        Integer,
+        ForeignKey("caixas.id"),
+        nullable=True,
+    )
 
     status = Column(String(20), nullable=False, default="aberto")
 

@@ -1,0 +1,767 @@
+import "./App.css";
+import { useEffect, useState } from "react";
+
+import Login from "./Login";
+import Usuarios from "./pages/Usuarios";
+import NovoUsuario from "./pages/NovoUsuario";
+import EditarUsuario from "./pages/EditarUsuario";
+import GestaoFiscal from "./pages/GestaoFiscal";
+import Pacientes from "./pages/Pacientes";
+import NovoPaciente from "./pages/NovoPaciente";
+import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
+import VisualizarPaciente from "./pages/VisualizarPaciente";
+import EditarPaciente from "./pages/EditarPaciente";
+import Prontuario from "./pages/Prontuario";
+import Agenda from "./pages/Agenda";
+import NovoAgendamento from "./pages/NovoAgendamento";
+import EditarAgendamento from "./pages/EditarAgendamento";
+import Financeiro from "./pages/Financeiro";
+import ContasReceber from "./pages/ContasReceber";
+import Caixa from "./pages/Caixa";
+import Estoque from "./pages/Estoque";
+
+const API_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:8000"
+    : `https://${window.location.hostname.replace(
+        /-5173\.app\.github\.dev$/,
+        "-8000.app.github.dev"
+      )}`;
+
+const STATUS_LABELS = {
+  agendado: "Agendado",
+  confirmado: "Confirmado",
+  em_atendimento: "Em atendimento",
+  concluido: "Concluído",
+  cancelado: "Cancelado",
+  faltou: "Faltou",
+};
+
+function formatarData(data) {
+  if (!data) return "";
+
+  const [ano, mes, dia] = data.split("-");
+
+  return `${dia}/${mes}/${ano}`;
+}
+
+function App() {
+  const [pacienteSelecionado, setPacienteSelecionado] = useState(null);
+  const [agendamentoSelecionado, setAgendamentoSelecionado] = useState(null);
+
+  const [usuarioLogado, setUsuarioLogado] = useState(() => {
+    const usuarioSalvo = localStorage.getItem("cuidare_usuario");
+
+    if (!usuarioSalvo) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(usuarioSalvo);
+    } catch {
+      localStorage.removeItem("cuidare_usuario");
+      localStorage.removeItem("cuidare_token");
+      return null;
+    }
+  });
+
+  const [currentPage, setCurrentPage] = useState("dashboard");
+
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+
+  const [configuracaoFiscalSelecionada, setConfiguracaoFiscalSelecionada] =
+    useState(null);
+
+  const [usuarios, setUsuarios] = useState([
+    {
+      id: 1,
+      nome: "Administrador",
+      email: "admin@cuidare.com.br",
+      telefone: "(00) 00000-0000",
+      perfil: "Administrador",
+      status: "Ativo",
+      ultimoAcesso: "Acesso recente",
+    },
+    {
+      id: 2,
+      nome: "Clínica Cuidare",
+      email: "clinica@cuidare.com.br",
+      telefone: "(00) 00000-0000",
+      perfil: "Administrador",
+      status: "Ativo",
+      ultimoAcesso: "Acesso recente",
+    },
+  ]);
+
+  const [dashboardDados, setDashboardDados] = useState({
+    pacientes: [],
+    agendamentos: [],
+    carregando: true,
+    erro: "",
+  });
+
+  useEffect(() => {
+    if (!usuarioLogado || currentPage !== "dashboard") {
+      return;
+    }
+
+    async function carregarDashboard() {
+      try {
+        setDashboardDados((atual) => ({
+          ...atual,
+          carregando: true,
+          erro: "",
+        }));
+
+        const [pacientesResponse, agendamentosResponse] =
+          await Promise.all([
+            fetch(`${API_URL}/pacientes`),
+            fetch(`${API_URL}/agendamentos`),
+          ]);
+
+        if (!pacientesResponse.ok || !agendamentosResponse.ok) {
+          throw new Error("Não foi possível carregar os dados do Dashboard.");
+        }
+
+        const [pacientesData, agendamentosData] = await Promise.all([
+          pacientesResponse.json(),
+          agendamentosResponse.json(),
+        ]);
+
+        setDashboardDados({
+          pacientes: Array.isArray(pacientesData) ? pacientesData : [],
+          agendamentos: Array.isArray(agendamentosData)
+            ? agendamentosData
+            : [],
+          carregando: false,
+          erro: "",
+        });
+      } catch (error) {
+        console.error("Erro ao carregar Dashboard:", error);
+
+        setDashboardDados((atual) => ({
+          ...atual,
+          carregando: false,
+          erro:
+            "Não foi possível carregar os dados do Dashboard. Verifique se a API está funcionando.",
+        }));
+      }
+    }
+
+    carregarDashboard();
+  }, [usuarioLogado, currentPage]);
+
+  function handleLogin(usuario) {
+    setUsuarioLogado(usuario);
+    setCurrentPage("dashboard");
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("cuidare_token");
+    localStorage.removeItem("cuidare_usuario");
+
+    setUsuarioLogado(null);
+    setCurrentPage("dashboard");
+  }
+
+  function adicionarUsuario(novoUsuario) {
+    const usuario = {
+      ...novoUsuario,
+      id: Date.now(),
+      ultimoAcesso: "Nunca acessou",
+    };
+
+    setUsuarios((usuariosAtuais) => [...usuariosAtuais, usuario]);
+
+    setCurrentPage("usuarios");
+  }
+
+  function atualizarUsuario(usuarioAtualizado) {
+    setUsuarios((usuariosAtuais) =>
+      usuariosAtuais.map((usuario) =>
+        usuario.id === usuarioAtualizado.id
+          ? usuarioAtualizado
+          : usuario
+      )
+    );
+
+    setCurrentPage("usuarios");
+  }
+
+  function alterarStatusUsuario(usuario) {
+    setUsuarios((usuariosAtuais) =>
+      usuariosAtuais.map((usuarioAtual) =>
+        usuarioAtual.id === usuario.id
+          ? {
+              ...usuarioAtual,
+              status:
+                usuarioAtual.status === "Ativo"
+                  ? "Inativo"
+                  : "Ativo",
+            }
+          : usuarioAtual
+      )
+    );
+  }
+
+  function abrirEdicao(usuario) {
+    setUsuarioSelecionado(usuario);
+    setCurrentPage("editar-usuario");
+  }
+
+  if (!usuarioLogado) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  if (currentPage === "prontuario") {
+    return (
+      <Prontuario
+        pacienteId={pacienteSelecionado}
+        onVoltar={() => {
+          setCurrentPage("pacientes");
+        }}
+      />
+    );
+  }
+
+  if (currentPage === "novo-agendamento") {
+    return (
+      <NovoAgendamento
+        onVoltar={() => setCurrentPage("agenda")}
+        onSalvo={() => setCurrentPage("agenda")}
+      />
+    );
+  }
+
+  if (currentPage === "editar-agendamento") {
+    return (
+      <EditarAgendamento
+        agendamentoId={agendamentoSelecionado}
+        onVoltar={() => {
+          setAgendamentoSelecionado(null);
+          setCurrentPage("agenda");
+        }}
+        onSalvo={() => {
+          setAgendamentoSelecionado(null);
+          setCurrentPage("agenda");
+        }}
+      />
+    );
+  }
+
+  if (currentPage === "agenda") {
+    return (
+      <Agenda
+        onVoltar={() => setCurrentPage("dashboard")}
+        onNovoAgendamento={() => setCurrentPage("novo-agendamento")}
+        onEditarAgendamento={(agendamentoId) => {
+          setAgendamentoSelecionado(agendamentoId);
+          setCurrentPage("editar-agendamento");
+        }}
+      />
+    );
+  }
+
+  if (currentPage === "pacientes") {
+    return (
+      <Pacientes
+        onNovoPaciente={() => setCurrentPage("novo-paciente")}
+        onVisualizarPaciente={(pacienteId) => {
+          setPacienteSelecionado(pacienteId);
+          setCurrentPage("visualizar-paciente");
+        }}
+        onEditarPaciente={(pacienteId) => {
+          setPacienteSelecionado(pacienteId);
+          setCurrentPage("editar-paciente");
+        }}
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
+  if (currentPage === "novo-paciente") {
+    return (
+      <NovoPaciente
+        onVoltar={() => setCurrentPage("pacientes")}
+        onSalvo={() => setCurrentPage("pacientes")}
+      />
+    );
+  }
+
+  if (currentPage === "editar-paciente") {
+    return (
+      <EditarPaciente
+        pacienteId={pacienteSelecionado}
+        onVoltar={() => {
+          setCurrentPage("pacientes");
+        }}
+        onSalvo={() => {
+          setCurrentPage("pacientes");
+        }}
+      />
+    );
+  }
+
+  if (currentPage === "visualizar-paciente") {
+    return (
+      <VisualizarPaciente
+        pacienteId={pacienteSelecionado}
+        onVoltar={() => {
+          setPacienteSelecionado(null);
+          setCurrentPage("pacientes");
+        }}
+        onAbrirProntuario={() => {
+          setCurrentPage("prontuario");
+        }}
+      />
+    );
+  }
+
+  if (currentPage === "usuarios") {
+    return (
+      <Usuarios
+        usuarios={usuarios}
+        onNovoUsuario={() => setCurrentPage("novo-usuario")}
+        onEditarUsuario={abrirEdicao}
+        onAlterarStatus={alterarStatusUsuario}
+      />
+    );
+  }
+
+  if (currentPage === "novo-usuario") {
+    return (
+      <NovoUsuario
+        onVoltar={() => setCurrentPage("usuarios")}
+        onSalvar={adicionarUsuario}
+      />
+    );
+  }
+
+  if (currentPage === "gestao-fiscal") {
+    return (
+      <GestaoFiscal
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
+  if (currentPage === "configuracao-fiscal") {
+    return (
+      <ConfiguracaoFiscal
+        configuracaoId={configuracaoFiscalSelecionada}
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
+  if (currentPage === "editar-usuario") {
+    return (
+      <EditarUsuario
+        usuario={usuarioSelecionado}
+        onVoltar={() => setCurrentPage("usuarios")}
+        onSalvar={atualizarUsuario}
+      />
+    );
+  }
+
+
+  if (currentPage === "financeiro") {
+    return (
+      <Financeiro
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
+  if (currentPage === "caixa") {
+    return (
+      <Caixa
+        onVoltar={() => setCurrentPage("financeiro")}
+      />
+    );
+  }
+
+  if (currentPage === "estoque") {
+    return (
+      <Estoque
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
+  if (currentPage === "contas-receber") {
+    return (
+      <ContasReceber
+        onVoltar={() => setCurrentPage("financeiro")}
+      />
+    );
+  }
+
+  const nomeUsuario = usuarioLogado?.nome || "Usuário";
+  const perfilUsuario = usuarioLogado?.perfil || "Usuário";
+
+  const hoje = new Date().toISOString().slice(0, 10);
+
+  const pacientesAtivos = dashboardDados.pacientes.filter(
+    (paciente) => paciente.ativo
+  );
+
+  const atendimentosHoje = dashboardDados.agendamentos.filter(
+    (agendamento) =>
+      agendamento.data === hoje &&
+      agendamento.ativo &&
+      !["cancelado", "faltou"].includes(agendamento.status)
+  );
+
+  const proximosAtendimentos = dashboardDados.agendamentos
+    .filter(
+      (agendamento) =>
+        agendamento.ativo &&
+        agendamento.data >= hoje &&
+        !["cancelado", "faltou", "concluido"].includes(
+          agendamento.status
+        )
+    )
+    .sort((a, b) => {
+      const dataHoraA = `${a.data}T${a.hora_inicio}`;
+      const dataHoraB = `${b.data}T${b.hora_inicio}`;
+
+      return dataHoraA.localeCompare(dataHoraB);
+    })
+    .slice(0, 5);
+
+  function buscarPaciente(id) {
+    return dashboardDados.pacientes.find(
+      (paciente) => paciente.id === id
+    );
+  }
+
+  return (
+    <div className="app">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-icon">C</div>
+
+          <div>
+            <h1>Cuidare</h1>
+            <span>Gestão em Saúde</span>
+          </div>
+        </div>
+
+        <nav className="menu">
+          <button
+            className={`menu-item ${
+              currentPage === "dashboard" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("dashboard")}
+          >
+            Dashboard
+          </button>
+
+          <button
+            className={`menu-item ${
+              currentPage === "pacientes" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("pacientes")}
+          >
+            Pacientes
+          </button>
+
+          <button
+            className={`menu-item ${
+              currentPage === "agenda" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("agenda")}
+          >
+            Agenda
+          </button>
+
+          <button
+            className={`menu-item ${
+              currentPage === "financeiro" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("financeiro")}
+          >
+            Financeiro
+          </button>
+
+          <button
+            className={`menu-item ${
+              currentPage === "estoque" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("estoque")}
+          >
+            Estoque
+          </button>
+
+          <button className="menu-item">
+            Relatórios
+          </button>
+
+          <button
+            className={`menu-item ${
+              currentPage === "configuracao-fiscal"
+                ? "active"
+                : ""
+            }`}
+            onClick={() =>
+              setCurrentPage("configuracao-fiscal")
+            }
+          >
+            Configurações
+          </button>
+
+          <button
+            className={`menu-item ${
+              currentPage === "gestao-fiscal"
+                ? "active"
+                : ""
+            }`}
+            onClick={() => setCurrentPage("gestao-fiscal")}
+          >
+            Gestão Fiscal
+          </button>
+        </nav>
+
+        <div className="sidebar-footer">
+          <span>{perfilUsuario}</span>
+
+          <strong>{nomeUsuario}</strong>
+
+          <button
+            onClick={handleLogout}
+            className="logout-button"
+          >
+            Sair
+          </button>
+        </div>
+      </aside>
+
+      <main className="main-content">
+        <header className="topbar">
+          <div>
+            <span className="welcome">
+              Bem-vindo ao Cuidare
+            </span>
+
+            <h2>Dashboard</h2>
+          </div>
+
+          <div className="user-area">
+            <div className="avatar">
+              {nomeUsuario.charAt(0).toUpperCase()}
+            </div>
+
+            <div>
+              <strong>{nomeUsuario}</strong>
+
+              <span>{perfilUsuario}</span>
+            </div>
+          </div>
+        </header>
+
+        <section className="dashboard">
+          <div className="welcome-card">
+            <div>
+              <span className="card-label">
+                VISÃO GERAL
+              </span>
+
+              <h3>
+                Tenha o controle da sua clínica em um só
+                lugar.
+              </h3>
+
+              <p>
+                O Cuidare foi desenvolvido para tornar a
+                gestão da clínica mais simples, segura e
+                inteligente.
+              </p>
+            </div>
+
+            <div className="card-symbol">✚</div>
+          </div>
+
+          {dashboardDados.erro && (
+            <div className="agenda-error">
+              {dashboardDados.erro}
+            </div>
+          )}
+
+          <div className="stats-grid">
+            <div className="stat-card">
+              <span>Pacientes</span>
+
+              <strong>
+                {dashboardDados.carregando
+                  ? "..."
+                  : pacientesAtivos.length}
+              </strong>
+
+              <small>
+                {pacientesAtivos.length === 1
+                  ? "Paciente ativo cadastrado"
+                  : "Pacientes ativos cadastrados"}
+              </small>
+            </div>
+
+            <div className="stat-card">
+              <span>Atendimentos hoje</span>
+
+              <strong>
+                {dashboardDados.carregando
+                  ? "..."
+                  : atendimentosHoje.length}
+              </strong>
+
+              <small>
+                Atendimentos programados para hoje
+              </small>
+            </div>
+
+            <div className="stat-card">
+              <span>Contas pendentes</span>
+
+              <strong>0</strong>
+
+              <small>
+                Nenhuma pendência financeira cadastrada
+              </small>
+            </div>
+          </div>
+
+          <div className="content-grid">
+            <section className="panel">
+              <div className="panel-header">
+                <div>
+                  <span>AGENDA</span>
+
+                  <h3>Próximos atendimentos</h3>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage("agenda")}
+                >
+                  Ver agenda
+                </button>
+              </div>
+
+              {dashboardDados.carregando ? (
+                <div className="empty-state">
+                  <div className="empty-icon">◷</div>
+
+                  <strong>
+                    Carregando atendimentos...
+                  </strong>
+
+                  <p>
+                    Aguarde enquanto buscamos a agenda.
+                  </p>
+                </div>
+              ) : proximosAtendimentos.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">◷</div>
+
+                  <strong>
+                    Nenhum atendimento agendado
+                  </strong>
+
+                  <p>
+                    Os próximos atendimentos aparecerão
+                    aqui.
+                  </p>
+                </div>
+              ) : (
+                <div className="dashboard-appointments">
+                  {proximosAtendimentos.map(
+                    (agendamento) => {
+                      const paciente = buscarPaciente(
+                        agendamento.paciente_id
+                      );
+
+                      return (
+                        <div
+                          className="dashboard-appointment"
+                          key={agendamento.id}
+                        >
+                          <div>
+                            <strong>
+                              {agendamento.hora_inicio.slice(
+                                0,
+                                5
+                              )}
+                            </strong>
+
+                            <span>
+                              {formatarData(
+                                agendamento.data
+                              )}
+                            </span>
+                          </div>
+
+                          <div>
+                            <strong>
+                              {paciente?.nome ||
+                                `Paciente #${agendamento.paciente_id}`}
+                            </strong>
+
+                            <span>
+                              {STATUS_LABELS[
+                                agendamento.status
+                              ] || agendamento.status}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+              )}
+            </section>
+
+            <section className="panel">
+              <div className="panel-header">
+                <div>
+                  <span>ACESSO RÁPIDO</span>
+
+                  <h3>Principais ações</h3>
+                </div>
+              </div>
+
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage("novo-paciente")
+                  }
+                >
+                  Novo paciente
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage("novo-agendamento")
+                  }
+                >
+                  Novo atendimento
+                </button>
+
+                <button type="button">
+                  Novo lançamento
+                </button>
+
+                <button type="button">
+                  Registrar ocorrência
+                </button>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+export default App;

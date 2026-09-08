@@ -18,12 +18,14 @@ FORMAS_PAGAMENTO_PERMITIDAS = {
     "cartao_credito",
     "cartao_debito",
     "transferencia",
+    "debito_automatico",
     "outro",
 }
 
 
 class ContaReceberCriar(BaseModel):
     paciente_id: int | None = None
+    agendamento_id: int | None = None
 
     descricao: str = Field(
         min_length=1,
@@ -62,31 +64,42 @@ class ContaReceberCriar(BaseModel):
 
 class ContaReceberAtualizar(BaseModel):
     paciente_id: int | None = None
+    agendamento_id: int | None = None
+
     descricao: str | None = Field(
         default=None,
         min_length=1,
         max_length=200,
     )
+
     categoria: str | None = Field(
         default=None,
         max_length=100,
     )
+
     valor: Decimal | None = Field(
         default=None,
         gt=0,
     )
+
     vencimento: date | None = None
+
     status: str | None = None
+
     forma_pagamento: str | None = Field(
         default=None,
         max_length=50,
     )
+
     data_pagamento: date | None = None
+
     valor_pago: Decimal | None = Field(
         default=None,
         gt=0,
     )
+
     observacoes: str | None = None
+
     ativo: bool | None = None
 
 
@@ -95,6 +108,7 @@ class ContaReceberResposta(BaseModel):
 
     id: int
     paciente_id: int | None
+    agendamento_id: int | None
     descricao: str
     categoria: str | None
     valor: Decimal

@@ -1,0 +1,484 @@
+.servicos-page {
+  min-height: 100%;
+  padding: 28px;
+  background: var(--background, #f7f8fa);
+}
+
+.servicos-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.servicos-kicker {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  opacity: 0.65;
+}
+
+.servicos-header h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.servicos-header p {
+  margin: 8px 0 0;
+  font-size: 15px;
+  opacity: 0.7;
+}
+
+.servicos-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.servicos-button {
+  min-height: 42px;
+  padding: 0 17px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.servicos-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.servicos-button.primary {
+  color: #fff;
+  background: #263238;
+}
+
+.servicos-button.primary:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.servicos-button.secondary {
+  color: inherit;
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.servicos-button.secondary:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.servicos-alert {
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.servicos-alert.success {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+}
+
+.servicos-alert.error {
+  background: rgba(198, 40, 40, 0.1);
+  color: #c62828;
+}
+
+.servicos-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.servicos-summary-card {
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+.servicos-summary-card span,
+.servicos-summary-card small {
+  display: block;
+  font-size: 13px;
+  opacity: 0.68;
+}
+
+.servicos-summary-card strong {
+  display: block;
+  margin: 7px 0 3px;
+  font-size: 28px;
+}
+
+.servicos-panel {
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+.servicos-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.servicos-panel-header > div:first-child span,
+.servicos-modal-header span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+
+.servicos-panel-header h2,
+.servicos-modal-header h2 {
+  margin: 5px 0 0;
+  font-size: 19px;
+}
+
+.servicos-filtros {
+  display: flex;
+  gap: 5px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #f1f3f4;
+}
+
+.servicos-filtros button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.servicos-filtros button.active {
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.08);
+}
+
+.servicos-table-wrapper {
+  overflow-x: auto;
+}
+
+.servicos-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.servicos-table th {
+  padding: 14px 18px;
+  text-align: left;
+  background: #fafafa;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.62;
+}
+
+.servicos-table td {
+  padding: 17px 18px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+.servico-nome strong {
+  display: block;
+  font-size: 15px;
+}
+
+.servico-nome small {
+  display: block;
+  max-width: 390px;
+  margin-top: 4px;
+  line-height: 1.4;
+  opacity: 0.62;
+}
+
+.servico-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.servico-status span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.servico-status.ativo {
+  color: #2e7d32;
+  background: rgba(46, 125, 50, 0.1);
+}
+
+.servico-status.inativo {
+  color: #757575;
+  background: rgba(117, 117, 117, 0.1);
+}
+
+.servico-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.servico-acoes button {
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.acao-editar {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  color: inherit;
+}
+
+.acao-inativar {
+  border: 1px solid rgba(198, 40, 40, 0.18);
+  background: rgba(198, 40, 40, 0.07);
+  color: #c62828;
+}
+
+.acao-ativar {
+  border: 1px solid rgba(46, 125, 50, 0.18);
+  background: rgba(46, 125, 50, 0.07);
+  color: #2e7d32;
+}
+
+.servicos-empty {
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.servicos-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: #f1f3f4;
+  font-size: 22px;
+}
+
+.servicos-empty strong {
+  display: block;
+  font-size: 16px;
+}
+
+.servicos-empty p {
+  margin: 7px 0 18px;
+  font-size: 14px;
+  opacity: 0.65;
+}
+
+.servicos-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.servicos-modal {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.22);
+}
+
+.servicos-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.servicos-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: #f1f3f4;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.servicos-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+  padding: 24px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.campo-full {
+  grid-column: 1 / -1;
+}
+
+.campo > span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.campo input,
+.campo textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 9px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.campo input:focus,
+.campo textarea:focus {
+  border-color: rgba(38, 50, 56, 0.55);
+  box-shadow: 0 0 0 3px rgba(38, 50, 56, 0.08);
+}
+
+.campo textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.servico-checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px;
+  border-radius: 10px;
+  background: #f7f8f9;
+}
+
+.servico-checkbox input {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+}
+
+.servico-checkbox span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.servico-checkbox strong {
+  font-size: 13px;
+}
+
+.servico-checkbox small {
+  font-size: 12px;
+  opacity: 0.62;
+}
+
+.servicos-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 24px 22px;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+@media (max-width: 800px) {
+  .servicos-page {
+    padding: 18px;
+  }
+
+  .servicos-header {
+    flex-direction: column;
+  }
+
+  .servicos-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .servicos-panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .servicos-filtros {
+    width: 100%;
+  }
+
+  .servicos-filtros button {
+    flex: 1;
+  }
+
+  .servicos-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campo-full {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .servicos-header-actions {
+    width: 100%;
+  }
+
+  .servicos-header-actions .servicos-button {
+    flex: 1;
+  }
+
+  .servicos-table th,
+  .servicos-table td {
+    padding: 12px;
+  }
+
+  .servico-acoes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

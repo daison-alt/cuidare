@@ -122,5 +122,7 @@ class ContaPagarResposta(BaseModel):
     valor_pago: Decimal | None
     observacoes: str | None
     ativo: bool
+    origem: str
+    referencia_ia: str | None
     criado_em: datetime
     atualizado_em: datetime

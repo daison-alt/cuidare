@@ -1,0 +1,74 @@
+from datetime import datetime
+from decimal import Decimal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class EstoqueProdutoCriar(BaseModel):
+    nome: str = Field(min_length=1, max_length=200)
+    categoria: str | None = Field(default=None, max_length=100)
+    unidade: str = Field(default="unidade", max_length=30)
+
+    estoque_minimo: Decimal = Field(
+        default=Decimal("0.00"),
+        ge=0,
+    )
+
+    fornecedor: str | None = Field(
+        default=None,
+        max_length=200,
+    )
+
+    observacoes: str | None = None
+
+
+class EstoqueProdutoResposta(BaseModel):
+    id: int
+    nome: str
+    categoria: str | None
+    unidade: str
+    quantidade_atual: Decimal
+    estoque_minimo: Decimal
+    fornecedor: str | None
+    observacoes: str | None
+    ativo: bool
+    criado_em: datetime
+    atualizado_em: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EntradaEstoqueCriar(BaseModel):
+    produto_id: int
+    quantidade: Decimal = Field(gt=0)
+    fornecedor: str | None = Field(
+        default=None,
+        max_length=200,
+    )
+    observacoes: str | None = None
+
+
+class BaixaEstoqueCriar(BaseModel):
+    produto_id: int
+    quantidade: Decimal = Field(gt=0)
+    descricao: str = Field(
+        default="Baixa manual de estoque",
+        min_length=1,
+        max_length=255,
+    )
+    observacoes: str | None = None
+
+
+class MovimentacaoEstoqueResposta(BaseModel):
+    id: int
+    produto_id: int
+    tipo: str
+    quantidade: Decimal
+    descricao: str
+    fornecedor: str | None
+    observacoes: str | None
+    data_movimentacao: datetime
+    ativo: bool
+    criado_em: datetime
+
+    model_config = ConfigDict(from_attributes=True)

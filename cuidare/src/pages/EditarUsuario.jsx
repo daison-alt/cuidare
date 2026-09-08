@@ -11,8 +11,10 @@ function EditarUsuario({ usuario, onVoltar, onSalvar }) {
       ? "administrador"
       : usuario?.perfil === "Fisioterapeuta"
       ? "fisioterapeuta"
-      : usuario?.perfil === "Secretária"
+      : usuario?.perfil === "Secretária" || usuario?.perfil === "Recepção"
       ? "secretaria"
+      : usuario?.perfil === "Contabilidade" || usuario?.perfil === "Contador"
+      ? "contabilidade"
       : "estagiario";
 
   const [perfil, setPerfil] = useState(perfilInicial);
@@ -52,6 +54,18 @@ function EditarUsuario({ usuario, onVoltar, onSalvar }) {
       ["Auditoria", false],
     ],
 
+    contabilidade: [
+      ["Pacientes", false],
+      ["Agenda", false],
+      ["Prontuários", false],
+      ["Financeiro", false],
+      ["Estoque", false],
+      ["Relatórios", true],
+      ["Configurações", false],
+      ["Auditoria", false],
+      ["Gestão Fiscal e Contábil", true],
+    ],
+
     estagiario: [
       ["Pacientes", true],
       ["Agenda", true],
@@ -67,7 +81,8 @@ function EditarUsuario({ usuario, onVoltar, onSalvar }) {
   const nomePerfil = {
     administrador: "Administrador",
     fisioterapeuta: "Fisioterapeuta",
-    secretaria: "Secretária",
+    secretaria: "Recepção",
+    contabilidade: "Contabilidade",
     estagiario: "Estagiário",
   };
 
@@ -257,7 +272,11 @@ function EditarUsuario({ usuario, onVoltar, onSalvar }) {
               </option>
 
               <option value="secretaria">
-                Secretária
+                Recepção
+              </option>
+
+              <option value="contabilidade">
+                Contabilidade
               </option>
 
               <option value="estagiario">

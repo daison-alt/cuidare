@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuidare - Clínica de Fisioterapia e Pilates</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-[#F5F3EF] font-sans antialiased">
+
+  <div class="flex min-h-screen">
+    <!-- LADO ESQUERDO: Branding / Logo -->
+    <div class="hidden lg:flex lg:w-1/2 bg-[#C2CEB7] flex-col justify-center items-center p-12 text-center">
+      <div class="max-w-md flex flex-col items-center">
+        <img src="/static/logo-cuidare.png" alt="Cuidare Logo" class="w-64 mb-6 object-contain">
+        
+        <h2 class="text-xl font-bold tracking-wider text-[#1A3835] uppercase mb-1">
+          FISIOTERAPIA E PILATES
+        </h2>
+        <p class="text-sm text-[#3E504A]">
+          Cuidar do seu corpo é cuidar de você.
+        </p>
+      </div>
+    </div>
+
+    <!-- LADO DIREITO: Formulário de Acesso -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+      <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        
+        <span class="text-xs font-semibold tracking-widest text-gray-400 uppercase block mb-1">
+          ACESSO SEGURO
+        </span>
+        <h1 class="text-2xl font-bold text-gray-800 mb-1">
+          Bem-vindo ao Cuidare
+        </h1>
+        <p class="text-sm text-gray-500 mb-6">
+          Entre com seu usuário e senha.
+        </p>
+
+        <form action="/login" method="POST" class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Usuário ou e-mail</label>
+            <input type="text" name="username" placeholder="rafaela@cuidare.com" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2C524B] focus:border-transparent transition" required>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Senha</label>
+            <input type="password" name="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2C524B] focus:border-transparent transition" required>
+          </div>
+
+          <button type="submit" class="w-full bg-[#2C524B] hover:bg-[#213f39] text-white font-medium py-2.5 rounded-lg text-sm transition duration-150">
+            Entrar
+          </button>
+        </form>
+
+        <div class="mt-4 text-center">
+          <button class="text-xs text-gray-500 hover:underline">
+            Abrir protótipo
+          </button>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-gray-100 text-center">
+          <p class="text-[11px] text-gray-400">
+            Autenticação e permissões ficam no backend.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

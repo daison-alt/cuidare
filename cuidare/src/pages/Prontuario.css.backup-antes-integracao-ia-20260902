@@ -1,0 +1,480 @@
+.prontuario-page {
+  padding: 30px 34px 40px;
+}
+
+.prontuario-header {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.prontuario-header h2 {
+  margin: 6px 0 8px;
+  color: #2b2b2b;
+  font-size: 26px;
+}
+
+.prontuario-header p {
+  margin: 0;
+  color: #666666;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.prontuario-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prontuario-primary-button,
+.prontuario-secondary-button {
+  padding: 10px 15px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.prontuario-primary-button {
+  border: 0;
+  background: #0e4334;
+  color: #ffffff;
+}
+
+.prontuario-primary-button:hover:not(:disabled) {
+  background: #145a45;
+  transform: translateY(-1px);
+}
+
+.prontuario-primary-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.prontuario-secondary-button {
+  border: 1px solid #dcdcd6;
+  background: #ffffff;
+  color: #555555;
+}
+
+.prontuario-secondary-button:hover {
+  border-color: #c29b47;
+  color: #0e4334;
+}
+
+.prontuario-alert {
+  margin-bottom: 20px;
+  padding: 13px 16px;
+  border: 1px solid #e6caca;
+  border-radius: 10px;
+  background: #fff4f4;
+  color: #9b3d3d;
+  font-size: 13px;
+}
+
+.prontuario-loading {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.prontuario-loading strong {
+  color: #2b2b2b;
+  font-size: 15px;
+}
+
+.prontuario-loading p {
+  margin-top: 6px;
+  color: #858585;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   RESUMO DO PACIENTE
+   ========================================================= */
+
+.prontuario-paciente-card {
+  margin-bottom: 20px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #e4e4df;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 3px 14px rgba(14, 67, 52, 0.04);
+}
+
+.prontuario-paciente-avatar {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f3ebd8;
+  color: #0e4334;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.prontuario-paciente-info {
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prontuario-paciente-info:first-of-type {
+  flex: 1;
+}
+
+.prontuario-paciente-info strong {
+  color: #2b2b2b;
+  font-size: 13px;
+}
+
+.prontuario-paciente-info span {
+  color: #858585;
+  font-size: 11px;
+}
+
+.prontuario-paciente-info .info-label {
+  color: #c29b47;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+}
+
+
+/* =========================================================
+   ESTRUTURA PRINCIPAL
+   ========================================================= */
+
+.prontuario-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 0.75fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.prontuario-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.prontuario-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.prontuario-card {
+  padding: 22px 24px;
+  border: 1px solid #e4e4df;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 3px 14px rgba(14, 67, 52, 0.04);
+}
+
+.prontuario-card-header {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.toolbar-label {
+  color: #c29b47;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.prontuario-card h3 {
+  margin: 5px 0 0;
+  color: #2b2b2b;
+  font-size: 18px;
+}
+
+
+/* =========================================================
+   FORMULÁRIO
+   ========================================================= */
+
+.prontuario-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.prontuario-field {
+  min-width: 0;
+}
+
+.prontuario-field.full {
+  grid-column: 1 / -1;
+}
+
+.prontuario-field label,
+.evolucao-nova label {
+  display: block;
+  margin-bottom: 7px;
+  color: #444444;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.prontuario-field textarea,
+.evolucao-nova textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 11px 12px;
+  box-sizing: border-box;
+  border: 1px solid #dcdcd6;
+  border-radius: 9px;
+  outline: none;
+  resize: vertical;
+  background: #ffffff;
+  color: #2b2b2b;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  transition: border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.prontuario-field textarea:focus,
+.evolucao-nova textarea:focus {
+  border-color: #c29b47;
+  box-shadow: 0 0 0 3px rgba(194, 155, 71, 0.1);
+}
+
+.prontuario-field textarea::placeholder,
+.evolucao-nova textarea::placeholder {
+  color: #999999;
+}
+
+
+/* =========================================================
+   EVOLUÇÕES
+   ========================================================= */
+
+.evolucao-nova {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eeeeea;
+}
+
+.evolucao-nova textarea {
+  min-height: 120px;
+}
+
+.evolucao-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.evolucoes-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.evolucao-item {
+  padding: 18px 0;
+  border-bottom: 1px solid #eeeeea;
+}
+
+.evolucao-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.evolucao-data {
+  margin-bottom: 8px;
+  color: #c29b47;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.evolucao-item p {
+  margin: 0;
+  color: #555555;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.prontuario-empty-small {
+  padding: 28px 10px;
+  text-align: center;
+  color: #858585;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   RESUMO LATERAL
+   ========================================================= */
+
+.prontuario-resumo h3 {
+  margin-bottom: 18px;
+}
+
+.resumo-item {
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid #eeeeea;
+}
+
+.resumo-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.resumo-item span {
+  color: #858585;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.resumo-item strong {
+  color: #2b2b2b;
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+
+/* =========================================================
+   CUIDARE IA
+   ========================================================= */
+
+.prontuario-ia {
+  background: linear-gradient(
+    145deg,
+    #ffffff 0%,
+    #faf8f0 100%
+  );
+}
+
+.prontuario-ia h3 {
+  margin-bottom: 10px;
+}
+
+.prontuario-ia p {
+  margin: 0 0 16px;
+  color: #666666;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.ia-button {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #deded8;
+  border-radius: 8px;
+  background: #f7f7f4;
+  color: #999999;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .prontuario-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .prontuario-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .prontuario-page {
+    padding: 22px 18px 30px;
+  }
+
+  .prontuario-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .prontuario-header-actions {
+    justify-content: flex-start;
+  }
+
+  .prontuario-paciente-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .prontuario-paciente-info {
+    min-width: calc(50% - 50px);
+  }
+
+  .prontuario-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .prontuario-field.full {
+    grid-column: auto;
+  }
+
+  .prontuario-side {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .prontuario-header-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .prontuario-primary-button,
+  .prontuario-secondary-button {
+    width: 100%;
+  }
+
+  .prontuario-paciente-card {
+    flex-direction: column;
+  }
+
+  .prontuario-paciente-info {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .prontuario-card {
+    padding: 18px;
+  }
+}

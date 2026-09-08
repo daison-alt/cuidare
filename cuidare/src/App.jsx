@@ -16,7 +16,13 @@ import Agenda from "./pages/Agenda";
 import NovoAgendamento from "./pages/NovoAgendamento";
 import EditarAgendamento from "./pages/EditarAgendamento";
 import Financeiro from "./pages/Financeiro";
+import ContasReceber from "./pages/ContasReceber";
 import Caixa from "./pages/Caixa";
+import Estoque from "./pages/Estoque";
+import Servicos from "./pages/Servicos";
+import PlanosPilates from "./pages/PlanosPilates";
+import AlunosPilates from "./pages/AlunosPilates";
+import Campanhas from "./pages/Campanhas";
 
 const API_URL =
   window.location.hostname === "localhost"
@@ -70,26 +76,7 @@ function App() {
   const [configuracaoFiscalSelecionada, setConfiguracaoFiscalSelecionada] =
     useState(null);
 
-  const [usuarios, setUsuarios] = useState([
-    {
-      id: 1,
-      nome: "Administrador",
-      email: "admin@cuidare.com.br",
-      telefone: "(00) 00000-0000",
-      perfil: "Administrador",
-      status: "Ativo",
-      ultimoAcesso: "Acesso recente",
-    },
-    {
-      id: 2,
-      nome: "Clínica Cuidare",
-      email: "clinica@cuidare.com.br",
-      telefone: "(00) 00000-0000",
-      perfil: "Administrador",
-      status: "Ativo",
-      ultimoAcesso: "Acesso recente",
-    },
-  ]);
+  const [usuarios, setUsuarios] = useState([]);
 
   const [dashboardDados, setDashboardDados] = useState({
     pacientes: [],
@@ -97,6 +84,48 @@ function App() {
     carregando: true,
     erro: "",
   });
+
+  const [logoCuidare, setLogoCuidare] = useState(null);
+  const [logoVersao, setLogoVersao] = useState(Date.now());
+
+  useEffect(() => {
+    if (!usuarioLogado) {
+      return;
+    }
+
+    async function carregarLogoCuidare() {
+      try {
+        const response = await fetch(
+          `${API_URL}/configuracoes/identidade`
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.logo_nome && data.logo_url) {
+          setLogoCuidare(data);
+          setLogoVersao(Date.now());
+        } else {
+          setLogoCuidare(null);
+        }
+      } catch {
+        setLogoCuidare(null);
+      }
+    }
+
+    carregarLogoCuidare();
+  }, [usuarioLogado]);
+
+  function obterLogoCuidareUrl() {
+    if (!logoCuidare?.logo_url) {
+      return "";
+    }
+
+    return `${API_URL}${logoCuidare.logo_url}?v=${logoVersao}`;
+  }
 
   useEffect(() => {
     if (!usuarioLogado || currentPage !== "dashboard") {
@@ -162,44 +191,273 @@ function App() {
     setCurrentPage("dashboard");
   }
 
-  function adicionarUsuario(novoUsuario) {
-    const usuario = {
-      ...novoUsuario,
-      id: Date.now(),
-      ultimoAcesso: "Nunca acessou",
+  function obterToken() {
+    return localStorage.getItem("cuidare_token");
+  }
+
+  function normalizarPerfil(perfil) {
+    const valor = String(perfil || "").trim().toLowerCase();
+
+    const perfis = {
+      administrador: "administrador",
+      "administrador": "administrador",
+      fisioterapeuta: "fisioterapeuta",
+      secretaria: "secretaria",
+      recepção: "secretaria",
+      recepcao: "secretaria",
+      estagiario: "estagiario",
+      "estagiário": "estagiario",
+      contabilidade: "contabilidade",
+      contador: "contabilidade",
     };
 
-    setUsuarios((usuariosAtuais) => [...usuariosAtuais, usuario]);
-
-    setCurrentPage("usuarios");
+    return perfis[valor] || valor;
   }
 
-  function atualizarUsuario(usuarioAtualizado) {
-    setUsuarios((usuariosAtuais) =>
-      usuariosAtuais.map((usuario) =>
-        usuario.id === usuarioAtualizado.id
-          ? usuarioAtualizado
-          : usuario
-      )
-    );
+  function formatarUsuarioApi(usuario) {
+    const nomesPerfil = {
+      administrador: "Administrador",
+      fisioterapeuta: "Fisioterapeuta",
+      secretaria: "Recepção",
+      contabilidade: "Contabilidade",
+      estagiario: "Estagiário",
+    };
 
-    setCurrentPage("usuarios");
+    return {
+      ...usuario,
+      perfil:
+        nomesPerfil[
+          normalizarPerfil(usuario.perfil)
+        ] || usuario.perfil,
+      status: usuario.status ? "Ativo" : "Inativo",
+      ultimoAcesso: usuario.ultimo_acesso
+        ? new Date(usuario.ultimo_acesso).toLocaleString("pt-BR")
+        : "Nunca acessou",
+    };
   }
 
-  function alterarStatusUsuario(usuario) {
-    setUsuarios((usuariosAtuais) =>
-      usuariosAtuais.map((usuarioAtual) =>
-        usuarioAtual.id === usuario.id
-          ? {
-              ...usuarioAtual,
-              status:
-                usuarioAtual.status === "Ativo"
-                  ? "Inativo"
-                  : "Ativo",
-            }
-          : usuarioAtual
-      )
-    );
+  async function carregarUsuarios() {
+    try {
+      const token = obterToken();
+
+      if (!token) {
+        throw new Error("Token de acesso não encontrado.");
+      }
+
+      const resposta = await fetch(
+        `${API_URL}/usuarios`,
+        {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.detail ||
+            "Não foi possível carregar os usuários."
+        );
+      }
+
+      setUsuarios(
+        Array.isArray(dados)
+          ? dados.map(formatarUsuarioApi)
+          : []
+      );
+    } catch (error) {
+      console.error(
+        "Erro ao carregar usuários:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Não foi possível carregar os usuários."
+      );
+    }
+  }
+
+  useEffect(() => {
+    if (
+      !usuarioLogado ||
+      currentPage !== "usuarios"
+    ) {
+      return;
+    }
+
+    carregarUsuarios();
+  }, [usuarioLogado, currentPage]);
+
+  async function adicionarUsuario(novoUsuario) {
+    try {
+      const token = obterToken();
+
+      const perfil = normalizarPerfil(
+        novoUsuario.perfil
+      );
+
+      const resposta = await fetch(
+        `${API_URL}/usuarios`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            nome: novoUsuario.nome.trim(),
+            email: novoUsuario.email.trim(),
+            telefone:
+              novoUsuario.telefone?.trim() || null,
+            senha: novoUsuario.senha,
+            perfil,
+            status: novoUsuario.status === "Ativo",
+          }),
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.detail ||
+            "Não foi possível criar o usuário."
+        );
+      }
+
+      setUsuarios((usuariosAtuais) => [
+        ...usuariosAtuais,
+        formatarUsuarioApi(dados),
+      ]);
+
+      setCurrentPage("usuarios");
+    } catch (error) {
+      console.error(
+        "Erro ao criar usuário:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Não foi possível criar o usuário."
+      );
+    }
+  }
+
+  async function atualizarUsuario(usuarioAtualizado) {
+    try {
+      const token = obterToken();
+
+      const resposta = await fetch(
+        `${API_URL}/usuarios/${usuarioAtualizado.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            nome: usuarioAtualizado.nome.trim(),
+            email: usuarioAtualizado.email.trim(),
+            telefone:
+              usuarioAtualizado.telefone?.trim() || null,
+            perfil: normalizarPerfil(
+              usuarioAtualizado.perfil
+            ),
+            status:
+              usuarioAtualizado.status === "Ativo",
+          }),
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.detail ||
+            "Não foi possível atualizar o usuário."
+        );
+      }
+
+      const usuarioFormatado =
+        formatarUsuarioApi(dados);
+
+      setUsuarios((usuariosAtuais) =>
+        usuariosAtuais.map((usuario) =>
+          usuario.id === usuarioFormatado.id
+            ? usuarioFormatado
+            : usuario
+        )
+      );
+
+      setCurrentPage("usuarios");
+    } catch (error) {
+      console.error(
+        "Erro ao atualizar usuário:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Não foi possível atualizar o usuário."
+      );
+    }
+  }
+
+  async function alterarStatusUsuario(usuario) {
+    try {
+      const token = obterToken();
+
+      const novoStatus =
+        usuario.status !== "Ativo";
+
+      const resposta = await fetch(
+        `${API_URL}/usuarios/${usuario.id}/status?ativo=${novoStatus}`,
+        {
+          method: "PATCH",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.detail ||
+            "Não foi possível alterar o status."
+        );
+      }
+
+      const usuarioFormatado =
+        formatarUsuarioApi(dados);
+
+      setUsuarios((usuariosAtuais) =>
+        usuariosAtuais.map((usuarioAtual) =>
+          usuarioAtual.id === usuarioFormatado.id
+            ? usuarioFormatado
+            : usuarioAtual
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Erro ao alterar status:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Não foi possível alterar o status do usuário."
+      );
+    }
   }
 
   function abrirEdicao(usuario) {
@@ -322,6 +580,7 @@ function App() {
         onNovoUsuario={() => setCurrentPage("novo-usuario")}
         onEditarUsuario={abrirEdicao}
         onAlterarStatus={alterarStatusUsuario}
+        onVoltar={() => setCurrentPage("dashboard")}
       />
     );
   }
@@ -374,13 +633,75 @@ function App() {
   if (currentPage === "caixa") {
     return (
       <Caixa
+        onVoltar={() => setCurrentPage("financeiro")}
+      />
+    );
+  }
+
+  if (currentPage === "estoque") {
+    return (
+      <Estoque
         onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
+  if (currentPage === "alunos-pilates") {
+    return (
+      <AlunosPilates
+        onVoltar={() => setCurrentPage("servicos")}
+      />
+    );
+  }
+
+  if (currentPage === "planos-pilates") {
+    return (
+      <PlanosPilates
+        onVoltar={() => setCurrentPage("servicos")}
+      />
+    );
+  }
+
+  if (currentPage === "campanhas") {
+    return (
+      <Campanhas
+        onVoltar={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
+  if (currentPage === "servicos") {
+    return (
+      <Servicos
+        onVoltar={() => setCurrentPage("dashboard")}
+        onAbrirPlanosPilates={() => setCurrentPage("planos-pilates")}
+        onAbrirAlunosPilates={() => setCurrentPage("alunos-pilates")}
+      />
+    );
+  }
+
+  if (currentPage === "contas-receber") {
+    return (
+      <ContasReceber
+        onVoltar={() => setCurrentPage("financeiro")}
       />
     );
   }
 
   const nomeUsuario = usuarioLogado?.nome || "Usuário";
   const perfilUsuario = usuarioLogado?.perfil || "Usuário";
+
+  const horaAtual = new Date().getHours();
+
+  let saudacao = "Boa noite";
+
+  if (horaAtual >= 5 && horaAtual < 12) {
+    saudacao = "Bom dia";
+  } else if (horaAtual >= 12 && horaAtual < 18) {
+    saudacao = "Boa tarde";
+  }
+
+  const primeiroNome = nomeUsuario.trim().split(/\s+/)[0] || "Usuário";
 
   const hoje = new Date().toISOString().slice(0, 10);
 
@@ -422,7 +743,16 @@ function App() {
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-icon">C</div>
+          <div className="brand-icon">
+            {logoCuidare ? (
+              <img
+                src={obterLogoCuidareUrl()}
+                alt="Logo Cuidare"
+              />
+            ) : (
+              "C"
+            )}
+          </div>
 
           <div>
             <h1>Cuidare</h1>
@@ -447,10 +777,6 @@ function App() {
             onClick={() => setCurrentPage("pacientes")}
           >
             Pacientes
-          </button>
-
-          <button className="menu-item">
-            Prontuários
           </button>
 
           <button
@@ -480,12 +806,31 @@ function App() {
             Caixa
           </button>
 
-          <button className="menu-item">
+          <button
+            className={`menu-item ${
+              currentPage === "estoque" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("estoque")}
+          >
             Estoque
           </button>
 
-          <button className="menu-item">
-            Relatórios
+          <button
+            className={`menu-item ${
+              currentPage === "campanhas" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("campanhas")}
+          >
+            Marketing
+          </button>
+
+          <button
+            className={`menu-item ${
+              currentPage === "servicos" ? "active" : ""
+            }`}
+            onClick={() => setCurrentPage("servicos")}
+          >
+            Serviços
           </button>
 
           <button
@@ -500,6 +845,19 @@ function App() {
           >
             Configurações
           </button>
+
+          {["Administrador", "administrador"].includes(
+            usuarioLogado?.perfil
+          ) && (
+            <button
+              className={`menu-item ${
+                currentPage === "usuarios" ? "active" : ""
+              }`}
+              onClick={() => setCurrentPage("usuarios")}
+            >
+              Usuários
+            </button>
+          )}
 
           <button
             className={`menu-item ${
@@ -531,7 +889,7 @@ function App() {
         <header className="topbar">
           <div>
             <span className="welcome">
-              Bem-vindo ao Cuidare
+              {saudacao}, {primeiroNome}!
             </span>
 
             <h2>Dashboard</h2>
@@ -569,7 +927,16 @@ function App() {
               </p>
             </div>
 
-            <div className="card-symbol">✚</div>
+            <div className="card-symbol">
+              {logoCuidare ? (
+                <img
+                  src={obterLogoCuidareUrl()}
+                  alt="Logo Cuidare"
+                />
+              ) : (
+                "✚"
+              )}
+            </div>
           </div>
 
           {dashboardDados.erro && (

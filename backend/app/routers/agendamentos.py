@@ -1,10 +1,14 @@
 from datetime import date, time
+from decimal import Decimal, InvalidOperation
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.agendamento import Agendamento
+from app.models.conta_receber import ContaReceber
+from app.models.agendamento_plano_pilates import AgendamentoPlanoPilates
+from app.models.aluno_plano_pilates import AlunoPlanoPilates
 from app.models.paciente import Paciente
 from app.models.servico import Servico
 from app.models.usuario import Usuario
@@ -13,6 +17,7 @@ from app.schemas.agendamento import (
     AgendamentoCriar,
     AgendamentoResposta,
     STATUS_AGENDAMENTO,
+    TIPOS_ATENDIMENTO,
 )
 
 
@@ -30,6 +35,38 @@ def validar_horarios(
         raise HTTPException(
             status_code=400,
             detail="O horário final deve ser posterior ao horário inicial.",
+        )
+
+
+def converter_valor_servico(valor):
+    if valor is None:
+        return Decimal("0.00")
+
+    texto = str(valor).strip()
+
+    if not texto:
+        return Decimal("0.00")
+
+    texto = (
+        texto.replace("R$", "")
+        .replace("r$", "")
+        .replace(" ", "")
+    )
+
+    if "," in texto:
+        texto = texto.replace(".", "").replace(",", ".")
+
+    try:
+        return Decimal(texto).quantize(Decimal("0.01"))
+    except (InvalidOperation, ValueError):
+        return Decimal("0.00")
+
+
+def validar_tipo_atendimento(tipo_atendimento: str):
+    if tipo_atendimento not in TIPOS_ATENDIMENTO:
+        raise HTTPException(
+            status_code=400,
+            detail="Tipo de atendimento inválido. Use normal ou cortesia.",
         )
 
 
@@ -156,6 +193,122 @@ def verificar_conflito(
         )
 
 
+def validar_plano_aluno(
+    aluno_plano_id: int,
+    paciente_id: int,
+    data_agendamento: date,
+    db: Session,
+):
+    aluno_plano = (
+        db.query(AlunoPlanoPilates)
+        .filter(
+            AlunoPlanoPilates.id == aluno_plano_id
+        )
+        .first()
+    )
+
+    if not aluno_plano:
+        raise HTTPException(
+            status_code=404,
+            detail="Plano do aluno não encontrado.",
+        )
+
+    if aluno_plano.paciente_id != paciente_id:
+        raise HTTPException(
+            status_code=400,
+            detail="O plano informado não pertence ao paciente.",
+        )
+
+    if not aluno_plano.ativo:
+        raise HTTPException(
+            status_code=400,
+            detail="O plano do aluno está inativo.",
+        )
+
+    if aluno_plano.status != "ativo":
+        raise HTTPException(
+            status_code=400,
+            detail="O plano do aluno não está ativo.",
+        )
+
+    if data_agendamento < aluno_plano.data_inicio:
+        raise HTTPException(
+            status_code=400,
+            detail="A data do agendamento é anterior ao início do plano.",
+        )
+
+    if data_agendamento > aluno_plano.data_fim:
+        raise HTTPException(
+            status_code=400,
+            detail="A data do agendamento está fora do período de validade do plano.",
+        )
+
+    if aluno_plano.aulas_utilizadas >= aluno_plano.aulas_previstas:
+        raise HTTPException(
+            status_code=400,
+            detail="O plano não possui aulas disponíveis.",
+        )
+
+    return aluno_plano
+
+
+def obter_vinculo_plano(
+    agendamento_id: int,
+    db: Session,
+):
+    return (
+        db.query(AgendamentoPlanoPilates)
+        .filter(
+            AgendamentoPlanoPilates.agendamento_id
+            == agendamento_id
+        )
+        .first()
+    )
+
+
+def consumir_aula(
+    agendamento: Agendamento,
+    aluno_plano: AlunoPlanoPilates,
+    vinculo: AgendamentoPlanoPilates,
+    db: Session,
+):
+    if agendamento.tipo_atendimento != "plano":
+        return
+
+    if vinculo.aula_consumida:
+        return
+
+    if aluno_plano.aulas_utilizadas >= aluno_plano.aulas_previstas:
+        raise HTTPException(
+            status_code=400,
+            detail="O plano não possui aulas disponíveis.",
+        )
+
+    aluno_plano.aulas_utilizadas += 1
+    vinculo.aula_consumida = True
+
+    db.add(aluno_plano)
+    db.add(vinculo)
+
+
+def desfazer_aula(
+    agendamento: Agendamento,
+    aluno_plano: AlunoPlanoPilates,
+    vinculo: AgendamentoPlanoPilates,
+    db: Session,
+):
+    if not vinculo.aula_consumida:
+        return
+
+    if aluno_plano.aulas_utilizadas > 0:
+        aluno_plano.aulas_utilizadas -= 1
+
+    vinculo.aula_consumida = False
+
+    db.add(aluno_plano)
+    db.add(vinculo)
+
+
 @router.post(
     "",
     response_model=AgendamentoResposta,
@@ -171,6 +324,10 @@ def criar_agendamento(
 
     validar_status(dados.status)
 
+    validar_tipo_atendimento(
+        dados.tipo_atendimento
+    )
+
     validar_paciente(
         dados.paciente_id,
         db,
@@ -181,7 +338,7 @@ def criar_agendamento(
         db,
     )
 
-    validar_servico(
+    servico = validar_servico(
         dados.servico_id,
         db,
     )
@@ -194,6 +351,62 @@ def criar_agendamento(
         hora_fim=dados.hora_fim,
     )
 
+    motivo_cortesia = None
+    campanha_cortesia = None
+    aluno_plano = None
+
+    valor_tabela = converter_valor_servico(
+        servico.valor
+    )
+
+    valor_cobrado = None
+
+    if dados.tipo_atendimento == "cortesia":
+        if not dados.motivo_cortesia or not dados.motivo_cortesia.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Informe o motivo da cortesia/brinde.",
+            )
+
+        motivo_cortesia = dados.motivo_cortesia.strip()
+
+        campanha_cortesia = (
+            dados.campanha_cortesia.strip()
+            if dados.campanha_cortesia
+            else None
+        )
+
+        valor_cobrado = Decimal("0.00")
+
+    elif dados.tipo_atendimento == "plano":
+        if not dados.aluno_plano_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe o plano ativo do aluno para este atendimento.",
+            )
+
+        aluno_plano = validar_plano_aluno(
+            dados.aluno_plano_id,
+            dados.paciente_id,
+            dados.data,
+            db,
+        )
+
+        valor_cobrado = Decimal("0.00")
+
+    elif dados.tipo_atendimento == "experimental":
+        valor_cobrado = Decimal("0.00")
+
+    elif dados.tipo_atendimento == "avulsa":
+        valor_cobrado = valor_tabela
+
+    else:
+        valor_cobrado = (
+            Decimal(str(dados.valor_cobrado))
+            if dados.valor_cobrado is not None
+            else None
+        )
+
     agendamento = Agendamento(
         paciente_id=dados.paciente_id,
         profissional_id=dados.profissional_id,
@@ -202,15 +415,49 @@ def criar_agendamento(
         hora_inicio=dados.hora_inicio,
         hora_fim=dados.hora_fim,
         status=dados.status,
+        tipo_atendimento=dados.tipo_atendimento,
+        motivo_cortesia=motivo_cortesia,
+        campanha_cortesia=campanha_cortesia,
+        valor_tabela=valor_tabela,
+        valor_cobrado=valor_cobrado,
         observacoes=dados.observacoes,
         ativo=dados.ativo,
     )
 
     db.add(agendamento)
+    db.flush()
+
+    if aluno_plano is not None:
+        vinculo = AgendamentoPlanoPilates(
+            agendamento_id=agendamento.id,
+            aluno_plano_id=aluno_plano.id,
+            aula_consumida=False,
+        )
+
+        db.add(vinculo)
+        db.flush()
+
+        if dados.status == "concluido":
+            consumir_aula(
+                agendamento,
+                aluno_plano,
+                vinculo,
+                db,
+            )
+
     db.commit()
     db.refresh(agendamento)
 
-    return agendamento
+    resposta = AgendamentoResposta.model_validate(
+        agendamento
+    ).model_dump()
+
+    if aluno_plano is not None:
+        resposta["aluno_plano_id"] = aluno_plano.id
+    else:
+        resposta["aluno_plano_id"] = None
+
+    return resposta
 
 
 @router.get(
@@ -301,6 +548,25 @@ def atualizar_agendamento(
             detail="Agendamento não encontrado.",
         )
 
+    vinculo = obter_vinculo_plano(
+        agendamento_id,
+        db,
+    )
+
+    plano_anterior = None
+
+    if vinculo:
+        plano_anterior = (
+            db.query(AlunoPlanoPilates)
+            .filter(
+                AlunoPlanoPilates.id
+                == vinculo.aluno_plano_id
+            )
+            .first()
+        )
+
+    status_anterior = agendamento.status
+
     campos = dados.model_dump(
         exclude_unset=True
     )
@@ -340,12 +606,36 @@ def atualizar_agendamento(
         agendamento.status,
     )
 
+    novo_tipo_atendimento = campos.get(
+        "tipo_atendimento",
+        agendamento.tipo_atendimento or "normal",
+    )
+
+    novo_aluno_plano_id = campos.get(
+        "aluno_plano_id",
+        vinculo.aluno_plano_id if vinculo else None,
+    )
+
+    novo_motivo_cortesia = campos.get(
+        "motivo_cortesia",
+        agendamento.motivo_cortesia,
+    )
+
+    nova_campanha_cortesia = campos.get(
+        "campanha_cortesia",
+        agendamento.campanha_cortesia,
+    )
+
     validar_horarios(
         nova_hora_inicio,
         nova_hora_fim,
     )
 
     validar_status(novo_status)
+
+    validar_tipo_atendimento(
+        novo_tipo_atendimento
+    )
 
     validar_paciente(
         novo_paciente_id,
@@ -357,10 +647,106 @@ def atualizar_agendamento(
         db,
     )
 
-    validar_servico(
+    servico = validar_servico(
         novo_servico_id,
         db,
     )
+
+    valor_tabela = converter_valor_servico(
+        servico.valor
+    )
+
+    if novo_tipo_atendimento == "cortesia":
+        if (
+            not novo_motivo_cortesia
+            or not novo_motivo_cortesia.strip()
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="Informe o motivo da cortesia/brinde.",
+            )
+
+        campos["motivo_cortesia"] = (
+            novo_motivo_cortesia.strip()
+        )
+
+        campos["campanha_cortesia"] = (
+            nova_campanha_cortesia.strip()
+            if nova_campanha_cortesia
+            else None
+        )
+
+        campos["valor_tabela"] = valor_tabela
+        campos["valor_cobrado"] = Decimal("0.00")
+
+    elif novo_tipo_atendimento == "plano":
+        if not novo_aluno_plano_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe o plano ativo do aluno para este atendimento.",
+            )
+
+        if (
+            not vinculo
+            or vinculo.aluno_plano_id
+            != novo_aluno_plano_id
+        ):
+            novo_plano = validar_plano_aluno(
+                novo_aluno_plano_id,
+                novo_paciente_id,
+                nova_data,
+                db,
+            )
+
+            if vinculo:
+                vinculo.aluno_plano_id = (
+                    novo_plano.id
+                )
+            else:
+                vinculo = AgendamentoPlanoPilates(
+                    agendamento_id=agendamento.id,
+                    aluno_plano_id=novo_plano.id,
+                    aula_consumida=False,
+                )
+                db.add(vinculo)
+                db.flush()
+
+            plano_anterior = novo_plano
+
+        campos["valor_tabela"] = valor_tabela
+        campos["valor_cobrado"] = Decimal("0.00")
+        campos["motivo_cortesia"] = None
+        campos["campanha_cortesia"] = None
+
+    elif novo_tipo_atendimento == "experimental":
+        campos["valor_tabela"] = valor_tabela
+        campos["valor_cobrado"] = Decimal("0.00")
+        campos["motivo_cortesia"] = None
+        campos["campanha_cortesia"] = None
+
+    elif novo_tipo_atendimento == "avulsa":
+        campos["valor_tabela"] = valor_tabela
+        campos["valor_cobrado"] = valor_tabela
+        campos["motivo_cortesia"] = None
+        campos["campanha_cortesia"] = None
+
+    else:
+        campos["motivo_cortesia"] = None
+        campos["campanha_cortesia"] = None
+
+        if (
+            novo_servico_id != agendamento.servico_id
+            or agendamento.valor_tabela is None
+        ):
+            campos["valor_tabela"] = valor_tabela
+
+    if (
+        novo_tipo_atendimento != "plano"
+        and vinculo
+        and not vinculo.aula_consumida
+    ):
+        db.delete(vinculo)
+        vinculo = None
 
     verificar_conflito(
         db=db,
@@ -374,7 +760,109 @@ def atualizar_agendamento(
     for campo, valor in campos.items():
         setattr(agendamento, campo, valor)
 
+    # --------------------------------------------------------
+    # INTEGRAÇÃO FINANCEIRA DA AULA AVULSA
+    # --------------------------------------------------------
+    # A cobrança nasce somente quando a aula é concluída.
+    # agendamento_id impede cobrança duplicada.
+    if (
+        novo_tipo_atendimento == "avulsa"
+        and status_anterior != "concluido"
+        and novo_status == "concluido"
+    ):
+        conta_existente = (
+            db.query(ContaReceber)
+            .filter(
+                ContaReceber.agendamento_id == agendamento.id
+            )
+            .first()
+        )
+
+        if not conta_existente:
+            valor_avulsa = (
+                agendamento.valor_cobrado
+                if agendamento.valor_cobrado is not None
+                else valor_tabela
+            )
+
+            if valor_avulsa is None or valor_avulsa <= 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "A aula avulsa precisa possuir "
+                        "um valor válido para gerar a cobrança."
+                    ),
+                )
+
+            conta = ContaReceber(
+                paciente_id=agendamento.paciente_id,
+                agendamento_id=agendamento.id,
+                descricao=f"Aula avulsa - Agendamento #{agendamento.id}",
+                categoria="Aula avulsa",
+                valor=valor_avulsa,
+                vencimento=agendamento.data,
+                status="pendente",
+                observacoes=(
+                    "Conta gerada automaticamente pela "
+                    "conclusão de uma aula avulsa."
+                ),
+                ativo=True,
+            )
+
+            db.add(conta)
+
+    if (
+        novo_tipo_atendimento == "plano"
+        and vinculo
+    ):
+        plano_atual = (
+            db.query(AlunoPlanoPilates)
+            .filter(
+                AlunoPlanoPilates.id
+                == vinculo.aluno_plano_id
+            )
+            .first()
+        )
+
+        if not plano_atual:
+            raise HTTPException(
+                status_code=404,
+                detail="Plano do aluno não encontrado.",
+            )
+
+        if (
+            status_anterior != "concluido"
+            and novo_status == "concluido"
+        ):
+            consumir_aula(
+                agendamento,
+                plano_atual,
+                vinculo,
+                db,
+            )
+
+        elif (
+            status_anterior == "concluido"
+            and novo_status != "concluido"
+        ):
+            desfazer_aula(
+                agendamento,
+                plano_atual,
+                vinculo,
+                db,
+            )
+
     db.commit()
     db.refresh(agendamento)
 
-    return agendamento
+    resposta = AgendamentoResposta.model_validate(
+        agendamento
+    ).model_dump()
+
+    resposta["aluno_plano_id"] = (
+        vinculo.aluno_plano_id
+        if vinculo
+        else None
+    )
+
+    return resposta

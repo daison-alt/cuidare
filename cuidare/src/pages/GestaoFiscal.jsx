@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
 import "./GestaoFiscal.css";
 
-const API_URL = "https://humble-waddle-97x5v4vpg7j73ppxq-8000.app.github.dev";
+const API_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:8000"
+    : `https://${window.location.hostname.replace(
+        /-5173\.app\.github\.dev$/,
+        "-8000.app.github.dev"
+      )}`;
 
-function GestaoFiscal({ onVoltar }) {
-  const [registros, setRegistros] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+const STATUS_LABELS = {
+  pendente: "Pendente",
+  pago: "Pago",
+  vencido: "Vencido",
+  cancelado: "Cancelado",
+};
 
-  const [formulario, setFormulario] = useState({
+function obterFormularioInicial() {
+  return {
     tipo_documento: "DAS",
     competencia: "",
     descricao: "",
@@ -16,23 +25,111 @@ function GestaoFiscal({ onVoltar }) {
     vencimento: "",
     valor: "",
     observacoes: "",
-  });
+  };
+}
+
+function formatarDataParaInput(data) {
+  if (!data) {
+    return "";
+  }
+
+  return String(data).slice(0, 10);
+}
+
+function obterStatusExibicao(registro) {
+  /*
+   * O status Pago e Cancelado nunca são alterados automaticamente.
+   *
+   * Apenas registros que continuam como Pendente podem aparecer
+   * visualmente como Vencido quando a data de vencimento já passou.
+   *
+   * Essa função NÃO altera o banco de dados.
+   */
+
+  if (registro.status !== "pendente") {
+    return registro.status;
+  }
+
+  if (!registro.vencimento) {
+    return "pendente";
+  }
+
+  const hoje = new Date();
+
+  const hojeSemHora = new Date(
+    hoje.getFullYear(),
+    hoje.getMonth(),
+    hoje.getDate()
+  );
+
+  const vencimentoTexto = String(
+    registro.vencimento
+  ).slice(0, 10);
+
+  const partes = vencimentoTexto.split("-");
+
+  if (partes.length !== 3) {
+    return "pendente";
+  }
+
+  const [ano, mes, dia] = partes.map(Number);
+
+  const dataVencimento = new Date(
+    ano,
+    mes - 1,
+    dia
+  );
+
+  if (hojeSemHora > dataVencimento) {
+    return "vencido";
+  }
+
+  return "pendente";
+}
+
+function GestaoFiscal({ onVoltar }) {
+  const [registros, setRegistros] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+
+  const [formulario, setFormulario] = useState(
+    obterFormularioInicial()
+  );
+
+  const [editandoId, setEditandoId] = useState(null);
+  const [salvando, setSalvando] = useState(false);
 
   async function carregarRegistros() {
     try {
       setCarregando(true);
       setErro("");
 
-      const resposta = await fetch(`${API_URL}/gestao-fiscal`);
+      const resposta = await fetch(
+        `${API_URL}/gestao-fiscal`
+      );
 
       if (!resposta.ok) {
-        throw new Error("Não foi possível carregar os registros fiscais.");
+        throw new Error(
+          "Não foi possível carregar os registros fiscais."
+        );
       }
 
       const dados = await resposta.json();
-      setRegistros(dados);
+
+      setRegistros(
+        Array.isArray(dados) ? dados : []
+      );
     } catch (error) {
-      setErro(error.message);
+      console.error(
+        "Erro ao carregar Gestão Fiscal:",
+        error
+      );
+
+      setErro(
+        error.message ||
+          "Não foi possível carregar os registros fiscais."
+      );
     } finally {
       setCarregando(false);
     }
@@ -46,9 +143,12 @@ function GestaoFiscal({ onVoltar }) {
     const { name, value } = event.target;
 
     if (name === "competencia") {
-      const somenteNumeros = value.replace(/\D/g, "").slice(0, 6);
+      const somenteNumeros = value
+        .replace(/\D/g, "")
+        .slice(0, 6);
 
-      let competenciaFormatada = somenteNumeros;
+      let competenciaFormatada =
+        somenteNumeros;
 
       if (somenteNumeros.length > 2) {
         competenciaFormatada =
@@ -71,50 +171,183 @@ function GestaoFiscal({ onVoltar }) {
     }));
   }
 
+  function iniciarEdicao(registro) {
+    setErro("");
+    setSucesso("");
+
+    setEditandoId(registro.id);
+
+    setFormulario({
+      tipo_documento:
+        registro.tipo_documento || "DAS",
+
+      competencia:
+        registro.competencia || "",
+
+      descricao:
+        registro.descricao || "",
+
+      status:
+        registro.status || "pendente",
+
+      vencimento:
+        formatarDataParaInput(
+          registro.vencimento
+        ),
+
+      valor:
+        registro.valor || "",
+
+      observacoes:
+        registro.observacoes || "",
+    });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  function cancelarEdicao() {
+    if (salvando) {
+      return;
+    }
+
+    setEditandoId(null);
+    setFormulario(obterFormularioInicial());
+    setErro("");
+    setSucesso("");
+  }
+
   async function salvarRegistro(event) {
     event.preventDefault();
 
     try {
       setErro("");
+      setSucesso("");
+
+      if (!formulario.competencia) {
+        setErro(
+          "Informe a competência no formato MM/AAAA."
+        );
+        return;
+      }
+
+      if (
+        !/^\d{2}\/\d{4}$/.test(
+          formulario.competencia
+        )
+      ) {
+        setErro(
+          "A competência deve estar no formato MM/AAAA."
+        );
+        return;
+      }
+
+      const [mes, ano] =
+        formulario.competencia
+          .split("/")
+          .map(Number);
+
+      if (
+        mes < 1 ||
+        mes > 12 ||
+        ano < 2000
+      ) {
+        setErro(
+          "Informe uma competência válida no formato MM/AAAA."
+        );
+        return;
+      }
+
+      if (!formulario.descricao.trim()) {
+        setErro(
+          "Informe a descrição da obrigação fiscal."
+        );
+        return;
+      }
+
+      setSalvando(true);
 
       const dados = {
         ...formulario,
+
         vencimento: formulario.vencimento
-          ? new Date(formulario.vencimento).toISOString()
+          ? new Date(
+              `${formulario.vencimento}T12:00:00`
+            ).toISOString()
           : null,
-        valor: formulario.valor || null,
-        observacoes: formulario.observacoes || null,
+
+        valor:
+          formulario.valor.trim() || null,
+
+        observacoes:
+          formulario.observacoes.trim() || null,
+
         arquivo: null,
       };
 
-      const resposta = await fetch(`${API_URL}/gestao-fiscal`, {
-        method: "POST",
+      const url = editandoId
+        ? `${API_URL}/gestao-fiscal/${editandoId}`
+        : `${API_URL}/gestao-fiscal`;
+
+      const resposta = await fetch(url, {
+        method: editandoId ? "PUT" : "POST",
+
         headers: {
           "Content-Type": "application/json",
         },
+
         body: JSON.stringify(dados),
       });
 
+      const respostaTexto =
+        await resposta.text();
+
+      let resultado = null;
+
+      try {
+        resultado = respostaTexto
+          ? JSON.parse(respostaTexto)
+          : null;
+      } catch {
+        resultado = null;
+      }
+
       if (!resposta.ok) {
-        const detalhe = await resposta.text();
         throw new Error(
-          detalhe || "Não foi possível salvar o registro fiscal."
+          resultado?.detail ||
+            respostaTexto ||
+            "Não foi possível salvar o registro fiscal."
         );
       }
 
-      setFormulario({
-        tipo_documento: "DAS",
-        competencia: "",
-        descricao: "",
-        status: "pendente",
-        vencimento: "",
-        valor: "",
-        observacoes: "",
-      });
+      if (editandoId) {
+        setSucesso(
+          "Obrigação fiscal atualizada com sucesso."
+        );
+      } else {
+        setSucesso(
+          "Obrigação fiscal cadastrada com sucesso."
+        );
+      }
+
+      setEditandoId(null);
+      setFormulario(obterFormularioInicial());
 
       await carregarRegistros();
     } catch (error) {
-      setErro(error.message);
+      console.error(
+        "Erro ao salvar registro fiscal:",
+        error
+      );
+
+      setErro(
+        error.message ||
+          "Não foi possível salvar o registro fiscal."
+      );
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -140,7 +373,16 @@ function GestaoFiscal({ onVoltar }) {
       return "—";
     }
 
-    return new Date(data).toLocaleDateString("pt-BR");
+    const texto = String(data).slice(0, 10);
+    const partes = texto.split("-");
+
+    if (partes.length !== 3) {
+      return "—";
+    }
+
+    const [ano, mes, dia] = partes;
+
+    return `${dia}/${mes}/${ano}`;
   }
 
   return (
@@ -155,11 +397,18 @@ function GestaoFiscal({ onVoltar }) {
         </button>
 
         <div>
-          <span className="page-label">GESTÃO FISCAL</span>
-          <h2>Documentos e obrigações fiscais</h2>
+          <span className="page-label">
+            GESTÃO FISCAL
+          </span>
+
+          <h2>
+            Documentos e obrigações fiscais
+          </h2>
+
           <p>
-            Controle os documentos, competências, vencimentos e valores
-            relacionados à gestão fiscal da Cuidare.
+            Controle os documentos, competências,
+            vencimentos e valores relacionados à
+            gestão fiscal da Cuidare.
           </p>
         </div>
       </div>
@@ -170,117 +419,223 @@ function GestaoFiscal({ onVoltar }) {
         </div>
       )}
 
+      {sucesso && (
+        <div className="fiscal-success">
+          {sucesso}
+        </div>
+      )}
+
       <div className="fiscal-grid">
         <section className="fiscal-panel">
           <div className="panel-title">
-            <span>NOVO REGISTRO</span>
-            <h3>Cadastrar obrigação fiscal</h3>
+            <span>
+              {editandoId
+                ? "EDITANDO OBRIGAÇÃO"
+                : "NOVO REGISTRO"}
+            </span>
+
+            <h3>
+              {editandoId
+                ? "Editar obrigação fiscal"
+                : "Cadastrar obrigação fiscal"}
+            </h3>
           </div>
 
-          <form onSubmit={salvarRegistro} className="fiscal-form">
+          <form
+            onSubmit={salvarRegistro}
+            className="fiscal-form"
+          >
             <div className="form-row">
               <label>
                 Tipo de documento
+
                 <select
                   name="tipo_documento"
-                  value={formulario.tipo_documento}
+                  value={
+                    formulario.tipo_documento
+                  }
                   onChange={alterarCampo}
+                  disabled={salvando}
                 >
-                  <option value="DAS">DAS</option>
-                  <option value="DARF">DARF</option>
-                  <option value="GPS">GPS</option>
-                  <option value="ISS">ISS</option>
-                  <option value="IR">IR</option>
-                  <option value="OUTRO">Outro</option>
+                  <option value="DAS">
+                    DAS
+                  </option>
+
+                  <option value="DARF">
+                    DARF
+                  </option>
+
+                  <option value="GPS">
+                    GPS
+                  </option>
+
+                  <option value="ISS">
+                    ISS
+                  </option>
+
+                  <option value="IR">
+                    IR
+                  </option>
+
+                  <option value="OUTRO">
+                    Outro
+                  </option>
                 </select>
               </label>
 
               <label>
                 Competência
+
                 <input
                   type="text"
                   name="competencia"
                   placeholder="08/2026"
                   maxLength={7}
-                  value={formulario.competencia}
+                  value={
+                    formulario.competencia
+                  }
                   onChange={alterarCampo}
                   required
+                  disabled={salvando}
                 />
               </label>
             </div>
 
             <label>
               Descrição
+
               <input
                 type="text"
                 name="descricao"
                 placeholder="Ex.: Simples Nacional - Agosto/2026"
-                value={formulario.descricao}
+                value={
+                  formulario.descricao
+                }
                 onChange={alterarCampo}
                 required
+                disabled={salvando}
               />
             </label>
 
             <div className="form-row">
               <label>
                 Status
+
                 <select
                   name="status"
-                  value={formulario.status}
+                  value={
+                    formulario.status
+                  }
                   onChange={alterarCampo}
+                  disabled={salvando}
                 >
-                  <option value="pendente">Pendente</option>
-                  <option value="pago">Pago</option>
-                  <option value="vencido">Vencido</option>
-                  <option value="cancelado">Cancelado</option>
+                  <option value="pendente">
+                    Pendente
+                  </option>
+
+                  <option value="pago">
+                    Pago
+                  </option>
+
+                  <option value="vencido">
+                    Vencido
+                  </option>
+
+                  <option value="cancelado">
+                    Cancelado
+                  </option>
                 </select>
               </label>
 
               <label>
                 Valor
+
                 <input
                   type="number"
                   name="valor"
                   step="0.01"
                   min="0"
                   placeholder="0,00"
-                  value={formulario.valor}
+                  value={
+                    formulario.valor
+                  }
                   onChange={alterarCampo}
+                  disabled={salvando}
                 />
               </label>
             </div>
 
             <label>
               Vencimento
+
               <input
                 type="date"
                 name="vencimento"
-                value={formulario.vencimento}
+                value={
+                  formulario.vencimento
+                }
                 onChange={alterarCampo}
+                disabled={salvando}
               />
             </label>
 
             <label>
               Observações
+
               <textarea
                 name="observacoes"
                 rows="4"
                 placeholder="Informações adicionais..."
-                value={formulario.observacoes}
+                value={
+                  formulario.observacoes
+                }
                 onChange={alterarCampo}
+                disabled={salvando}
               />
             </label>
 
-            <button type="submit" className="fiscal-save-button">
-              Salvar obrigação fiscal
-            </button>
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="submit"
+                className="fiscal-save-button"
+                disabled={salvando}
+              >
+                {salvando
+                  ? "Salvando..."
+                  : editandoId
+                  ? "Salvar alterações"
+                  : "Salvar obrigação fiscal"}
+              </button>
+
+              {editandoId && (
+                <button
+                  type="button"
+                  className="fiscal-back-button"
+                  onClick={cancelarEdicao}
+                  disabled={salvando}
+                >
+                  Cancelar edição
+                </button>
+              )}
+            </div>
           </form>
         </section>
 
         <section className="fiscal-panel">
           <div className="panel-title">
-            <span>CONTROLE FISCAL</span>
-            <h3>Registros cadastrados</h3>
+            <span>
+              CONTROLE FISCAL
+            </span>
+
+            <h3>
+              Registros cadastrados
+            </h3>
           </div>
 
           {carregando ? (
@@ -289,52 +644,97 @@ function GestaoFiscal({ onVoltar }) {
             </div>
           ) : registros.length === 0 ? (
             <div className="fiscal-empty">
-              <strong>Nenhum registro fiscal</strong>
+              <strong>
+                Nenhum registro fiscal
+              </strong>
+
               <p>
-                As obrigações cadastradas aparecerão aqui.
+                As obrigações cadastradas
+                aparecerão aqui.
               </p>
             </div>
           ) : (
             <div className="fiscal-list">
-              {registros.map((registro) => (
-                <article className="fiscal-item" key={registro.id}>
-                  <div className="fiscal-item-main">
-                    <div>
-                      <span className="fiscal-type">
-                        {registro.tipo_documento}
+              {registros.map((registro) => {
+                const statusExibicao =
+                  obterStatusExibicao(
+                    registro
+                  );
+
+                return (
+                  <article
+                    className="fiscal-item"
+                    key={registro.id}
+                  >
+                    <div className="fiscal-item-main">
+                      <div>
+                        <span className="fiscal-type">
+                          {registro.tipo_documento}
+                        </span>
+
+                        <h4>
+                          {registro.descricao}
+                        </h4>
+
+                        <p>
+                          Competência:{" "}
+                          {registro.competencia}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`fiscal-status status-${statusExibicao}`}
+                      >
+                        {STATUS_LABELS[
+                          statusExibicao
+                        ] ||
+                          statusExibicao}
                       </span>
-
-                      <h4>{registro.descricao}</h4>
-
-                      <p>
-                        Competência: {registro.competencia}
-                      </p>
                     </div>
 
-                    <span
-                      className={`fiscal-status status-${registro.status}`}
+                    <div className="fiscal-item-details">
+                      <span>
+                        Vencimento:{" "}
+                        <strong>
+                          {formatarData(
+                            registro.vencimento
+                          )}
+                        </strong>
+                      </span>
+
+                      <span>
+                        Valor:{" "}
+                        <strong>
+                          {formatarValor(
+                            registro.valor
+                          )}
+                        </strong>
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent:
+                          "flex-end",
+                        marginTop: "14px",
+                      }}
                     >
-                      {registro.status}
-                    </span>
-                  </div>
-
-                  <div className="fiscal-item-details">
-                    <span>
-                      Vencimento:{" "}
-                      <strong>
-                        {formatarData(registro.vencimento)}
-                      </strong>
-                    </span>
-
-                    <span>
-                      Valor:{" "}
-                      <strong>
-                        {formatarValor(registro.valor)}
-                      </strong>
-                    </span>
-                  </div>
-                </article>
-              ))}
+                      <button
+                        type="button"
+                        className="fiscal-save-button"
+                        onClick={() =>
+                          iniciarEdicao(
+                            registro
+                          )
+                        }
+                      >
+                        Editar
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

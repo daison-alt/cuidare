@@ -1,6 +1,16 @@
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Column, Date, DateTime, Integer, Numeric, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 
 from app.database import Base
 
@@ -15,6 +25,12 @@ class ContaReceber(Base):
     )
 
     paciente_id = Column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+
+    agendamento_id = Column(
         Integer,
         nullable=True,
         index=True,
@@ -86,4 +102,11 @@ class ContaReceber(Base):
         nullable=False,
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "agendamento_id",
+            name="uq_conta_receber_agendamento",
+        ),
     )

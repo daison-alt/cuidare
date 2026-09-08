@@ -397,3 +397,651 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   CAIXA - NOVO FECHAMENTO SIMPLIFICADO
+   ========================================================= */
+
+.caixa-section-description {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.caixa-formas-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.caixa-forma-card {
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.caixa-forma-card span {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.caixa-forma-card strong {
+  display: block;
+  margin-top: 7px;
+  font-size: 1.15rem;
+  color: #0f172a;
+}
+
+.caixa-forma-especie {
+  border-color: #cbd5e1;
+}
+
+.caixa-total-separado {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.caixa-total-separado > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #f1f5f9;
+}
+
+.caixa-total-separado span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.caixa-total-separado strong {
+  font-size: 1.15rem;
+  color: #0f172a;
+}
+
+.caixa-fechamento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.caixa-fechamento-resumo {
+  min-height: 140px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.caixa-fechamento-resumo > span {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.caixa-fechamento-resumo > strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.6rem;
+  color: #0f172a;
+}
+
+.caixa-fechamento-resumo small {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.caixa-fechamento-contado {
+  background: #ffffff;
+}
+
+.caixa-fechamento-contado label {
+  display: block;
+}
+
+.caixa-fechamento-contado label > span {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.caixa-fechamento-contado input {
+  width: 100%;
+  margin-top: 10px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 1.15rem;
+  outline: none;
+}
+
+.caixa-fechamento-contado input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.18);
+}
+
+.caixa-fechamento-diferenca {
+  border-color: #cbd5e1;
+}
+
+.caixa-fechamento-ok {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.caixa-fechamento-ok > strong {
+  color: #15803d;
+}
+
+.caixa-fechamento-sobra {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.caixa-fechamento-sobra > strong {
+  color: #1d4ed8;
+}
+
+.caixa-fechamento-falta {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.caixa-fechamento-falta > strong {
+  color: #b91c1c;
+}
+
+.caixa-fechamento-eletronicos {
+  margin-top: 26px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.caixa-card-fechamento {
+  border-color: #fecdd3;
+}
+
+@media (max-width: 900px) {
+  .caixa-formas-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .caixa-fechamento-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .caixa-formas-grid,
+  .caixa-total-separado {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   CAIXA - REFINAMENTO VISUAL
+   ========================================================= */
+
+/* Espaçamento geral dos cartões */
+.caixa-card {
+  padding: 28px;
+}
+
+/* Cabeçalhos mais limpos */
+.caixa-section-header {
+  margin-bottom: 22px;
+}
+
+.caixa-section-header h2 {
+  margin-bottom: 4px;
+}
+
+/* =========================================================
+   RESUMO PRINCIPAL
+   ========================================================= */
+
+.caixa-resumo-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.caixa-resumo-card {
+  min-height: 112px;
+  padding: 20px 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.caixa-resumo-card span {
+  display: block;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  color: #64748b;
+}
+
+.caixa-resumo-card strong {
+  display: block;
+  margin-top: 9px;
+  font-size: 1.55rem;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.caixa-resumo-card small {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.caixa-resumo-destaque {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* O quarto card deixa de disputar espaço com os principais */
+.caixa-resumo-grid .caixa-resumo-card:nth-child(4) {
+  display: none;
+}
+
+/* =========================================================
+   FORMAS DE PAGAMENTO - LINHA COMPACTA
+   ========================================================= */
+
+.caixa-formas-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.caixa-forma-card {
+  padding: 13px 15px;
+  border-radius: 11px;
+  background: #f8fafc;
+}
+
+.caixa-forma-card span {
+  font-size: 0.68rem;
+}
+
+.caixa-forma-card strong {
+  margin-top: 5px;
+  font-size: 1rem;
+}
+
+/* =========================================================
+   INFORMAÇÕES COMPLEMENTARES
+   ========================================================= */
+
+.caixa-resumo-secundario {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.caixa-resumo-secundario > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.caixa-resumo-secundario span {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.caixa-resumo-secundario strong {
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+/* =========================================================
+   MOVIMENTAÇÕES
+   ========================================================= */
+
+.caixa-tabela-wrapper {
+  margin-top: 4px;
+}
+
+.caixa-tabela {
+  width: 100%;
+}
+
+.caixa-tabela th {
+  padding: 12px 14px;
+  font-size: 0.72rem;
+}
+
+.caixa-tabela td {
+  padding: 14px;
+}
+
+.caixa-tabela td strong {
+  display: block;
+}
+
+.caixa-tabela td small {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+}
+
+/* =========================================================
+   FECHAMENTO
+   ========================================================= */
+
+.caixa-card-fechamento {
+  margin-top: 20px;
+}
+
+.caixa-card-fechamento .caixa-section-header {
+  margin-bottom: 0;
+}
+
+.caixa-fechamento-grid {
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.caixa-fechamento-resumo {
+  min-height: 126px;
+  padding: 18px;
+  border-radius: 14px;
+}
+
+.caixa-fechamento-resumo > strong {
+  font-size: 1.45rem;
+}
+
+.caixa-fechamento-eletronicos {
+  margin-top: 22px;
+  padding-top: 20px;
+}
+
+.caixa-fechamento-eletronicos .caixa-section-header {
+  margin-bottom: 12px;
+}
+
+.caixa-fechamento-eletronicos .caixa-formas-grid {
+  margin-top: 8px;
+}
+
+.caixa-total-separado {
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.caixa-total-separado > div {
+  padding: 13px 16px;
+}
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+  .caixa-resumo-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .caixa-resumo-grid .caixa-resumo-card:nth-child(4) {
+    display: none;
+  }
+
+  .caixa-formas-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .caixa-fechamento-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .caixa-card {
+    padding: 20px;
+  }
+
+  .caixa-resumo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .caixa-formas-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .caixa-resumo-secundario {
+    flex-wrap: wrap;
+    gap: 12px 20px;
+  }
+
+  .caixa-total-separado {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .caixa-formas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   CONTROLE DE TROCO
+   ============================================================ */
+
+.caixa-troco-aviso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 18px 20px;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 14px;
+  background: rgba(34, 197, 94, 0.07);
+}
+
+.caixa-troco-aviso > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.caixa-troco-aviso small {
+  display: block;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.5;
+}
+
+.caixa-troco-kicker {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #16a34a;
+}
+
+.caixa-troco-valor {
+  display: block;
+  font-size: 1.55rem;
+  line-height: 1.2;
+}
+
+.caixa-troco-check {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.caixa-troco-check input {
+  width: 18px !important;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.caixa-troco-check span {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.caixa-troco-sem-valor {
+  border-color: rgba(100, 116, 139, 0.2);
+  background: rgba(100, 116, 139, 0.06);
+}
+
+.caixa-troco-sem-valor strong {
+  font-size: 0.95rem;
+}
+
+
+/* ============================================================
+   TROCO NO FECHAMENTO
+   ============================================================ */
+
+.caixa-troco-fechamento {
+  margin: 24px 0;
+  padding: 22px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: 16px;
+  background: rgba(37, 99, 235, 0.045);
+}
+
+.caixa-troco-fechamento-header {
+  margin-bottom: 18px;
+}
+
+.caixa-troco-fechamento-header h3 {
+  margin: 4px 0 6px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.caixa-troco-fechamento-header p {
+  margin: 0;
+  max-width: 720px;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.caixa-troco-fechamento-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.caixa-troco-fechamento-grid > label,
+.caixa-troco-retirada {
+  min-width: 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.caixa-troco-fechamento-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.caixa-troco-fechamento-grid label > span,
+.caixa-troco-retirada > span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.caixa-troco-fechamento-grid input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 10px;
+  background: transparent;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+.caixa-troco-fechamento-grid input:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.caixa-troco-fechamento-grid small,
+.caixa-troco-retirada small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.45;
+  font-size: 0.8rem;
+}
+
+.caixa-troco-retirada {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.caixa-troco-retirada strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.4rem;
+}
+
+
+/* ============================================================
+   RESPONSIVO
+   ============================================================ */
+
+@media (max-width: 700px) {
+  .caixa-troco-fechamento-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .caixa-troco-fechamento {
+    padding: 16px;
+  }
+
+  .caixa-troco-aviso {
+    padding: 16px;
+  }
+}
+

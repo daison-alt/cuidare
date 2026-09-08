@@ -1,0 +1,1141 @@
+import { useEffect, useState } from "react";
+
+const API_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:8000"
+    : `https://${window.location.hostname.replace(
+        /-5173\.app\.github\.dev$/,
+        "-8000.app.github.dev"
+      )}`;
+
+function formatarNumero(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatarData(data) {
+  if (!data) return "-";
+
+  const dataObj = new Date(data);
+
+  if (Number.isNaN(dataObj.getTime())) return "-";
+
+  return dataObj.toLocaleString("pt-BR");
+}
+
+export default function Estoque({ onVoltar }) {
+  const [produtos, setProdutos] = useState([]);
+  const [movimentacoes, setMovimentacoes] = useState([]);
+
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+
+  const [mostrarCadastro, setMostrarCadastro] = useState(false);
+  const [mostrarEntrada, setMostrarEntrada] = useState(false);
+  const [mostrarBaixa, setMostrarBaixa] = useState(false);
+  const [mostrarEdicaoEntrada, setMostrarEdicaoEntrada] = useState(false);
+
+  const [busca, setBusca] = useState("");
+
+  const [movimentacaoEditando, setMovimentacaoEditando] = useState(null);
+
+  const [novoProduto, setNovoProduto] = useState({
+    nome: "",
+    categoria: "",
+    unidade: "unidade",
+    estoque_minimo: "",
+    fornecedor: "",
+    observacoes: "",
+  });
+
+  const [entrada, setEntrada] = useState({
+    produto_id: "",
+    quantidade: "",
+    fornecedor: "",
+    observacoes: "",
+  });
+
+  const [baixa, setBaixa] = useState({
+    produto_id: "",
+    quantidade: "",
+    descricao: "Baixa manual de estoque",
+    observacoes: "",
+  });
+
+  const [edicaoEntrada, setEdicaoEntrada] = useState({
+    quantidade: "",
+    fornecedor: "",
+    observacoes: "",
+  });
+
+  async function carregarDados() {
+    try {
+      setCarregando(true);
+      setErro("");
+
+      const [produtosResponse, movimentacoesResponse] =
+        await Promise.all([
+          fetch(`${API_URL}/estoque/produtos`),
+          fetch(`${API_URL}/estoque/movimentacoes`),
+        ]);
+
+      if (!produtosResponse.ok) {
+        throw new Error("Não foi possível carregar os produtos do estoque.");
+      }
+
+      if (!movimentacoesResponse.ok) {
+        throw new Error(
+          "Não foi possível carregar as movimentações do estoque."
+        );
+      }
+
+      const produtosData = await produtosResponse.json();
+      const movimentacoesData = await movimentacoesResponse.json();
+
+      setProdutos(Array.isArray(produtosData) ? produtosData : []);
+      setMovimentacoes(
+        Array.isArray(movimentacoesData) ? movimentacoesData : []
+      );
+    } catch (error) {
+      setErro(
+        error.message || "Não foi possível carregar os dados do estoque."
+      );
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
+  function limparMensagens() {
+    setErro("");
+    setSucesso("");
+  }
+
+  function alterarNovoProduto(event) {
+    const { name, value } = event.target;
+
+    setNovoProduto((atual) => ({
+      ...atual,
+      [name]: value,
+    }));
+  }
+
+  function alterarEntrada(event) {
+    const { name, value } = event.target;
+
+    setEntrada((atual) => ({
+      ...atual,
+      [name]: value,
+    }));
+  }
+
+  function alterarBaixa(event) {
+    const { name, value } = event.target;
+
+    setBaixa((atual) => ({
+      ...atual,
+      [name]: value,
+    }));
+  }
+
+  function alterarEdicaoEntrada(event) {
+    const { name, value } = event.target;
+
+    setEdicaoEntrada((atual) => ({
+      ...atual,
+      [name]: value,
+    }));
+  }
+
+  async function cadastrarProduto(event) {
+    event.preventDefault();
+    limparMensagens();
+
+    if (!novoProduto.nome.trim()) {
+      setErro("Informe o nome do produto/material.");
+      return;
+    }
+
+    if (!novoProduto.unidade.trim()) {
+      setErro("Informe a unidade de medida.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/estoque/produtos`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nome: novoProduto.nome.trim(),
+          categoria: novoProduto.categoria.trim() || null,
+          unidade: novoProduto.unidade.trim(),
+          estoque_minimo: Number(novoProduto.estoque_minimo || 0),
+          fornecedor: novoProduto.fornecedor.trim() || null,
+          observacoes: novoProduto.observacoes.trim() || null,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || "Não foi possível cadastrar o produto."
+        );
+      }
+
+      setNovoProduto({
+        nome: "",
+        categoria: "",
+        unidade: "unidade",
+        estoque_minimo: "",
+        fornecedor: "",
+        observacoes: "",
+      });
+
+      setMostrarCadastro(false);
+      setSucesso("Produto/material cadastrado com sucesso.");
+
+      await carregarDados();
+    } catch (error) {
+      setErro(error.message || "Erro ao cadastrar produto.");
+    }
+  }
+
+  async function registrarEntrada(event) {
+    event.preventDefault();
+    limparMensagens();
+
+    if (!entrada.produto_id) {
+      setErro("Selecione o produto/material.");
+      return;
+    }
+
+    if (!entrada.quantidade || Number(entrada.quantidade) <= 0) {
+      setErro("Informe uma quantidade válida para a entrada.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/estoque/entrada`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          produto_id: Number(entrada.produto_id),
+          quantidade: Number(entrada.quantidade),
+          fornecedor: entrada.fornecedor.trim() || null,
+          observacoes: entrada.observacoes.trim() || null,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || "Não foi possível registrar a entrada."
+        );
+      }
+
+      setEntrada({
+        produto_id: "",
+        quantidade: "",
+        fornecedor: "",
+        observacoes: "",
+      });
+
+      setMostrarEntrada(false);
+      setSucesso("Entrada de estoque registrada com sucesso.");
+
+      await carregarDados();
+    } catch (error) {
+      setErro(error.message || "Erro ao registrar entrada.");
+    }
+  }
+
+  async function registrarBaixa(event) {
+    event.preventDefault();
+    limparMensagens();
+
+    if (!baixa.produto_id) {
+      setErro("Selecione o produto/material.");
+      return;
+    }
+
+    if (!baixa.quantidade || Number(baixa.quantidade) <= 0) {
+      setErro("Informe uma quantidade válida para a baixa.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/estoque/baixa`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          produto_id: Number(baixa.produto_id),
+          quantidade: Number(baixa.quantidade),
+          descricao:
+            baixa.descricao.trim() || "Baixa manual de estoque",
+          observacoes: baixa.observacoes.trim() || null,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || "Não foi possível registrar a baixa."
+        );
+      }
+
+      setBaixa({
+        produto_id: "",
+        quantidade: "",
+        descricao: "Baixa manual de estoque",
+        observacoes: "",
+      });
+
+      setMostrarBaixa(false);
+      setSucesso("Baixa de estoque registrada com sucesso.");
+
+      await carregarDados();
+    } catch (error) {
+      setErro(error.message || "Erro ao registrar baixa.");
+    }
+  }
+
+  function abrirCadastro() {
+    limparMensagens();
+
+    setMostrarEntrada(false);
+    setMostrarBaixa(false);
+    setMostrarEdicaoEntrada(false);
+    setMostrarCadastro(true);
+  }
+
+  function abrirEntrada(produto = null) {
+    limparMensagens();
+
+    setEntrada({
+      produto_id: produto ? String(produto.id) : "",
+      quantidade: "",
+      fornecedor: produto?.fornecedor || "",
+      observacoes: "",
+    });
+
+    setMostrarCadastro(false);
+    setMostrarBaixa(false);
+    setMostrarEdicaoEntrada(false);
+    setMostrarEntrada(true);
+  }
+
+  function abrirBaixa(produto = null) {
+    limparMensagens();
+
+    setBaixa({
+      produto_id: produto ? String(produto.id) : "",
+      quantidade: "",
+      descricao: "Baixa manual de estoque",
+      observacoes: "",
+    });
+
+    setMostrarCadastro(false);
+    setMostrarEntrada(false);
+    setMostrarEdicaoEntrada(false);
+    setMostrarBaixa(true);
+  }
+
+  function abrirEdicaoEntrada(movimento) {
+    limparMensagens();
+
+    if (movimento.tipo !== "entrada") {
+      return;
+    }
+
+    setMovimentacaoEditando(movimento);
+
+    setEdicaoEntrada({
+      quantidade: String(movimento.quantidade ?? ""),
+      fornecedor: movimento.fornecedor || "",
+      observacoes: movimento.observacoes || "",
+    });
+
+    setMostrarCadastro(false);
+    setMostrarEntrada(false);
+    setMostrarBaixa(false);
+    setMostrarEdicaoEntrada(true);
+  }
+
+  function fecharFormularios() {
+    setMostrarCadastro(false);
+    setMostrarEntrada(false);
+    setMostrarBaixa(false);
+    setMostrarEdicaoEntrada(false);
+    setMovimentacaoEditando(null);
+  }
+
+  async function salvarEdicaoEntrada(event) {
+    event.preventDefault();
+    limparMensagens();
+
+    if (!movimentacaoEditando) {
+      setErro("Nenhuma entrada foi selecionada para edição.");
+      return;
+    }
+
+    if (
+      !edicaoEntrada.quantidade ||
+      Number(edicaoEntrada.quantidade) <= 0
+    ) {
+      setErro("Informe uma quantidade válida para a entrada.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_URL}/estoque/movimentacoes/${movimentacaoEditando.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            quantidade: Number(edicaoEntrada.quantidade),
+            fornecedor: edicaoEntrada.fornecedor.trim() || null,
+            observacoes: edicaoEntrada.observacoes.trim() || null,
+          }),
+        }
+      );
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || "Não foi possível editar a entrada."
+        );
+      }
+
+      setEdicaoEntrada({
+        quantidade: "",
+        fornecedor: "",
+        observacoes: "",
+      });
+
+      setMovimentacaoEditando(null);
+      setMostrarEdicaoEntrada(false);
+
+      setSucesso("Entrada de estoque atualizada com sucesso.");
+
+      await carregarDados();
+    } catch (error) {
+      setErro(error.message || "Erro ao editar entrada.");
+    }
+  }
+
+  const produtosFiltrados = produtos.filter((produto) =>
+    String(produto.nome || "")
+      .toLowerCase()
+      .includes(busca.toLowerCase())
+  );
+
+  const produtosAbaixoDoMinimo = produtos.filter((produto) => {
+    const atual = Number(produto.quantidade_atual || 0);
+    const minimo = Number(produto.estoque_minimo || 0);
+
+    return minimo > 0 && atual <= minimo;
+  });
+
+  const totalItens = produtos.reduce(
+    (total, produto) => total + Number(produto.quantidade_atual || 0),
+    0
+  );
+
+  const ultimasMovimentacoes = movimentacoes.slice(0, 10);
+
+  function nomeProduto(produtoId) {
+    const produto = produtos.find(
+      (item) => Number(item.id) === Number(produtoId)
+    );
+
+    return produto?.nome || `Produto #${produtoId}`;
+  }
+
+  const produtoEmEdicao = movimentacaoEditando
+    ? produtos.find(
+        (produto) =>
+          Number(produto.id) ===
+          Number(movimentacaoEditando.produto_id)
+      )
+    : null;
+
+  return (
+    <div className="page-container estoque-page">
+      <div className="page-header">
+        <div>
+          <h1>Estoque</h1>
+          <p>
+            Controle de produtos, materiais, entradas, baixas e
+            movimentações.
+          </p>
+        </div>
+
+        <div className="page-header-actions">
+          {onVoltar && (
+            <button className="secondary-button" onClick={onVoltar}>
+              ← Voltar
+            </button>
+          )}
+
+          <button className="secondary-button" onClick={abrirCadastro}>
+            + Novo produto
+          </button>
+
+          <button className="secondary-button" onClick={() => abrirEntrada()}>
+            + Entrada
+          </button>
+
+          <button className="primary-button" onClick={() => abrirBaixa()}>
+            − Baixa manual
+          </button>
+        </div>
+      </div>
+
+      {erro && <div className="alert-message error">{erro}</div>}
+
+      {sucesso && <div className="alert-message success">{sucesso}</div>}
+
+      <div className="estoque-resumo">
+        <div className="estoque-card">
+          <span>Produtos cadastrados</span>
+          <strong>{produtos.length}</strong>
+        </div>
+
+        <div className="estoque-card">
+          <span>Itens em estoque</span>
+          <strong>{formatarNumero(totalItens)}</strong>
+        </div>
+
+        <div className="estoque-card">
+          <span>Estoque baixo</span>
+          <strong>{produtosAbaixoDoMinimo.length}</strong>
+        </div>
+
+        <div className="estoque-card">
+          <span>Movimentações</span>
+          <strong>{movimentacoes.length}</strong>
+        </div>
+      </div>
+
+      {mostrarCadastro && (
+        <div className="estoque-form-card">
+          <div className="estoque-form-header">
+            <div>
+              <h2>Novo produto/material</h2>
+              <p>
+                Cadastre um item que será controlado pelo estoque.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="text-button"
+              onClick={fecharFormularios}
+            >
+              Fechar
+            </button>
+          </div>
+
+          <form onSubmit={cadastrarProduto}>
+            <div className="form-grid">
+              <label>
+                Nome do produto/material
+                <input
+                  type="text"
+                  name="nome"
+                  value={novoProduto.nome}
+                  onChange={alterarNovoProduto}
+                  placeholder="Ex.: Luvas descartáveis"
+                />
+              </label>
+
+              <label>
+                Categoria
+                <input
+                  type="text"
+                  name="categoria"
+                  value={novoProduto.categoria}
+                  onChange={alterarNovoProduto}
+                  placeholder="Ex.: Material de consumo"
+                />
+              </label>
+
+              <label>
+                Unidade
+                <input
+                  type="text"
+                  name="unidade"
+                  value={novoProduto.unidade}
+                  onChange={alterarNovoProduto}
+                  placeholder="Ex.: caixa, unidade, pacote"
+                />
+              </label>
+
+              <label>
+                Estoque mínimo
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  name="estoque_minimo"
+                  value={novoProduto.estoque_minimo}
+                  onChange={alterarNovoProduto}
+                  placeholder="0"
+                />
+              </label>
+
+              <label>
+                Fornecedor
+                <input
+                  type="text"
+                  name="fornecedor"
+                  value={novoProduto.fornecedor}
+                  onChange={alterarNovoProduto}
+                  placeholder="Fornecedor habitual"
+                />
+              </label>
+
+              <label>
+                Observações
+                <input
+                  type="text"
+                  name="observacoes"
+                  value={novoProduto.observacoes}
+                  onChange={alterarNovoProduto}
+                  placeholder="Opcional"
+                />
+              </label>
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={fecharFormularios}
+              >
+                Cancelar
+              </button>
+
+              <button type="submit" className="primary-button">
+                Cadastrar produto
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {mostrarEntrada && (
+        <div className="estoque-form-card">
+          <div className="estoque-form-header">
+            <div>
+              <h2>Entrada de estoque</h2>
+              <p>
+                Registre a quantidade comprada ou recebida.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="text-button"
+              onClick={fecharFormularios}
+            >
+              Fechar
+            </button>
+          </div>
+
+          <form onSubmit={registrarEntrada}>
+            <div className="form-grid">
+              <label>
+                Produto/material
+                <select
+                  name="produto_id"
+                  value={entrada.produto_id}
+                  onChange={alterarEntrada}
+                >
+                  <option value="">Selecione</option>
+
+                  {produtos.map((produto) => (
+                    <option key={produto.id} value={produto.id}>
+                      {produto.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Quantidade
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  name="quantidade"
+                  value={entrada.quantidade}
+                  onChange={alterarEntrada}
+                  placeholder="0"
+                />
+              </label>
+
+              <label>
+                Fornecedor
+                <input
+                  type="text"
+                  name="fornecedor"
+                  value={entrada.fornecedor}
+                  onChange={alterarEntrada}
+                  placeholder="Fornecedor"
+                />
+              </label>
+
+              <label>
+                Observações
+                <input
+                  type="text"
+                  name="observacoes"
+                  value={entrada.observacoes}
+                  onChange={alterarEntrada}
+                  placeholder="Ex.: Compra de 10 caixas"
+                />
+              </label>
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={fecharFormularios}
+              >
+                Cancelar
+              </button>
+
+              <button type="submit" className="primary-button">
+                Registrar entrada
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {mostrarBaixa && (
+        <div className="estoque-form-card">
+          <div className="estoque-form-header">
+            <div>
+              <h2>Baixa manual</h2>
+              <p>
+                Registre o consumo ou saída de material manualmente.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="text-button"
+              onClick={fecharFormularios}
+            >
+              Fechar
+            </button>
+          </div>
+
+          <form onSubmit={registrarBaixa}>
+            <div className="form-grid">
+              <label>
+                Produto/material
+                <select
+                  name="produto_id"
+                  value={baixa.produto_id}
+                  onChange={alterarBaixa}
+                >
+                  <option value="">Selecione</option>
+
+                  {produtos.map((produto) => (
+                    <option key={produto.id} value={produto.id}>
+                      {produto.nome} — estoque:{" "}
+                      {formatarNumero(produto.quantidade_atual)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Quantidade
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  name="quantidade"
+                  value={baixa.quantidade}
+                  onChange={alterarBaixa}
+                  placeholder="0"
+                />
+              </label>
+
+              <label>
+                Motivo da baixa
+                <input
+                  type="text"
+                  name="descricao"
+                  value={baixa.descricao}
+                  onChange={alterarBaixa}
+                  placeholder="Ex.: Uso interno"
+                />
+              </label>
+
+              <label>
+                Observações
+                <input
+                  type="text"
+                  name="observacoes"
+                  value={baixa.observacoes}
+                  onChange={alterarBaixa}
+                  placeholder="Opcional"
+                />
+              </label>
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={fecharFormularios}
+              >
+                Cancelar
+              </button>
+
+              <button type="submit" className="primary-button">
+                Registrar baixa
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {mostrarEdicaoEntrada && movimentacaoEditando && (
+        <div className="estoque-form-card">
+          <div className="estoque-form-header">
+            <div>
+              <h2>Editar entrada de estoque</h2>
+              <p>
+                Corrija os dados da entrada sem apagar o histórico.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="text-button"
+              onClick={fecharFormularios}
+            >
+              Fechar
+            </button>
+          </div>
+
+          <div className="estoque-edit-info">
+            <strong>
+              Produto:{" "}
+              {produtoEmEdicao?.nome ||
+                nomeProduto(movimentacaoEditando.produto_id)}
+            </strong>
+
+            <span>
+              Data da entrada:{" "}
+              {formatarData(
+                movimentacaoEditando.data_movimentacao
+              )}
+            </span>
+          </div>
+
+          <form onSubmit={salvarEdicaoEntrada}>
+            <div className="form-grid">
+              <label>
+                Quantidade
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  name="quantidade"
+                  value={edicaoEntrada.quantidade}
+                  onChange={alterarEdicaoEntrada}
+                  placeholder="0"
+                />
+              </label>
+
+              <label>
+                Fornecedor
+                <input
+                  type="text"
+                  name="fornecedor"
+                  value={edicaoEntrada.fornecedor}
+                  onChange={alterarEdicaoEntrada}
+                  placeholder="Fornecedor"
+                />
+              </label>
+
+              <label>
+                Observações
+                <input
+                  type="text"
+                  name="observacoes"
+                  value={edicaoEntrada.observacoes}
+                  onChange={alterarEdicaoEntrada}
+                  placeholder="Opcional"
+                />
+              </label>
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={fecharFormularios}
+              >
+                Cancelar
+              </button>
+
+              <button type="submit" className="primary-button">
+                Salvar alterações
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="estoque-toolbar">
+        <div>
+          <h2>Produtos e materiais</h2>
+          <p>
+            Consulte a quantidade disponível e faça movimentações.
+          </p>
+        </div>
+
+        <input
+          type="search"
+          value={busca}
+          onChange={(event) => setBusca(event.target.value)}
+          placeholder="Buscar produto..."
+          className="estoque-search"
+        />
+      </div>
+
+      <div className="estoque-table-card">
+        {carregando ? (
+          <div className="empty-state">
+            <strong>Carregando estoque...</strong>
+            <span>
+              Aguarde enquanto buscamos os produtos.
+            </span>
+          </div>
+        ) : produtosFiltrados.length === 0 ? (
+          <div className="empty-state">
+            <strong>Nenhum produto encontrado</strong>
+            <span>
+              Cadastre o primeiro produto/material para começar o
+              controle.
+            </span>
+          </div>
+        ) : (
+          <div className="table-wrapper">
+            <table className="estoque-table">
+              <thead>
+                <tr>
+                  <th>Produto/material</th>
+                  <th>Categoria</th>
+                  <th>Unidade</th>
+                  <th>Quantidade atual</th>
+                  <th>Estoque mínimo</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {produtosFiltrados.map((produto) => {
+                  const quantidade = Number(
+                    produto.quantidade_atual || 0
+                  );
+
+                  const minimo = Number(
+                    produto.estoque_minimo || 0
+                  );
+
+                  const estoqueBaixo =
+                    minimo > 0 && quantidade <= minimo;
+
+                  return (
+                    <tr key={produto.id}>
+                      <td>
+                        <strong>{produto.nome}</strong>
+                      </td>
+
+                      <td>{produto.categoria || "-"}</td>
+
+                      <td>{produto.unidade || "-"}</td>
+
+                      <td>
+                        <strong>
+                          {formatarNumero(quantidade)}
+                        </strong>
+                      </td>
+
+                      <td>{formatarNumero(minimo)}</td>
+
+                      <td>
+                        <span
+                          className={`estoque-status ${
+                            estoqueBaixo ? "baixo" : "normal"
+                          }`}
+                        >
+                          {estoqueBaixo
+                            ? "Estoque baixo"
+                            : "Normal"}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="table-actions">
+                          <button
+                            type="button"
+                            className="small-button"
+                            onClick={() =>
+                              abrirEntrada(produto)
+                            }
+                          >
+                            Entrada
+                          </button>
+
+                          <button
+                            type="button"
+                            className="small-button"
+                            onClick={() =>
+                              abrirBaixa(produto)
+                            }
+                          >
+                            Baixa
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="estoque-table-card">
+        <div className="estoque-toolbar">
+          <div>
+            <h2>Últimas movimentações</h2>
+            <p>
+              Histórico recente de entradas e baixas.
+            </p>
+          </div>
+        </div>
+
+        {ultimasMovimentacoes.length === 0 ? (
+          <div className="empty-state">
+            <strong>Nenhuma movimentação registrada</strong>
+            <span>
+              As entradas e baixas aparecerão aqui.
+            </span>
+          </div>
+        ) : (
+          <div className="table-wrapper">
+            <table className="estoque-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Produto</th>
+                  <th>Tipo</th>
+                  <th>Quantidade</th>
+                  <th>Descrição</th>
+                  <th>Fornecedor</th>
+                  <th>Observações</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {ultimasMovimentacoes.map((movimento) => (
+                  <tr key={movimento.id}>
+                    <td>
+                      {formatarData(
+                        movimento.data_movimentacao
+                      )}
+                    </td>
+
+                    <td>
+                      {nomeProduto(movimento.produto_id)}
+                    </td>
+
+                    <td>
+                      <span
+                        className={`movimentacao-tipo ${
+                          movimento.tipo === "entrada"
+                            ? "entrada"
+                            : "baixa"
+                        }`}
+                      >
+                        {movimento.tipo === "entrada"
+                          ? "Entrada"
+                          : "Baixa"}
+                      </span>
+                    </td>
+
+                    <td>
+                      {formatarNumero(movimento.quantidade)}
+                    </td>
+
+                    <td>
+                      {movimento.descricao || "-"}
+                    </td>
+
+                    <td>
+                      {movimento.fornecedor || "-"}
+                    </td>
+
+                    <td>
+                      {movimento.observacoes || "-"}
+                    </td>
+
+                    <td>
+                      {movimento.tipo === "entrada" ? (
+                        <button
+                          type="button"
+                          className="small-button"
+                          onClick={() =>
+                            abrirEdicaoEntrada(movimento)
+                          }
+                        >
+                          ✏️ Editar
+                        </button>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

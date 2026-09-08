@@ -1,0 +1,475 @@
+import { useState } from "react";
+import "./NovoUsuario.css";
+
+function NovoUsuario({ onVoltar, onSalvar }) {
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [perfil, setPerfil] = useState("");
+  const [status, setStatus] = useState("Ativo");
+
+  const permissoes = {
+    administrador: [
+      ["Pacientes", true],
+      ["Agenda", true],
+      ["Prontuários", true],
+      ["Financeiro", true],
+      ["Estoque", true],
+      ["Relatórios", true],
+      ["Configurações", true],
+      ["Auditoria", true],
+    ],
+
+    fisioterapeuta: [
+      ["Pacientes", true],
+      ["Agenda", true],
+      ["Prontuários", true],
+      ["Financeiro", false],
+      ["Estoque", true],
+      ["Relatórios", false],
+      ["Configurações", false],
+      ["Auditoria", false],
+    ],
+
+    secretaria: [
+      ["Pacientes", true],
+      ["Agenda", true],
+      ["Prontuários", false],
+      ["Financeiro", true],
+      ["Estoque", true],
+      ["Relatórios", false],
+      ["Configurações", false],
+      ["Auditoria", false],
+    ],
+
+    contabilidade: [
+      ["Pacientes", false],
+      ["Agenda", false],
+      ["Prontuários", false],
+      ["Financeiro", false],
+      ["Estoque", false],
+      ["Relatórios", true],
+      ["Configurações", false],
+      ["Auditoria", false],
+      ["Gestão Fiscal e Contábil", true],
+    ],
+
+    estagiario: [
+      ["Pacientes", true],
+      ["Agenda", true],
+      ["Prontuários", false],
+      ["Financeiro", false],
+      ["Estoque", false],
+      ["Relatórios", false],
+      ["Configurações", false],
+      ["Auditoria", false],
+    ],
+  };
+
+  const nomePerfil = {
+    administrador: "Administrador",
+    fisioterapeuta: "Fisioterapeuta",
+    secretaria: "Recepção",
+    contabilidade: "Contabilidade",
+    estagiario: "Estagiário",
+  };
+
+  function handleSalvar() {
+    if (!nome.trim()) {
+      alert("Digite o nome completo.");
+      return;
+    }
+
+    if (!email.trim()) {
+      alert("Digite o usuário ou e-mail.");
+      return;
+    }
+
+    if (!perfil) {
+      alert("Selecione um perfil de acesso.");
+      return;
+    }
+
+    if (!senha) {
+      alert("Digite uma senha.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      alert("As senhas não conferem.");
+      return;
+    }
+
+    onSalvar({
+      nome,
+      email,
+      telefone,
+      perfil: nomePerfil[perfil],
+      status,
+    });
+  }
+
+  return (
+    <div className="novo-usuario-page">
+
+      <div className="novo-usuario-header">
+
+        <div>
+
+          <button
+            className="back-button"
+            type="button"
+            onClick={onVoltar}
+          >
+            ← Voltar para usuários
+          </button>
+
+          <span className="page-label">
+            ADMINISTRAÇÃO
+          </span>
+
+          <h1>
+            Novo usuário
+          </h1>
+
+          <p>
+            Cadastre um novo usuário e defina seu nível de acesso ao Cuidare.
+          </p>
+
+        </div>
+
+      </div>
+
+      <div className="novo-usuario-layout">
+
+        <section className="form-panel">
+
+          <div className="form-panel-header">
+
+            <span>
+              DADOS DO USUÁRIO
+            </span>
+
+            <h2>
+              Informações pessoais
+            </h2>
+
+          </div>
+
+          <div className="form-grid">
+
+            <div className="form-group full">
+
+              <label htmlFor="nome">
+                Nome completo
+              </label>
+
+              <input
+                id="nome"
+                type="text"
+                placeholder="Digite o nome completo"
+                value={nome}
+                onChange={(event) => setNome(event.target.value)}
+              />
+
+            </div>
+
+            <div className="form-group">
+
+              <label htmlFor="email">
+                Usuário ou e-mail
+              </label>
+
+              <input
+                id="email"
+                type="email"
+                placeholder="Digite o usuário ou e-mail"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+
+            </div>
+
+            <div className="form-group">
+
+              <label htmlFor="telefone">
+                Telefone
+              </label>
+
+              <input
+                id="telefone"
+                type="text"
+                placeholder="(00) 00000-0000"
+                value={telefone}
+                onChange={(event) => setTelefone(event.target.value)}
+              />
+
+            </div>
+
+            <div className="form-group">
+
+              <label htmlFor="senha">
+                Senha
+              </label>
+
+              <input
+                id="senha"
+                type="password"
+                placeholder="Digite uma senha"
+                value={senha}
+                onChange={(event) => setSenha(event.target.value)}
+              />
+
+            </div>
+
+            <div className="form-group">
+
+              <label htmlFor="confirmarSenha">
+                Confirmar senha
+              </label>
+
+              <input
+                id="confirmarSenha"
+                type="password"
+                placeholder="Confirme a senha"
+                value={confirmarSenha}
+                onChange={(event) =>
+                  setConfirmarSenha(event.target.value)
+                }
+              />
+
+            </div>
+
+          </div>
+
+        </section>
+
+        <section className="form-panel">
+
+          <div className="form-panel-header">
+
+            <span>
+              ACESSO AO SISTEMA
+            </span>
+
+            <h2>
+              Perfil e permissões
+            </h2>
+
+          </div>
+
+          <div className="form-group">
+
+            <label htmlFor="perfil">
+              Perfil de acesso
+            </label>
+
+            <select
+              id="perfil"
+              value={perfil}
+              onChange={(event) => setPerfil(event.target.value)}
+            >
+
+              <option value="" disabled>
+                Selecione um perfil
+              </option>
+
+              <option value="administrador">
+                Administrador
+              </option>
+
+              <option value="fisioterapeuta">
+                Fisioterapeuta
+              </option>
+
+              <option value="secretaria">
+                Recepção
+              </option>
+
+              <option value="contabilidade">
+                Contabilidade
+              </option>
+
+              <option value="estagiario">
+                Estagiário
+              </option>
+
+            </select>
+
+          </div>
+
+          <div className="permission-info">
+
+            <div className="permission-icon">
+              🔐
+            </div>
+
+            <div>
+
+              <strong>
+                Permissões por perfil
+              </strong>
+
+              <p>
+                As permissões são apresentadas automaticamente
+                de acordo com o perfil selecionado.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="form-group">
+
+            <label>
+              Status do usuário
+            </label>
+
+            <div className="status-options">
+
+              <label className="status-option">
+
+                <input
+                  type="radio"
+                  name="status"
+                  value="Ativo"
+                  checked={status === "Ativo"}
+                  onChange={() => setStatus("Ativo")}
+                />
+
+                <span>
+                  Ativo
+                </span>
+
+              </label>
+
+              <label className="status-option">
+
+                <input
+                  type="radio"
+                  name="status"
+                  value="Inativo"
+                  checked={status === "Inativo"}
+                  onChange={() => setStatus("Inativo")}
+                />
+
+                <span>
+                  Inativo
+                </span>
+
+              </label>
+
+            </div>
+
+          </div>
+
+        </section>
+
+      </div>
+
+      <section className="permissions-preview">
+
+        <div className="form-panel-header">
+
+          <span>
+            PERMISSÕES
+          </span>
+
+          <h2>
+            {perfil
+              ? `Permissões do perfil: ${nomePerfil[perfil]}`
+              : "Selecione um perfil"
+            }
+          </h2>
+
+          <p>
+            Os acessos abaixo serão definidos automaticamente
+            conforme o perfil escolhido.
+          </p>
+
+        </div>
+
+        {!perfil && (
+
+          <div className="permission-empty">
+
+            <div>
+              🔐
+            </div>
+
+            <strong>
+              Nenhum perfil selecionado
+            </strong>
+
+            <p>
+              Selecione um perfil acima para visualizar
+              as permissões disponíveis.
+            </p>
+
+          </div>
+
+        )}
+
+        {perfil && (
+
+          <div className="permissions-grid">
+
+            {permissoes[perfil].map(
+              ([nomePermissao, permitido]) => (
+
+                <div
+                  className={`permission-card ${
+                    permitido ? "" : "restricted"
+                  }`}
+                  key={nomePermissao}
+                >
+
+                  <strong>
+                    {permitido ? "✓" : "×"} {nomePermissao}
+                  </strong>
+
+                  <span>
+                    {permitido
+                      ? "Acesso permitido"
+                      : "Acesso restrito"
+                    }
+                  </span>
+
+                </div>
+
+              )
+            )}
+
+          </div>
+
+        )}
+
+      </section>
+
+      <div className="novo-usuario-actions">
+
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={onVoltar}
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          className="primary-button"
+          onClick={handleSalvar}
+        >
+          Criar usuário
+        </button>
+
+      </div>
+
+    </div>
+  );
+}
+
+export default NovoUsuario;

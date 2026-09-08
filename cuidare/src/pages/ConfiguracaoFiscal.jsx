@@ -36,8 +36,17 @@ function ConfiguracaoFiscal({ onVoltar }) {
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
 
+  const [logo, setLogo] = useState(null);
+  const [logoCarregando, setLogoCarregando] = useState(true);
+  const [logoEnviando, setLogoEnviando] = useState(false);
+  const [logoRemovendo, setLogoRemovendo] = useState(false);
+  const [logoMensagem, setLogoMensagem] = useState("");
+  const [logoErro, setLogoErro] = useState("");
+  const [logoVersao, setLogoVersao] = useState(Date.now());
+
   useEffect(() => {
     carregarConfiguracao();
+    carregarIdentidadeVisual();
   }, []);
 
   async function carregarConfiguracao() {
@@ -103,6 +112,35 @@ function ConfiguracaoFiscal({ onVoltar }) {
     }
   }
 
+  async function carregarIdentidadeVisual() {
+    try {
+      setLogoCarregando(true);
+      setLogoErro("");
+
+      const resposta = await fetch(
+        `${API_URL}/configuracoes/identidade`
+      );
+
+      if (!resposta.ok) {
+        throw new Error(
+          "Não foi possível carregar a identidade visual."
+        );
+      }
+
+      const dados = await resposta.json();
+
+      if (dados.logo_nome && dados.logo_url) {
+        setLogo(dados);
+      } else {
+        setLogo(null);
+      }
+    } catch (error) {
+      setLogoErro(error.message);
+    } finally {
+      setLogoCarregando(false);
+    }
+  }
+
   function alterarCampo(event) {
     const { name, value, type, checked } = event.target;
 
@@ -153,6 +191,128 @@ function ConfiguracaoFiscal({ onVoltar }) {
     } finally {
       setSalvando(false);
     }
+  }
+
+  async function enviarLogo(event) {
+    const arquivo = event.target.files?.[0];
+
+    if (!arquivo) {
+      return;
+    }
+
+    setLogoMensagem("");
+    setLogoErro("");
+
+    const extensoesPermitidas = [
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+    ];
+
+    if (!extensoesPermitidas.includes(arquivo.type)) {
+      setLogoErro(
+        "Formato inválido. Escolha uma imagem PNG, JPG, JPEG ou WEBP."
+      );
+      event.target.value = "";
+      return;
+    }
+
+    const limite = 5 * 1024 * 1024;
+
+    if (arquivo.size > limite) {
+      setLogoErro(
+        "A logo deve ter no máximo 5 MB."
+      );
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      setLogoEnviando(true);
+
+      const dados = new FormData();
+      dados.append("arquivo", arquivo);
+
+      const resposta = await fetch(
+        `${API_URL}/configuracoes/identidade/logo`,
+        {
+          method: "POST",
+          body: dados,
+        }
+      );
+
+      const resultado = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          resultado.detail ||
+            "Não foi possível enviar a logo."
+        );
+      }
+
+      setLogo(resultado);
+      setLogoVersao(Date.now());
+
+      setLogoMensagem(
+        "Logo da Cuidare atualizada com sucesso."
+      );
+    } catch (error) {
+      setLogoErro(error.message);
+    } finally {
+      setLogoEnviando(false);
+      event.target.value = "";
+    }
+  }
+
+  async function removerLogo() {
+    const confirmar = window.confirm(
+      "Deseja realmente remover a logo da Cuidare?"
+    );
+
+    if (!confirmar) {
+      return;
+    }
+
+    try {
+      setLogoRemovendo(true);
+      setLogoMensagem("");
+      setLogoErro("");
+
+      const resposta = await fetch(
+        `${API_URL}/configuracoes/identidade/logo`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const resultado = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          resultado.detail ||
+            "Não foi possível remover a logo."
+        );
+      }
+
+      setLogo(null);
+      setLogoVersao(Date.now());
+
+      setLogoMensagem(
+        "Logo removida com sucesso."
+      );
+    } catch (error) {
+      setLogoErro(error.message);
+    } finally {
+      setLogoRemovendo(false);
+    }
+  }
+
+  function obterLogoUrl() {
+    if (!logo?.logo_url) {
+      return "";
+    }
+
+    return `${API_URL}${logo.logo_url}?v=${logoVersao}`;
   }
 
   if (carregando) {
@@ -376,12 +536,15 @@ function ConfiguracaoFiscal({ onVoltar }) {
                 <option value="">
                   Selecione
                 </option>
+
                 <option value="Simples Nacional">
                   Simples Nacional
                 </option>
+
                 <option value="Lucro Presumido">
                   Lucro Presumido
                 </option>
+
                 <option value="Lucro Real">
                   Lucro Real
                 </option>
@@ -426,7 +589,9 @@ function ConfiguracaoFiscal({ onVoltar }) {
 
             <div>
               <h3>NFS-e</h3>
-              <p>Configuração da emissão de nota fiscal de serviço.</p>
+              <p>
+                Configuração da emissão de nota fiscal de serviço.
+              </p>
             </div>
           </div>
 
@@ -488,7 +653,9 @@ function ConfiguracaoFiscal({ onVoltar }) {
 
             <div>
               <h3>Observações</h3>
-              <p>Informações complementares da configuração.</p>
+              <p>
+                Informações complementares da configuração.
+              </p>
             </div>
           </div>
 
@@ -500,6 +667,95 @@ function ConfiguracaoFiscal({ onVoltar }) {
             onChange={alterarCampo}
             placeholder="Digite observações importantes..."
           />
+        </section>
+
+        <section className="config-card identidade-visual-card">
+          <div className="config-card-title">
+            <span>06</span>
+
+            <div>
+              <h3>Identidade visual</h3>
+              <p>
+                Personalize o Cuidare com a logo da sua clínica.
+              </p>
+            </div>
+          </div>
+
+          <div className="identidade-visual-content">
+            <div className="identidade-logo-preview">
+              {logoCarregando ? (
+                <span>Carregando...</span>
+              ) : logo?.logo_url ? (
+                <img
+                  src={obterLogoUrl()}
+                  alt="Logo da Cuidare"
+                />
+              ) : (
+                <div className="identidade-logo-vazia">
+                  <strong>C</strong>
+                  <span>Sem logo cadastrada</span>
+                </div>
+              )}
+            </div>
+
+            <div className="identidade-logo-info">
+              <strong>Logo da Cuidare</strong>
+
+              <p>
+                Essa logo será utilizada na identidade visual
+                do sistema, incluindo o menu lateral e o
+                painel principal.
+              </p>
+
+              <p className="identidade-formatos">
+                Formatos aceitos: PNG, JPG, JPEG e WEBP.
+                Tamanho máximo: 5 MB.
+              </p>
+
+              <div className="identidade-logo-actions">
+                <label className="config-save-button identidade-upload-button">
+                  {logoEnviando
+                    ? "Enviando..."
+                    : logo
+                    ? "Substituir logo"
+                    : "Escolher logo"}
+
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={enviarLogo}
+                    disabled={logoEnviando}
+                    hidden
+                  />
+                </label>
+
+                {logo && (
+                  <button
+                    type="button"
+                    className="config-cancel-button"
+                    onClick={removerLogo}
+                    disabled={logoRemovendo}
+                  >
+                    {logoRemovendo
+                      ? "Removendo..."
+                      : "Remover logo"}
+                  </button>
+                )}
+              </div>
+
+              {logoMensagem && (
+                <div className="config-success identidade-mensagem">
+                  {logoMensagem}
+                </div>
+              )}
+
+              {logoErro && (
+                <div className="config-error identidade-mensagem">
+                  {logoErro}
+                </div>
+              )}
+            </div>
+          </div>
         </section>
 
         <div className="config-actions">
@@ -519,8 +775,8 @@ function ConfiguracaoFiscal({ onVoltar }) {
             {salvando
               ? "Salvando..."
               : configuracaoId
-                ? "Atualizar configuração"
-                : "Salvar configuração"}
+              ? "Atualizar configuração"
+              : "Salvar configuração"}
           </button>
         </div>
       </form>

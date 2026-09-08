@@ -24,3 +24,10 @@ class UsuarioResposta(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UsuarioAtualizar(BaseModel):
+    nome: str
+    email: EmailStr
+    telefone: str | None = None
+    perfil: str
+    status: bool = True

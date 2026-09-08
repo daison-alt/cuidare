@@ -1,0 +1,348 @@
+from decimal import Decimal
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models.estoque_produto import EstoqueProduto
+from app.models.movimentacao_estoque import MovimentacaoEstoque
+from app.schemas.estoque import (
+    BaixaEstoqueCriar,
+    EntradaEstoqueCriar,
+    EntradaEstoqueEditar,
+    EstoqueProdutoCriar,
+    EstoqueProdutoResposta,
+    MovimentacaoEstoqueResposta,
+)
+
+
+router = APIRouter(
+    prefix="/estoque",
+    tags=["Estoque"],
+)
+
+
+@router.get(
+    "/produtos",
+    response_model=list[EstoqueProdutoResposta],
+)
+def listar_produtos(
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(EstoqueProduto)
+        .filter(EstoqueProduto.ativo.is_(True))
+        .order_by(EstoqueProduto.nome.asc())
+        .all()
+    )
+
+
+@router.post(
+    "/produtos",
+    response_model=EstoqueProdutoResposta,
+    status_code=201,
+)
+def criar_produto(
+    dados: EstoqueProdutoCriar,
+    db: Session = Depends(get_db),
+):
+    produto = EstoqueProduto(
+        nome=dados.nome.strip(),
+        categoria=dados.categoria.strip() if dados.categoria else None,
+        unidade=dados.unidade.strip(),
+        quantidade_atual=Decimal("0.00"),
+        estoque_minimo=dados.estoque_minimo,
+        fornecedor=dados.fornecedor.strip() if dados.fornecedor else None,
+        observacoes=dados.observacoes,
+        ativo=True,
+    )
+
+    db.add(produto)
+    db.commit()
+    db.refresh(produto)
+
+    return produto
+
+
+@router.post(
+    "/entrada",
+    response_model=MovimentacaoEstoqueResposta,
+    status_code=201,
+)
+def registrar_entrada(
+    dados: EntradaEstoqueCriar,
+    db: Session = Depends(get_db),
+):
+    produto = (
+        db.query(EstoqueProduto)
+        .filter(
+            EstoqueProduto.id == dados.produto_id,
+            EstoqueProduto.ativo.is_(True),
+        )
+        .first()
+    )
+
+    if not produto:
+        raise HTTPException(
+            status_code=404,
+            detail="Produto/material não encontrado.",
+        )
+
+    produto.quantidade_atual = (
+        Decimal(str(produto.quantidade_atual or 0))
+        + dados.quantidade
+    )
+
+    if dados.fornecedor:
+        produto.fornecedor = dados.fornecedor.strip()
+
+    movimento = MovimentacaoEstoque(
+        produto_id=produto.id,
+        tipo="entrada",
+        quantidade=dados.quantidade,
+        descricao="Entrada de compra",
+        fornecedor=dados.fornecedor.strip()
+        if dados.fornecedor
+        else None,
+        observacoes=dados.observacoes,
+        ativo=True,
+    )
+
+    db.add(movimento)
+    db.commit()
+    db.refresh(movimento)
+
+    return movimento
+
+
+@router.put(
+    "/movimentacoes/{movimentacao_id}",
+    response_model=MovimentacaoEstoqueResposta,
+)
+def editar_movimentacao_estoque(
+    movimentacao_id: int,
+    dados: EntradaEstoqueEditar,
+    db: Session = Depends(get_db),
+):
+    movimento = (
+        db.query(MovimentacaoEstoque)
+        .filter(
+            MovimentacaoEstoque.id == movimentacao_id,
+            MovimentacaoEstoque.ativo.is_(True),
+        )
+        .first()
+    )
+
+    if not movimento:
+        raise HTTPException(
+            status_code=404,
+            detail="Movimentação de estoque não encontrada.",
+        )
+
+    if movimento.tipo != "entrada":
+        raise HTTPException(
+            status_code=400,
+            detail="Somente entradas de estoque podem ser editadas.",
+        )
+
+    produto = (
+        db.query(EstoqueProduto)
+        .filter(
+            EstoqueProduto.id == movimento.produto_id,
+            EstoqueProduto.ativo.is_(True),
+        )
+        .first()
+    )
+
+    if not produto:
+        raise HTTPException(
+            status_code=404,
+            detail="Produto/material vinculado à movimentação não encontrado.",
+        )
+
+    quantidade_anterior = Decimal(
+        str(movimento.quantidade or 0)
+    )
+
+    quantidade_nova = Decimal(
+        str(dados.quantidade)
+    )
+
+    diferenca = quantidade_nova - quantidade_anterior
+
+    quantidade_atual = Decimal(
+        str(produto.quantidade_atual or 0)
+    )
+
+    nova_quantidade_estoque = (
+        quantidade_atual + diferenca
+    )
+
+    if nova_quantidade_estoque < 0:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Não é possível reduzir essa entrada porque "
+                "a quantidade resultante deixaria o estoque negativo."
+            ),
+        )
+
+    produto.quantidade_atual = nova_quantidade_estoque
+
+    movimento.quantidade = quantidade_nova
+
+    movimento.fornecedor = (
+        dados.fornecedor.strip()
+        if dados.fornecedor
+        else None
+    )
+
+    movimento.observacoes = dados.observacoes
+
+    db.commit()
+    db.refresh(movimento)
+
+    return movimento
+
+
+@router.post(
+    "/baixa",
+    response_model=MovimentacaoEstoqueResposta,
+    status_code=201,
+)
+def registrar_baixa(
+    dados: BaixaEstoqueCriar,
+    db: Session = Depends(get_db),
+):
+    produto = (
+        db.query(EstoqueProduto)
+        .filter(
+            EstoqueProduto.id == dados.produto_id,
+            EstoqueProduto.ativo.is_(True),
+        )
+        .first()
+    )
+
+    if not produto:
+        raise HTTPException(
+            status_code=404,
+            detail="Produto/material não encontrado.",
+        )
+
+    quantidade_atual = Decimal(
+        str(produto.quantidade_atual or 0)
+    )
+
+    if dados.quantidade > quantidade_atual:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Quantidade insuficiente em estoque. "
+                f"Disponível: {quantidade_atual}."
+            ),
+        )
+
+    produto.quantidade_atual = (
+        quantidade_atual - dados.quantidade
+    )
+
+    movimento = MovimentacaoEstoque(
+        produto_id=produto.id,
+        tipo="saida",
+        quantidade=dados.quantidade,
+        descricao=dados.descricao.strip(),
+        observacoes=dados.observacoes,
+        ativo=True,
+    )
+
+    db.add(movimento)
+    db.commit()
+    db.refresh(movimento)
+
+    return movimento
+
+
+@router.get(
+    "/movimentacoes",
+    response_model=list[MovimentacaoEstoqueResposta],
+)
+def listar_movimentacoes(
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(MovimentacaoEstoque)
+        .filter(MovimentacaoEstoque.ativo.is_(True))
+        .order_by(
+            MovimentacaoEstoque.data_movimentacao.desc()
+        )
+        .all()
+    )
+
+
+@router.get(
+    "/produtos/{produto_id}/movimentacoes",
+    response_model=list[MovimentacaoEstoqueResposta],
+)
+def listar_movimentacoes_produto(
+    produto_id: int,
+    db: Session = Depends(get_db),
+):
+    produto = (
+        db.query(EstoqueProduto)
+        .filter(
+            EstoqueProduto.id == produto_id,
+            EstoqueProduto.ativo.is_(True),
+        )
+        .first()
+    )
+
+    if not produto:
+        raise HTTPException(
+            status_code=404,
+            detail="Produto/material não encontrado.",
+        )
+
+    return (
+        db.query(MovimentacaoEstoque)
+        .filter(
+            MovimentacaoEstoque.produto_id == produto_id,
+            MovimentacaoEstoque.ativo.is_(True),
+        )
+        .order_by(
+            MovimentacaoEstoque.data_movimentacao.desc()
+        )
+        .all()
+    )
+
+
+@router.get("/alertas")
+def listar_alertas_estoque(
+    db: Session = Depends(get_db),
+):
+    produtos = (
+        db.query(EstoqueProduto)
+        .filter(EstoqueProduto.ativo.is_(True))
+        .all()
+    )
+
+    alertas = []
+
+    for produto in produtos:
+        quantidade = Decimal(
+            str(produto.quantidade_atual or 0)
+        )
+
+        minimo = Decimal(
+            str(produto.estoque_minimo or 0)
+        )
+
+        if minimo > 0 and quantidade <= minimo:
+            alertas.append({
+                "id": produto.id,
+                "nome": produto.nome,
+                "quantidade_atual": quantidade,
+                "estoque_minimo": minimo,
+                "status": "estoque_baixo",
+            })
+
+    return alertas

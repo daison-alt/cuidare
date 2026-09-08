@@ -12,12 +12,21 @@ TIPOS_MOVIMENTACAO = {
 }
 
 
+FORMAS_PAGAMENTO_PERMITIDAS = {
+    "dinheiro",
+    "pix",
+    "cartao_credito",
+    "cartao_debito",
+    "transferencia",
+}
+
+
 class MovimentacaoCaixaCriar(BaseModel):
     tipo: str
     categoria: str
     descricao: str
     valor: Decimal = Field(..., gt=0)
-    forma_pagamento: str | None = None
+    forma_pagamento: str
     observacoes: str | None = None
 
 

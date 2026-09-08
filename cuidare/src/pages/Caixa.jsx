@@ -22,7 +22,6 @@ const FORMAS_PAGAMENTO = {
   cartao_credito: "Cartão de crédito",
   cartao_debito: "Cartão de débito",
   transferencia: "Transferência",
-  outro: "Outro",
 };
 
 function formatarMoeda(valor) {
@@ -45,6 +44,11 @@ function Caixa({ onVoltar }) {
   const [caixa, setCaixa] = useState(null);
   const [saldo, setSaldo] = useState(null);
   const [movimentacoes, setMovimentacoes] = useState([]);
+  const [historicoCaixas, setHistoricoCaixas] = useState([]);
+  const [mostrarHistorico, setMostrarHistorico] = useState(false);
+  const [caixaHistoricoSelecionado, setCaixaHistoricoSelecionado] = useState(null);
+  const [detalhesCaixaHistorico, setDetalhesCaixaHistorico] = useState(null);
+  const [carregandoDetalhesHistorico, setCarregandoDetalhesHistorico] = useState(false);
 
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -58,6 +62,13 @@ function Caixa({ onVoltar }) {
   const [saldoFinal, setSaldoFinal] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
+  // CONTROLE DE TROCO
+  const [trocoAnterior, setTrocoAnterior] = useState(0);
+  const [caixaOrigemTroco, setCaixaOrigemTroco] = useState(null);
+  const [carregandoTrocoAnterior, setCarregandoTrocoAnterior] = useState(false);
+  const [usarTrocoAnterior, setUsarTrocoAnterior] = useState(true);
+  const [trocoProximaAbertura, setTrocoProximaAbertura] = useState("");
+
   const [movimentacao, setMovimentacao] = useState({
     tipo: "entrada",
     categoria: "",
@@ -66,6 +77,85 @@ function Caixa({ onVoltar }) {
     forma_pagamento: "",
     observacoes: "",
   });
+
+  async function acessarCaixaHistorico(item) {
+    setCaixaHistoricoSelecionado(item);
+    setDetalhesCaixaHistorico(null);
+    setCarregandoDetalhesHistorico(true);
+
+    try {
+      const resposta = await fetch(
+        `${API_URL}/caixa/historico/${item.id}`
+      );
+
+      if (!resposta.ok) {
+        throw new Error("Não foi possível carregar os detalhes do caixa.");
+      }
+
+      const dados = await resposta.json();
+      setDetalhesCaixaHistorico(dados);
+    } catch (error) {
+      console.error("Erro ao carregar detalhes do caixa:", error);
+      setDetalhesCaixaHistorico(null);
+      setErro(error.message || "Erro ao carregar detalhes do caixa.");
+    } finally {
+      setCarregandoDetalhesHistorico(false);
+    }
+  }
+
+  async function carregarHistorico() {
+    try {
+      const resposta = await fetch(`${API_URL}/caixa/historico`);
+
+      if (!resposta.ok) {
+        throw new Error("Não foi possível carregar o histórico dos caixas.");
+      }
+
+      const dados = await resposta.json();
+      setHistoricoCaixas(Array.isArray(dados) ? dados : []);
+    } catch (error) {
+      console.error("Erro ao carregar histórico:", error);
+      setHistoricoCaixas([]);
+    }
+  }
+
+  async function carregarTrocoAnterior() {
+    try {
+      setCarregandoTrocoAnterior(true);
+
+      const resposta = await fetch(`${API_URL}/caixa/proximo-troco`);
+
+      if (!resposta.ok) {
+        throw new Error("Não foi possível consultar o troco do caixa anterior.");
+      }
+
+      const dados = await resposta.json();
+
+      const troco = Number(dados.troco || 0);
+
+      setTrocoAnterior(troco);
+      setCaixaOrigemTroco(
+        dados.existe_caixa_anterior
+          ? {
+              id: dados.caixa_origem_id,
+              data_fechamento: dados.data_fechamento,
+            }
+          : null
+      );
+
+      // Se existir troco anterior, ele já entra como saldo inicial.
+      if (troco > 0) {
+        setSaldoInicial(troco.toFixed(2));
+        setUsarTrocoAnterior(true);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar troco anterior:", error);
+      setTrocoAnterior(0);
+      setCaixaOrigemTroco(null);
+    } finally {
+      setCarregandoTrocoAnterior(false);
+    }
+  }
 
   async function carregarCaixa() {
     try {
@@ -94,14 +184,11 @@ function Caixa({ onVoltar }) {
         ]);
 
       if (!respostaSaldo.ok || !respostaMovimentacoes.ok) {
-        throw new Error(
-          "Não foi possível carregar os dados do caixa."
-        );
+        throw new Error("Não foi possível carregar os dados do caixa.");
       }
 
       const dadosSaldo = await respostaSaldo.json();
-      const dadosMovimentacoes =
-        await respostaMovimentacoes.json();
+      const dadosMovimentacoes = await respostaMovimentacoes.json();
 
       setCaixa(dadosCaixa);
       setSaldo(dadosSaldo);
@@ -120,27 +207,26 @@ function Caixa({ onVoltar }) {
 
   useEffect(() => {
     carregarCaixa();
+    carregarHistorico();
   }, []);
 
-  function alterarMovimentacao(event) {
-    const { name, value } = event.target;
-
-    setMovimentacao((atual) => ({
-      ...atual,
-      [name]: value,
-    }));
-  }
+  useEffect(() => {
+    if (!caixa && mostrarAbertura) {
+      carregarTrocoAnterior();
+    }
+  }, [mostrarAbertura, caixa]);
 
   async function abrirCaixa(event) {
     event.preventDefault();
 
-    if (!saldoInicial) {
+    if (saldoInicial === "") {
       setErro("Informe o saldo inicial do caixa.");
       return;
     }
 
     try {
       setErro("");
+      setSucesso("");
 
       const resposta = await fetch(`${API_URL}/caixa/abrir`, {
         method: "POST",
@@ -149,7 +235,7 @@ function Caixa({ onVoltar }) {
         },
         body: JSON.stringify({
           saldo_inicial: Number(saldoInicial),
-          observacoes: observacoes.trim() || null,
+          usar_troco_anterior: usarTrocoAnterior,
         }),
       });
 
@@ -162,7 +248,9 @@ function Caixa({ onVoltar }) {
       }
 
       setSaldoInicial("");
-      setObservacoes("");
+      setTrocoAnterior(0);
+      setCaixaOrigemTroco(null);
+      setUsarTrocoAnterior(true);
       setMostrarAbertura(false);
       setSucesso("Caixa aberto com sucesso.");
 
@@ -179,16 +267,23 @@ function Caixa({ onVoltar }) {
     if (
       !movimentacao.categoria.trim() ||
       !movimentacao.descricao.trim() ||
-      !movimentacao.valor
+      !movimentacao.valor ||
+      !movimentacao.forma_pagamento
     ) {
       setErro(
-        "Preencha categoria, descrição e valor da movimentação."
+        "Preencha categoria, descrição, valor e forma de pagamento."
       );
+      return;
+    }
+
+    if (Number(movimentacao.valor) <= 0) {
+      setErro("O valor da movimentação deve ser maior que zero.");
       return;
     }
 
     try {
       setErro("");
+      setSucesso("");
 
       const resposta = await fetch(
         `${API_URL}/caixa/movimentacoes`,
@@ -198,12 +293,11 @@ function Caixa({ onVoltar }) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            ...movimentacao,
+            tipo: movimentacao.tipo,
             categoria: movimentacao.categoria.trim(),
             descricao: movimentacao.descricao.trim(),
             valor: Number(movimentacao.valor),
-            forma_pagamento:
-              movimentacao.forma_pagamento || null,
+            forma_pagamento: movimentacao.forma_pagamento,
             observacoes:
               movimentacao.observacoes.trim() || null,
           }),
@@ -214,8 +308,7 @@ function Caixa({ onVoltar }) {
 
       if (!resposta.ok) {
         throw new Error(
-          dados.detail ||
-            "Não foi possível registrar a movimentação."
+          dados.detail || "Não foi possível registrar a movimentação."
         );
       }
 
@@ -243,13 +336,33 @@ function Caixa({ onVoltar }) {
   async function fecharCaixa(event) {
     event.preventDefault();
 
-    if (!saldoFinal) {
-      setErro("Informe o saldo final do caixa.");
+    if (saldoFinal === "") {
+      setErro("Informe o dinheiro físico contado.");
+      return;
+    }
+
+    if (Number(saldoFinal) < 0) {
+      setErro("O dinheiro físico contado não pode ser negativo.");
+      return;
+    }
+
+    const valorTroco = Number(trocoProximaAbertura || 0);
+
+    if (valorTroco < 0) {
+      setErro("O troco para a próxima abertura não pode ser negativo.");
+      return;
+    }
+
+    if (valorTroco > Number(saldoFinal)) {
+      setErro(
+        "O troco para a próxima abertura não pode ser maior que o dinheiro físico contado."
+      );
       return;
     }
 
     try {
       setErro("");
+      setSucesso("");
 
       const resposta = await fetch(`${API_URL}/caixa/fechar`, {
         method: "POST",
@@ -258,6 +371,7 @@ function Caixa({ onVoltar }) {
         },
         body: JSON.stringify({
           saldo_final: Number(saldoFinal),
+          troco_proxima_abertura: valorTroco,
           observacoes: observacoes.trim() || null,
         }),
       });
@@ -271,6 +385,7 @@ function Caixa({ onVoltar }) {
       }
 
       setSaldoFinal("");
+      setTrocoProximaAbertura("");
       setObservacoes("");
       setMostrarFechamento(false);
 
@@ -323,95 +438,195 @@ function Caixa({ onVoltar }) {
     );
   }, [movimentacoes]);
 
+  const resumoFormasPagamento = useMemo(() => {
+    const resultado = {
+      dinheiro: 0,
+      pix: 0,
+      cartao_credito: 0,
+      cartao_debito: 0,
+      transferencia: 0,
+    };
+
+    movimentacoes.forEach((item) => {
+      if (!Object.prototype.hasOwnProperty.call(
+        resultado,
+        item.forma_pagamento
+      )) {
+        return;
+      }
+
+      const valor = Number(item.valor || 0);
+
+      if (
+        item.tipo === "entrada" ||
+        item.tipo === "suprimento"
+      ) {
+        resultado[item.forma_pagamento] += valor;
+      }
+
+      if (
+        item.tipo === "saida" ||
+        item.tipo === "sangria"
+      ) {
+        resultado[item.forma_pagamento] -= valor;
+      }
+    });
+
+    return resultado;
+  }, [movimentacoes]);
+
+  const dinheiroEsperado =
+    Number(caixa?.saldo_inicial || 0) +
+    resumoFormasPagamento.dinheiro;
+
+  const totalEletronicoEsperado =
+    resumoFormasPagamento.pix +
+    resumoFormasPagamento.cartao_credito +
+    resumoFormasPagamento.cartao_debito +
+    resumoFormasPagamento.transferencia;
+
+  const totalFinanceiroEsperado =
+    dinheiroEsperado + totalEletronicoEsperado;
+
+  const dinheiroContado =
+    saldoFinal === "" ? null : Number(saldoFinal);
+
+  const diferencaFechamento =
+    dinheiroContado === null
+      ? null
+      : dinheiroContado - dinheiroEsperado;
+
+  if (carregando) {
+    return (
+      <div className="caixa-page">
+        <div className="caixa-loading">
+          Carregando caixa...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="caixa-page">
       <header className="caixa-header">
         <div>
-          <span className="caixa-kicker">CAIXA</span>
-
-          <h1>Controle de Caixa</h1>
-
+          <span className="caixa-kicker">FINANCEIRO</span>
+          <h1>Caixa</h1>
           <p>
-            Acompanhe abertura, movimentações e fechamento
-            do caixa da clínica.
+            Controle de entradas, saídas, dinheiro físico e
+            valores eletrônicos.
           </p>
         </div>
 
-        <div className="caixa-header-actions">
+        {onVoltar && (
           <button
             type="button"
             className="caixa-secondary-button"
             onClick={onVoltar}
           >
-            Voltar
+            ← Voltar
           </button>
-
-          <button
-            type="button"
-            className="caixa-refresh-button"
-            onClick={carregarCaixa}
-          >
-            Atualizar
-          </button>
-
-          {caixa && (
-            <button
-              type="button"
-              className="caixa-danger-button"
-              onClick={() => {
-                setErro("");
-                setSucesso("");
-                setMostrarFechamento(true);
-              }}
-            >
-              Fechar caixa
-            </button>
-          )}
-        </div>
+        )}
       </header>
 
       {erro && (
-        <div className="caixa-alert caixa-alert-erro">
+        <div className="caixa-alerta caixa-alerta-erro">
           {erro}
         </div>
       )}
 
       {sucesso && (
-        <div className="caixa-alert caixa-alert-sucesso">
+        <div className="caixa-alerta caixa-alerta-sucesso">
           {sucesso}
         </div>
       )}
 
-      {carregando ? (
-        <section className="caixa-empty">
-          <strong>Carregando caixa...</strong>
-          <p>Aguarde enquanto consultamos os dados.</p>
-        </section>
-      ) : !caixa ? (
+      {!caixa ? (
         <section className="caixa-card caixa-card-abertura">
-          <span className="caixa-kicker">CAIXA FECHADO</span>
-
-          <h2>Nenhum caixa está aberto</h2>
-
-          <p>
-            Abra o caixa para começar a registrar
-            recebimentos, pagamentos, sangrias e suprimentos.
-          </p>
+          <div className="caixa-section-header">
+            <div>
+              <span className="caixa-kicker">
+                CONTROLE FINANCEIRO
+              </span>
+              <h2>Caixa fechado</h2>
+              <p className="caixa-section-description">
+                Abra o caixa para começar a registrar as
+                movimentações financeiras da clínica.
+              </p>
+            </div>
+          </div>
 
           {!mostrarAbertura ? (
             <button
               type="button"
               className="caixa-primary-button"
-              onClick={() => {
-                setErro("");
-                setSucesso("");
-                setMostrarAbertura(true);
-              }}
+              onClick={() => setMostrarAbertura(true)}
             >
               Abrir caixa
             </button>
           ) : (
             <form onSubmit={abrirCaixa} className="caixa-form">
+
+              {carregandoTrocoAnterior ? (
+                <div className="caixa-troco-aviso">
+                  <strong>Consultando troco do caixa anterior...</strong>
+                </div>
+              ) : trocoAnterior > 0 ? (
+                <div className="caixa-troco-aviso">
+                  <div>
+                    <span className="caixa-troco-kicker">
+                      TROCO DO CAIXA ANTERIOR
+                    </span>
+
+                    <strong className="caixa-troco-valor">
+                      {formatarMoeda(trocoAnterior)}
+                    </strong>
+
+                    <small>
+                      Este valor foi deixado no caixa anterior
+                      para ser utilizado como troco na abertura
+                      de hoje.
+                    </small>
+
+                    {caixaOrigemTroco?.id && (
+                      <small>
+                        Origem: Caixa #{caixaOrigemTroco.id}
+                      </small>
+                    )}
+                  </div>
+
+                  <label className="caixa-troco-check">
+                    <input
+                      type="checkbox"
+                      checked={usarTrocoAnterior}
+                      onChange={(event) => {
+                        const usar = event.target.checked;
+
+                        setUsarTrocoAnterior(usar);
+
+                        if (usar) {
+                          setSaldoInicial(
+                            trocoAnterior.toFixed(2)
+                          );
+                        } else {
+                          setSaldoInicial("");
+                        }
+                      }}
+                    />
+
+                    <span>Usar troco anterior como saldo inicial</span>
+                  </label>
+                </div>
+              ) : (
+                <div className="caixa-troco-aviso caixa-troco-sem-valor">
+                  <strong>Nenhum troco anterior registrado.</strong>
+                  <small>
+                    Informe manualmente o valor que estará
+                    disponível no caixa no início do expediente.
+                  </small>
+                </div>
+              )}
+
               <label>
                 Saldo inicial
                 <input
@@ -423,26 +638,26 @@ function Caixa({ onVoltar }) {
                     setSaldoInicial(event.target.value)
                   }
                   placeholder="0,00"
+                  autoFocus
                 />
-              </label>
-
-              <label>
-                Observações
-                <textarea
-                  rows="3"
-                  value={observacoes}
-                  onChange={(event) =>
-                    setObservacoes(event.target.value)
-                  }
-                  placeholder="Observações da abertura..."
-                />
+                <small>
+                  {trocoAnterior > 0 && usarTrocoAnterior
+                    ? "Valor preenchido automaticamente com o troco anterior."
+                    : "Informe o dinheiro físico disponível para iniciar o caixa."}
+                </small>
               </label>
 
               <div className="caixa-form-actions">
                 <button
                   type="button"
                   className="caixa-secondary-button"
-                  onClick={() => setMostrarAbertura(false)}
+                  onClick={() => {
+                    setMostrarAbertura(false);
+                    setSaldoInicial("");
+                    setTrocoAnterior(0);
+                    setCaixaOrigemTroco(null);
+                    setUsarTrocoAnterior(true);
+                  }}
                 >
                   Cancelar
                 </button>
@@ -459,50 +674,139 @@ function Caixa({ onVoltar }) {
         </section>
       ) : (
         <>
-          <section className="caixa-status-card">
-            <div>
-              <span>STATUS</span>
-              <strong>Caixa aberto</strong>
-              <small>
-                Aberto em {formatarData(caixa.data_abertura)}
-              </small>
+          <section className="caixa-card">
+            <div className="caixa-section-header">
+              <div>
+                <span className="caixa-kicker">
+                  CONTROLE FINANCEIRO
+                </span>
+                <h2>Resumo do caixa</h2>
+                <p className="caixa-section-description">
+                  Visão geral do dinheiro físico e dos valores
+                  eletrônicos registrados.
+                </p>
+              </div>
+
+              <span className="caixa-status-aberto">
+                CAIXA ABERTO
+              </span>
             </div>
 
-            <div className="caixa-status-saldo">
-              <span>SALDO ATUAL</span>
-              <strong>
-                {formatarMoeda(saldo?.saldo_atual)}
-              </strong>
-            </div>
-          </section>
+            <div className="caixa-resumo-grid">
+              <div className="caixa-resumo-card caixa-resumo-destaque">
+                <span>SALDO FINANCEIRO</span>
+                <strong>
+                  {formatarMoeda(totalFinanceiroEsperado)}
+                </strong>
+                <small>
+                  Dinheiro + valores eletrônicos
+                </small>
+              </div>
 
-          <section className="caixa-resumo-grid">
-            <div className="caixa-resumo-card">
-              <span>ENTRADAS</span>
-              <strong>
-                {formatarMoeda(totais.entradas)}
-              </strong>
+              <div className="caixa-resumo-card">
+                <span>DINHEIRO EM ESPÉCIE</span>
+                <strong>
+                  {formatarMoeda(dinheiroEsperado)}
+                </strong>
+                <small>
+                  Valor esperado fisicamente no caixa
+                </small>
+              </div>
+
+              <div className="caixa-resumo-card">
+                <span>VALORES ELETRÔNICOS</span>
+                <strong>
+                  {formatarMoeda(totalEletronicoEsperado)}
+                </strong>
+                <small>
+                  Pix, cartões e transferência
+                </small>
+              </div>
+
+              <div className="caixa-resumo-card">
+                <span>MOVIMENTAÇÕES</span>
+                <strong>{movimentacoes.length}</strong>
+                <small>
+                  Registros realizados no caixa
+                </small>
+              </div>
             </div>
 
-            <div className="caixa-resumo-card">
-              <span>SAÍDAS</span>
-              <strong>
-                {formatarMoeda(totais.saidas)}
-              </strong>
+            <div className="caixa-formas-grid">
+              <div className="caixa-forma-card caixa-forma-especie">
+                <span>DINHEIRO</span>
+                <strong>
+                  {formatarMoeda(
+                    resumoFormasPagamento.dinheiro
+                  )}
+                </strong>
+              </div>
+
+              <div className="caixa-forma-card">
+                <span>PIX</span>
+                <strong>
+                  {formatarMoeda(
+                    resumoFormasPagamento.pix
+                  )}
+                </strong>
+              </div>
+
+              <div className="caixa-forma-card">
+                <span>CARTÃO DE CRÉDITO</span>
+                <strong>
+                  {formatarMoeda(
+                    resumoFormasPagamento.cartao_credito
+                  )}
+                </strong>
+              </div>
+
+              <div className="caixa-forma-card">
+                <span>CARTÃO DE DÉBITO</span>
+                <strong>
+                  {formatarMoeda(
+                    resumoFormasPagamento.cartao_debito
+                  )}
+                </strong>
+              </div>
+
+              <div className="caixa-forma-card">
+                <span>TRANSFERÊNCIA</span>
+                <strong>
+                  {formatarMoeda(
+                    resumoFormasPagamento.transferencia
+                  )}
+                </strong>
+              </div>
             </div>
 
-            <div className="caixa-resumo-card">
-              <span>SANGRIAS</span>
-              <strong>
-                {formatarMoeda(totais.sangrias)}
-              </strong>
-            </div>
+            <div className="caixa-resumo-secundario">
+              <div>
+                <span>ENTRADAS</span>
+                <strong>
+                  {formatarMoeda(totais.entradas)}
+                </strong>
+              </div>
 
-            <div className="caixa-resumo-card">
-              <span>SUPRIMENTOS</span>
-              <strong>
-                {formatarMoeda(totais.suprimentos)}
-              </strong>
+              <div>
+                <span>SAÍDAS</span>
+                <strong>
+                  {formatarMoeda(totais.saidas)}
+                </strong>
+              </div>
+
+              <div>
+                <span>SUPRIMENTOS</span>
+                <strong>
+                  {formatarMoeda(totais.suprimentos)}
+                </strong>
+              </div>
+
+              <div>
+                <span>SANGRIAS</span>
+                <strong>
+                  {formatarMoeda(totais.sangrias)}
+                </strong>
+              </div>
             </div>
           </section>
 
@@ -512,36 +816,44 @@ function Caixa({ onVoltar }) {
                 <span className="caixa-kicker">
                   MOVIMENTAÇÕES
                 </span>
-
-                <h2>Movimentações do caixa</h2>
+                <h2>O que aconteceu</h2>
+                <p className="caixa-section-description">
+                  Registre todas as entradas, saídas,
+                  sangrias e suprimentos.
+                </p>
               </div>
 
               <button
                 type="button"
                 className="caixa-primary-button"
                 onClick={() => {
-                  setErro("");
-                  setSucesso("");
                   setMostrarMovimentacao(
                     !mostrarMovimentacao
                   );
+                  setErro("");
                 }}
               >
-                + Nova movimentação
+                {mostrarMovimentacao
+                  ? "Fechar formulário"
+                  : "+ Nova movimentação"}
               </button>
             </div>
 
             {mostrarMovimentacao && (
               <form
                 onSubmit={registrarMovimentacao}
-                className="caixa-form caixa-form-movimentacao"
+                className="caixa-form"
               >
                 <label>
                   Tipo
                   <select
-                    name="tipo"
                     value={movimentacao.tipo}
-                    onChange={alterarMovimentacao}
+                    onChange={(event) =>
+                      setMovimentacao({
+                        ...movimentacao,
+                        tipo: event.target.value,
+                      })
+                    }
                   >
                     {Object.entries(TIPOS).map(
                       ([valor, nome]) => (
@@ -556,32 +868,46 @@ function Caixa({ onVoltar }) {
                 <label>
                   Categoria
                   <input
-                    name="categoria"
+                    type="text"
                     value={movimentacao.categoria}
-                    onChange={alterarMovimentacao}
-                    placeholder="Ex.: Recebimento"
+                    onChange={(event) =>
+                      setMovimentacao({
+                        ...movimentacao,
+                        categoria: event.target.value,
+                      })
+                    }
+                    placeholder="Ex.: Atendimento, material..."
                   />
                 </label>
 
                 <label>
                   Descrição
                   <input
-                    name="descricao"
+                    type="text"
                     value={movimentacao.descricao}
-                    onChange={alterarMovimentacao}
-                    placeholder="Descrição da movimentação"
+                    onChange={(event) =>
+                      setMovimentacao({
+                        ...movimentacao,
+                        descricao: event.target.value,
+                      })
+                    }
+                    placeholder="Descreva a movimentação"
                   />
                 </label>
 
                 <label>
                   Valor
                   <input
-                    name="valor"
                     type="number"
                     step="0.01"
-                    min="0.01"
+                    min="0"
                     value={movimentacao.valor}
-                    onChange={alterarMovimentacao}
+                    onChange={(event) =>
+                      setMovimentacao({
+                        ...movimentacao,
+                        valor: event.target.value,
+                      })
+                    }
                     placeholder="0,00"
                   />
                 </label>
@@ -589,12 +915,16 @@ function Caixa({ onVoltar }) {
                 <label>
                   Forma de pagamento
                   <select
-                    name="forma_pagamento"
                     value={movimentacao.forma_pagamento}
-                    onChange={alterarMovimentacao}
+                    onChange={(event) =>
+                      setMovimentacao({
+                        ...movimentacao,
+                        forma_pagamento: event.target.value,
+                      })
+                    }
                   >
                     <option value="">
-                      Não informado
+                      Selecione a forma de pagamento
                     </option>
 
                     {Object.entries(
@@ -610,11 +940,15 @@ function Caixa({ onVoltar }) {
                 <label className="caixa-form-full">
                   Observações
                   <textarea
-                    name="observacoes"
                     rows="3"
                     value={movimentacao.observacoes}
-                    onChange={alterarMovimentacao}
-                    placeholder="Observações..."
+                    onChange={(event) =>
+                      setMovimentacao({
+                        ...movimentacao,
+                        observacoes: event.target.value,
+                      })
+                    }
+                    placeholder="Observações opcionais"
                   />
                 </label>
 
@@ -639,22 +973,18 @@ function Caixa({ onVoltar }) {
               </form>
             )}
 
-            {movimentacoes.length === 0 ? (
-              <div className="caixa-empty">
-                <strong>Nenhuma movimentação</strong>
-                <p>
-                  Ainda não existem movimentações neste caixa.
-                </p>
-              </div>
-            ) : (
-              <div className="caixa-table-wrapper">
-                <table className="caixa-table">
+            <div className="caixa-tabela-wrapper">
+              {movimentacoes.length === 0 ? (
+                <div className="caixa-empty">
+                  Nenhuma movimentação registrada neste caixa.
+                </div>
+              ) : (
+                <table className="caixa-tabela">
                   <thead>
                     <tr>
                       <th>Data</th>
                       <th>Tipo</th>
                       <th>Descrição</th>
-                      <th>Categoria</th>
                       <th>Forma</th>
                       <th>Valor</th>
                     </tr>
@@ -665,7 +995,8 @@ function Caixa({ onVoltar }) {
                       <tr key={item.id}>
                         <td>
                           {formatarData(
-                            item.data_movimentacao
+                            item.data_movimentacao ||
+                              item.criado_em
                           )}
                         </td>
 
@@ -673,15 +1004,22 @@ function Caixa({ onVoltar }) {
                           <span
                             className={`caixa-tipo caixa-tipo-${item.tipo}`}
                           >
-                            {TIPOS[item.tipo] || item.tipo}
+                            {TIPOS[item.tipo] ||
+                              item.tipo}
                           </span>
                         </td>
 
                         <td>
-                          <strong>{item.descricao}</strong>
-                        </td>
+                          <strong>
+                            {item.descricao}
+                          </strong>
 
-                        <td>{item.categoria || "-"}</td>
+                          {item.categoria && (
+                            <small>
+                              {item.categoria}
+                            </small>
+                          )}
+                        </td>
 
                         <td>
                           {FORMAS_PAGAMENTO[
@@ -692,9 +1030,383 @@ function Caixa({ onVoltar }) {
                         </td>
 
                         <td>
-                          <strong>
-                            {formatarMoeda(item.valor)}
-                          </strong>
+                          {formatarMoeda(item.valor)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </section>
+
+          <section className="caixa-card caixa-card-fechamento">
+            <div className="caixa-section-header">
+              <div>
+                <span className="caixa-kicker">
+                  FECHAMENTO
+                </span>
+                <h2>Fechar caixa</h2>
+                <p className="caixa-section-description">
+                  Confira o dinheiro físico encontrado e
+                  visualize os valores eletrônicos antes de
+                  confirmar o fechamento.
+                </p>
+              </div>
+
+              {!mostrarFechamento && (
+                <button
+                  type="button"
+                  className="caixa-danger-button"
+                  onClick={() => {
+                    setMostrarFechamento(true);
+                    setErro("");
+                  }}
+                >
+                  Fechar caixa
+                </button>
+              )}
+            </div>
+
+            {mostrarFechamento && (
+              <>
+                <div className="caixa-fechamento-grid">
+                  <div className="caixa-fechamento-resumo">
+                    <span>DINHEIRO ESPERADO</span>
+                    <strong>
+                      {formatarMoeda(dinheiroEsperado)}
+                    </strong>
+                    <small>
+                      Valor que deve estar fisicamente no
+                      caixa.
+                    </small>
+                  </div>
+
+                  <div className="caixa-fechamento-resumo caixa-fechamento-contado">
+                    <label>
+                      <span>DINHEIRO FÍSICO CONTADO</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={saldoFinal}
+                        onChange={(event) =>
+                          setSaldoFinal(event.target.value)
+                        }
+                        placeholder="0,00"
+                        autoFocus
+                      />
+                    </label>
+
+                    <small>
+                      Informe o valor realmente encontrado.
+                    </small>
+                  </div>
+
+                  <div
+                    className={`caixa-fechamento-resumo caixa-fechamento-diferenca ${
+                      diferencaFechamento === null
+                        ? ""
+                        : diferencaFechamento === 0
+                        ? "caixa-fechamento-ok"
+                        : diferencaFechamento > 0
+                        ? "caixa-fechamento-sobra"
+                        : "caixa-fechamento-falta"
+                    }`}
+                  >
+                    <span>DIFERENÇA</span>
+
+                    <strong>
+                      {diferencaFechamento === null
+                        ? "-"
+                        : formatarMoeda(
+                            diferencaFechamento
+                          )}
+                    </strong>
+
+                    <small>
+                      {diferencaFechamento === null
+                        ? "Informe o dinheiro contado."
+                        : diferencaFechamento === 0
+                        ? "Caixa conferido."
+                        : diferencaFechamento > 0
+                        ? "Há uma sobra no caixa."
+                        : "Há uma falta no caixa."}
+                    </small>
+                  </div>
+                </div>
+
+                <div className="caixa-troco-fechamento">
+                  <div className="caixa-troco-fechamento-header">
+                    <div>
+                      <span className="caixa-troco-kicker">
+                        PRÓXIMO DIA
+                      </span>
+
+                      <h3>Troco para próxima abertura</h3>
+
+                      <p>
+                        Informe quanto do dinheiro físico contado
+                        permanecerá no caixa para iniciar o próximo
+                        expediente.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="caixa-troco-fechamento-grid">
+                    <label>
+                      <span>VALOR DO TROCO</span>
+
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={trocoProximaAbertura}
+                        onChange={(event) =>
+                          setTrocoProximaAbertura(
+                            event.target.value
+                          )
+                        }
+                        placeholder="0,00"
+                      />
+
+                      <small>
+                        Esse valor não será registrado como
+                        movimentação financeira.
+                      </small>
+                    </label>
+
+                    <div className="caixa-troco-retirada">
+                      <span>VALOR QUE SERÁ RETIRADO</span>
+
+                      <strong>
+                        {saldoFinal === ""
+                          ? formatarMoeda(0)
+                          : formatarMoeda(
+                              Math.max(
+                                0,
+                                Number(saldoFinal) -
+                                  Number(
+                                    trocoProximaAbertura || 0
+                                  )
+                              )
+                            )}
+                      </strong>
+
+                      <small>
+                        Dinheiro contado menos o troco deixado
+                        para o próximo dia.
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="caixa-fechamento-eletronicos">
+                  <div className="caixa-section-header">
+                    <div>
+                      <span className="caixa-kicker">
+                        VALORES ELETRÔNICOS
+                      </span>
+
+                      <h3>Movimentações eletrônicas</h3>
+
+                      <p className="caixa-section-description">
+                        Valores calculados automaticamente
+                        pelas movimentações registradas.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="caixa-formas-grid">
+                    <div className="caixa-forma-card">
+                      <span>PIX</span>
+                      <strong>
+                        {formatarMoeda(
+                          resumoFormasPagamento.pix
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="caixa-forma-card">
+                      <span>CARTÃO DE CRÉDITO</span>
+                      <strong>
+                        {formatarMoeda(
+                          resumoFormasPagamento.cartao_credito
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="caixa-forma-card">
+                      <span>CARTÃO DE DÉBITO</span>
+                      <strong>
+                        {formatarMoeda(
+                          resumoFormasPagamento.cartao_debito
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="caixa-forma-card">
+                      <span>TRANSFERÊNCIA</span>
+                      <strong>
+                        {formatarMoeda(
+                          resumoFormasPagamento.transferencia
+                        )}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="caixa-total-separado">
+                    <div>
+                      <span>
+                        TOTAL ELETRÔNICO
+                      </span>
+                      <strong>
+                        {formatarMoeda(
+                          totalEletronicoEsperado
+                        )}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        TOTAL FINANCEIRO
+                      </span>
+                      <strong>
+                        {formatarMoeda(
+                          totalFinanceiroEsperado
+                        )}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                <form
+                  onSubmit={fecharCaixa}
+                  className="caixa-form"
+                >
+                  <label className="caixa-form-full">
+                    Observações
+                    <textarea
+                      rows="3"
+                      value={observacoes}
+                      onChange={(event) =>
+                        setObservacoes(
+                          event.target.value
+                        )
+                      }
+                      placeholder="Informe alguma diferença, ocorrência ou observação..."
+                    />
+                  </label>
+
+                  <div className="caixa-form-actions caixa-form-full">
+                    <button
+                      type="button"
+                      className="caixa-secondary-button"
+                      onClick={() => {
+                        setMostrarFechamento(false);
+                        setSaldoFinal("");
+                        setObservacoes("");
+                      }}
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="caixa-danger-button"
+                    >
+                      Confirmar fechamento
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+          </section>
+        </>
+
+      )}
+
+      <section className="caixa-card caixa-historico">
+        <div className="caixa-section-header">
+          <div>
+            <h2>📋 Histórico de Caixas</h2>
+            <p className="caixa-section-description">
+              Consulte os caixas já fechados.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="caixa-secondary-button"
+            onClick={() => {
+              setMostrarHistorico(!mostrarHistorico);
+              if (!mostrarHistorico) {
+                carregarHistorico();
+              }
+            }}
+          >
+            {mostrarHistorico ? "Ocultar histórico" : "Ver histórico"}
+          </button>
+        </div>
+
+        {mostrarHistorico && (
+          <div className="caixa-historico-conteudo">
+            {historicoCaixas.length === 0 ? (
+              <div className="caixa-historico-vazio">
+                Nenhum caixa fechado encontrado.
+              </div>
+            ) : (
+              <div className="caixa-table-wrapper">
+                <table className="caixa-table">
+                  <thead>
+                    <tr>
+                      <th>Caixa</th>
+                      <th>Data do fechamento</th>
+                      <th>Saldo inicial</th>
+                      <th>Dinheiro contado</th>
+                      <th>Status</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {historicoCaixas.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <strong>#{item.id}</strong>
+                        </td>
+
+                        <td>
+                          {item.data_fechamento
+                            ? new Date(item.data_fechamento).toLocaleString("pt-BR")
+                            : "-"}
+                        </td>
+
+                        <td>
+                          {formatarMoeda(item.saldo_inicial)}
+                        </td>
+
+                        <td>
+                          {item.saldo_final !== null &&
+                          item.saldo_final !== undefined
+                            ? formatarMoeda(item.saldo_final)
+                            : "-"}
+                        </td>
+
+                        <td>
+                          <span className="caixa-status-fechado">
+                            Fechado
+                          </span>
+                        </td>
+
+                        <td>
+                          <button
+                            type="button"
+                            className="caixa-secondary-button"
+                            onClick={() => acessarCaixaHistorico(item)}
+                          >
+                            Acessar caixa
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -702,71 +1414,295 @@ function Caixa({ onVoltar }) {
                 </table>
               </div>
             )}
-          </section>
+          </div>
+        )}
 
-          {mostrarFechamento && (
-            <section className="caixa-card caixa-card-fechamento">
-              <div className="caixa-section-header">
-                <div>
-                  <span className="caixa-kicker">
-                    FECHAMENTO
-                  </span>
-
-                  <h2>Fechar caixa</h2>
-                </div>
+        {caixaHistoricoSelecionado && (
+          <div className="caixa-historico-detalhes">
+            <div className="caixa-section-header">
+              <div>
+                <h3>📂 Caixa #{caixaHistoricoSelecionado.id}</h3>
+                <p className="caixa-section-description">
+                  Consulta do caixa fechado — somente leitura.
+                </p>
               </div>
 
-              <form onSubmit={fecharCaixa} className="caixa-form">
-                <label>
-                  Saldo final
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={saldoFinal}
-                    onChange={(event) =>
-                      setSaldoFinal(event.target.value)
-                    }
-                    placeholder="0,00"
-                  />
-                </label>
+              <button
+                type="button"
+                className="caixa-secondary-button"
+                onClick={() => {
+                  setCaixaHistoricoSelecionado(null);
+                  setDetalhesCaixaHistorico(null);
+                }}
+              >
+                Fechar detalhes
+              </button>
+            </div>
 
-                <label>
-                  Observações
-                  <textarea
-                    rows="3"
-                    value={observacoes}
-                    onChange={(event) =>
-                      setObservacoes(event.target.value)
-                    }
-                    placeholder="Observações do fechamento..."
-                  />
-                </label>
+            {carregandoDetalhesHistorico && (
+              <div className="caixa-empty-state">
+                Carregando detalhes do caixa...
+              </div>
+            )}
 
-                <div className="caixa-form-actions">
-                  <button
-                    type="button"
-                    className="caixa-secondary-button"
-                    onClick={() =>
-                      setMostrarFechamento(false)
-                    }
-                  >
-                    Cancelar
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="caixa-danger-button"
-                  >
-                    Confirmar fechamento
-                  </button>
+            {!carregandoDetalhesHistorico && detalhesCaixaHistorico && (
+              <>
+                <div className="caixa-historico-status">
+                  <strong>🔒 Caixa fechado</strong>
+                  <span>Este caixa está disponível apenas para consulta.</span>
                 </div>
-              </form>
-            </section>
-          )}
-        </>
-      )}
+
+                <div className="caixa-resumo-secundario">
+                  <div>
+                    <span>ABERTURA</span>
+                    <strong>
+                      {detalhesCaixaHistorico.caixa?.data_abertura
+                        ? new Date(
+                            detalhesCaixaHistorico.caixa.data_abertura
+                          ).toLocaleString("pt-BR")
+                        : "-"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>FECHAMENTO</span>
+                    <strong>
+                      {detalhesCaixaHistorico.caixa?.data_fechamento
+                        ? new Date(
+                            detalhesCaixaHistorico.caixa.data_fechamento
+                          ).toLocaleString("pt-BR")
+                        : "-"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>SALDO INICIAL</span>
+                    <strong>
+                      {formatarMoeda(
+                        detalhesCaixaHistorico.caixa?.saldo_inicial
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>DINHEIRO CONTADO</span>
+                    <strong>
+                      {detalhesCaixaHistorico.caixa?.saldo_final !== null &&
+                      detalhesCaixaHistorico.caixa?.saldo_final !== undefined
+                        ? formatarMoeda(
+                            detalhesCaixaHistorico.caixa.saldo_final
+                          )
+                        : "-"}
+                    </strong>
+                  </div>
+                </div>
+
+                {detalhesCaixaHistorico.conferencia ? (
+                  <>
+                    <div className="caixa-section-header">
+                      <div>
+                        <h4>📊 Conferência do fechamento</h4>
+                        <p className="caixa-section-description">
+                          Valores registrados no momento do fechamento.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="caixa-resumo-secundario">
+                      <div>
+                        <span>DINHEIRO ESPERADO</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia
+                              .dinheiro_esperado
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>DINHEIRO CONTADO</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia
+                              .dinheiro_informado
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>DIFERENÇA</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia
+                              .diferenca_dinheiro
+                          )}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="caixa-formas-grid">
+                      <div>
+                        <span>PIX</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia.pix_esperado
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>CARTÃO CRÉDITO</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia
+                              .cartao_credito_esperado
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>CARTÃO DÉBITO</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia
+                              .cartao_debito_esperado
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>TRANSFERÊNCIA</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia
+                              .transferencia_esperada
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>TOTAL FINANCEIRO</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia.total_esperado
+                          )}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="caixa-resumo-secundario">
+                      <div>
+                        <span>TOTAL ESPERADO</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia.total_esperado
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>TOTAL INFORMADO</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia.total_informado
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>DIFERENÇA TOTAL</span>
+                        <strong>
+                          {formatarMoeda(
+                            detalhesCaixaHistorico.conferencia.diferenca_total
+                          )}
+                        </strong>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="caixa-empty-state">
+                    Esta caixa não possui uma conferência registrada.
+                  </div>
+                )}
+
+                {detalhesCaixaHistorico.caixa?.observacoes && (
+                  <div className="caixa-observacoes-historico">
+                    <strong>Observações do fechamento:</strong>{" "}
+                    {detalhesCaixaHistorico.caixa.observacoes}
+                  </div>
+                )}
+
+                <div className="caixa-section-header">
+                  <div>
+                    <h4>📋 Movimentações do caixa</h4>
+                    <p className="caixa-section-description">
+                      Registro das movimentações realizadas neste caixa.
+                    </p>
+                  </div>
+                </div>
+
+                {detalhesCaixaHistorico.movimentacoes?.length > 0 ? (
+                  <div className="caixa-table-wrapper">
+                    <table className="caixa-table">
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Tipo</th>
+                          <th>Categoria</th>
+                          <th>Descrição</th>
+                          <th>Forma de pagamento</th>
+                          <th>Valor</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {detalhesCaixaHistorico.movimentacoes.map(
+                          (movimento) => (
+                            <tr key={movimento.id}>
+                              <td>
+                                {movimento.data_movimentacao
+                                  ? new Date(
+                                      movimento.data_movimentacao
+                                    ).toLocaleString("pt-BR")
+                                  : "-"}
+                              </td>
+
+                              <td>{movimento.tipo || "-"}</td>
+
+                              <td>{movimento.categoria || "-"}</td>
+
+                              <td>{movimento.descricao || "-"}</td>
+
+                              <td>{movimento.forma_pagamento || "-"}</td>
+
+                              <td>
+                                {formatarMoeda(movimento.valor)}
+                              </td>
+                            </tr>
+                          )
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="caixa-empty-state">
+                    Nenhuma movimentação registrada neste caixa.
+                  </div>
+                )}
+              </>
+            )}
+
+            {!carregandoDetalhesHistorico && !detalhesCaixaHistorico && (
+              <div className="caixa-empty-state">
+                Não foi possível carregar os detalhes deste caixa.
+              </div>
+            )}
+          </div>
+        )}
+      </section>
     </div>
+
+
   );
 }
 

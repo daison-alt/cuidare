@@ -14,6 +14,14 @@ const STATUS_OPTIONS = [
   { value: "confirmado", label: "Confirmado" },
 ];
 
+const TIPOS_ATENDIMENTO = [
+  { value: "normal", label: "Normal" },
+  { value: "plano", label: "Plano de Pilates" },
+  { value: "avulsa", label: "Aula avulsa" },
+  { value: "experimental", label: "Aula experimental" },
+  { value: "cortesia", label: "Cortesia / Brinde" },
+];
+
 function calcularHoraFim(horaInicio, duracaoMinutos) {
   if (!horaInicio || !duracaoMinutos) return "";
 
@@ -38,6 +46,7 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
   const [pacientes, setPacientes] = useState([]);
   const [servicos, setServicos] = useState([]);
   const [profissionais, setProfissionais] = useState([]);
+  const [planosAluno, setPlanosAluno] = useState([]);
 
   const [formulario, setFormulario] = useState({
     paciente_id: "",
@@ -47,10 +56,15 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
     hora_inicio: "",
     hora_fim: "",
     status: "agendado",
+    tipo_atendimento: "normal",
+    aluno_plano_id: "",
+    motivo_cortesia: "",
+    campanha_cortesia: "",
     observacoes: "",
   });
 
   const [carregando, setCarregando] = useState(true);
+  const [carregandoPlanos, setCarregandoPlanos] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -60,14 +74,25 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
         setCarregando(true);
         setErro("");
 
+        const token = localStorage.getItem("cuidare_token");
+
+        const headers = token
+          ? {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            }
+          : {
+              Accept: "application/json",
+            };
+
         const [
           pacientesResponse,
           servicosResponse,
           usuariosResponse,
         ] = await Promise.all([
-          fetch(`${API_URL}/pacientes`),
-          fetch(`${API_URL}/servicos`),
-          fetch(`${API_URL}/usuarios`),
+          fetch(`${API_URL}/pacientes`, { headers }),
+          fetch(`${API_URL}/servicos`, { headers }),
+          fetch(`${API_URL}/usuarios`, { headers }),
         ]);
 
         if (
@@ -89,19 +114,25 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
         ]);
 
         setPacientes(
-          pacientesData.filter((paciente) => paciente.ativo)
+          Array.isArray(pacientesData)
+            ? pacientesData.filter((paciente) => paciente.ativo)
+            : []
         );
 
         setServicos(
-          servicosData.filter((servico) => servico.ativo)
+          Array.isArray(servicosData)
+            ? servicosData.filter((servico) => servico.ativo)
+            : []
         );
 
         setProfissionais(
-          usuariosData.filter(
-            (usuario) =>
-              usuario.status &&
-              usuario.perfil === "fisioterapeuta"
-          )
+          Array.isArray(usuariosData)
+            ? usuariosData.filter(
+                (usuario) =>
+                  usuario.status &&
+                  usuario.perfil === "fisioterapeuta"
+              )
+            : []
         );
       } catch (error) {
         console.error(error);
@@ -116,12 +147,86 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
     carregarDados();
   }, []);
 
+  useEffect(() => {
+    async function carregarPlanosDoPaciente() {
+      if (!formulario.paciente_id) {
+        setPlanosAluno([]);
+        return;
+      }
+
+      try {
+        setCarregandoPlanos(true);
+
+        const token = localStorage.getItem("cuidare_token");
+
+        const response = await fetch(
+          `${API_URL}/alunos-planos-pilates?paciente_id=${formulario.paciente_id}`,
+          {
+            headers: token
+              ? {
+                  Accept: "application/json",
+                  Authorization: `Bearer ${token}`,
+                }
+              : {
+                  Accept: "application/json",
+                },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar os planos do paciente.");
+        }
+
+        const dados = await response.json();
+
+        const planos = Array.isArray(dados)
+          ? dados.filter(
+              (plano) =>
+                plano.ativo &&
+                plano.status === "ativo" &&
+                Number(plano.aulas_restantes ?? 0) > 0
+            )
+          : [];
+
+        setPlanosAluno(planos);
+
+        if (formulario.aluno_plano_id) {
+          const aindaDisponivel = planos.some(
+            (plano) =>
+              String(plano.id) === String(formulario.aluno_plano_id)
+          );
+
+          if (!aindaDisponivel) {
+            setFormulario((atual) => ({
+              ...atual,
+              aluno_plano_id: "",
+            }));
+          }
+        }
+      } catch (error) {
+        console.error(error);
+        setPlanosAluno([]);
+      } finally {
+        setCarregandoPlanos(false);
+      }
+    }
+
+    carregarPlanosDoPaciente();
+  }, [formulario.paciente_id]);
+
   const servicoSelecionado = useMemo(() => {
     return servicos.find(
       (servico) =>
         String(servico.id) === String(formulario.servico_id)
     );
   }, [servicos, formulario.servico_id]);
+
+  const planoSelecionado = useMemo(() => {
+    return planosAluno.find(
+      (plano) =>
+        String(plano.id) === String(formulario.aluno_plano_id)
+    );
+  }, [planosAluno, formulario.aluno_plano_id]);
 
   useEffect(() => {
     if (!formulario.hora_inicio || !servicoSelecionado) {
@@ -146,10 +251,29 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
   function alterarCampo(event) {
     const { name, value } = event.target;
 
-    setFormulario((atual) => ({
-      ...atual,
-      [name]: value,
-    }));
+    setFormulario((atual) => {
+      const novoFormulario = {
+        ...atual,
+        [name]: value,
+      };
+
+      if (name === "paciente_id") {
+        novoFormulario.aluno_plano_id = "";
+      }
+
+      if (name === "tipo_atendimento") {
+        if (value !== "plano") {
+          novoFormulario.aluno_plano_id = "";
+        }
+
+        if (value !== "cortesia") {
+          novoFormulario.motivo_cortesia = "";
+          novoFormulario.campanha_cortesia = "";
+        }
+      }
+
+      return novoFormulario;
+    });
   }
 
   async function salvar(event) {
@@ -173,24 +297,50 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
         return;
       }
 
+      if (!formulario.data) {
+        setErro("Informe a data do agendamento.");
+        return;
+      }
+
       if (!formulario.hora_inicio) {
         setErro("Informe o horário inicial.");
         return;
       }
 
       if (!formulario.hora_fim) {
-        setErro(
-          "Não foi possível calcular o horário final."
-        );
+        setErro("Não foi possível calcular o horário final.");
+        return;
+      }
+
+      if (
+        formulario.tipo_atendimento === "plano" &&
+        !formulario.aluno_plano_id
+      ) {
+        setErro("Selecione o plano de Pilates do paciente.");
+        return;
+      }
+
+      if (
+        formulario.tipo_atendimento === "cortesia" &&
+        !formulario.motivo_cortesia.trim()
+      ) {
+        setErro("Informe o motivo da cortesia.");
         return;
       }
 
       setSalvando(true);
 
+      const token = localStorage.getItem("cuidare_token");
+
       const response = await fetch(`${API_URL}/agendamentos`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {}),
         },
         body: JSON.stringify({
           paciente_id: Number(formulario.paciente_id),
@@ -200,6 +350,19 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
           hora_inicio: formulario.hora_inicio,
           hora_fim: formulario.hora_fim,
           status: formulario.status,
+          tipo_atendimento: formulario.tipo_atendimento,
+          aluno_plano_id:
+            formulario.tipo_atendimento === "plano"
+              ? Number(formulario.aluno_plano_id)
+              : null,
+          motivo_cortesia:
+            formulario.tipo_atendimento === "cortesia"
+              ? formulario.motivo_cortesia.trim() || null
+              : null,
+          campanha_cortesia:
+            formulario.tipo_atendimento === "cortesia"
+              ? formulario.campanha_cortesia.trim() || null
+              : null,
           observacoes: formulario.observacoes || null,
           ativo: true,
         }),
@@ -209,7 +372,8 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
 
       if (!response.ok) {
         throw new Error(
-          dados.detail || "Não foi possível criar o agendamento."
+          dados.detail ||
+            "Não foi possível criar o agendamento."
         );
       }
 
@@ -231,11 +395,25 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
       <div className="novo-agendamento-page">
         <div className="novo-agendamento-loading">
           <strong>Carregando formulário...</strong>
-          <p>Buscando pacientes, serviços e fisioterapeutas.</p>
+          <p>
+            Buscando pacientes, serviços e fisioterapeutas.
+          </p>
         </div>
       </div>
     );
   }
+
+  const ehCortesia =
+    formulario.tipo_atendimento === "cortesia";
+
+  const ehPlano =
+    formulario.tipo_atendimento === "plano";
+
+  const ehAvulsa =
+    formulario.tipo_atendimento === "avulsa";
+
+  const ehExperimental =
+    formulario.tipo_atendimento === "experimental";
 
   return (
     <div className="novo-agendamento-page">
@@ -256,6 +434,7 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
           type="button"
           className="novo-agendamento-secondary"
           onClick={onVoltar}
+          disabled={salvando}
         >
           Voltar
         </button>
@@ -335,6 +514,10 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
                 <small>
                   Duração:{" "}
                   {servicoSelecionado.duracao_minutos} minutos
+                  {ehAvulsa &&
+                    ` • Valor: R$ ${Number(
+                      servicoSelecionado.valor || 0
+                    ).toFixed(2).replace(".", ",")}`}
                 </small>
               )}
             </div>
@@ -435,6 +618,173 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
                 ))}
               </select>
             </div>
+
+            <div className="novo-agendamento-field">
+              <label htmlFor="tipo_atendimento">
+                Tipo de atendimento
+              </label>
+
+              <select
+                id="tipo_atendimento"
+                name="tipo_atendimento"
+                value={formulario.tipo_atendimento}
+                onChange={alterarCampo}
+              >
+                {TIPOS_ATENDIMENTO.map((tipo) => (
+                  <option
+                    key={tipo.value}
+                    value={tipo.value}
+                  >
+                    {tipo.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {ehPlano && (
+              <div className="novo-agendamento-field novo-agendamento-field-full">
+                <label htmlFor="aluno_plano_id">
+                  Plano de Pilates
+                </label>
+
+                <select
+                  id="aluno_plano_id"
+                  name="aluno_plano_id"
+                  value={formulario.aluno_plano_id}
+                  onChange={alterarCampo}
+                  required
+                  disabled={
+                    !formulario.paciente_id ||
+                    carregandoPlanos
+                  }
+                >
+                  <option value="">
+                    {carregandoPlanos
+                      ? "Carregando planos..."
+                      : !formulario.paciente_id
+                      ? "Selecione primeiro o paciente"
+                      : planosAluno.length === 0
+                      ? "Paciente não possui plano ativo com aulas disponíveis"
+                      : "Selecione o plano"}
+                  </option>
+
+                  {planosAluno.map((plano) => (
+                    <option
+                      key={plano.id}
+                      value={plano.id}
+                    >
+                      {plano.nome ||
+                        `Plano #${plano.plano_id}`}{" "}
+                      • {plano.aulas_restantes} aula(s) restante(s)
+                    </option>
+                  ))}
+                </select>
+
+                {planoSelecionado && (
+                  <small>
+                    {planoSelecionado.aulas_utilizadas} de{" "}
+                    {planoSelecionado.aulas_previstas} aulas utilizadas
+                    {" • "}
+                    {planoSelecionado.aulas_restantes} restantes
+                  </small>
+                )}
+              </div>
+            )}
+
+            {ehAvulsa && (
+              <div className="novo-agendamento-field novo-agendamento-field-full">
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: "10px",
+                    background: "#f5f8f7",
+                    border: "1px solid #dce7e3",
+                    fontSize: "14px",
+                  }}
+                >
+                  <strong>Aula avulsa</strong>
+                  <br />
+                  O valor será definido pelo serviço. Ao concluir o
+                  atendimento, o sistema criará automaticamente uma
+                  Conta a Receber. O recebimento será feito normalmente
+                  pelo módulo financeiro.
+                </div>
+              </div>
+            )}
+
+            {ehExperimental && (
+              <div className="novo-agendamento-field novo-agendamento-field-full">
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: "10px",
+                    background: "#f5f8f7",
+                    border: "1px solid #dce7e3",
+                    fontSize: "14px",
+                  }}
+                >
+                  <strong>Aula experimental</strong>
+                  <br />
+                  Atendimento individual para avaliação de interesse.
+                  Não consome aulas de nenhum plano e não gera cobrança
+                  automática.
+                </div>
+              </div>
+            )}
+
+            {ehCortesia && (
+              <>
+                <div className="novo-agendamento-field">
+                  <label htmlFor="motivo_cortesia">
+                    Motivo da cortesia
+                  </label>
+
+                  <input
+                    id="motivo_cortesia"
+                    name="motivo_cortesia"
+                    type="text"
+                    value={formulario.motivo_cortesia}
+                    onChange={alterarCampo}
+                    placeholder="Ex.: Sorteio, parceria, ação promocional..."
+                    maxLength="255"
+                    required
+                  />
+                </div>
+
+                <div className="novo-agendamento-field">
+                  <label htmlFor="campanha_cortesia">
+                    Campanha / origem
+                  </label>
+
+                  <input
+                    id="campanha_cortesia"
+                    name="campanha_cortesia"
+                    type="text"
+                    value={formulario.campanha_cortesia}
+                    onChange={alterarCampo}
+                    placeholder="Ex.: Dia das Mães 2027"
+                    maxLength="150"
+                  />
+                </div>
+
+                <div className="novo-agendamento-field novo-agendamento-field-full">
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: "10px",
+                      background: "#f5f8f7",
+                      border: "1px solid #dce7e3",
+                      fontSize: "14px",
+                    }}
+                  >
+                    <strong>Atendimento de cortesia</strong>
+                    <br />
+                    Este atendimento ocupará a Agenda, mas não
+                    gerará receita ou lançamento no Caixa.
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </section>
 

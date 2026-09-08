@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.conta_receber import ContaReceber
 from app.models.caixa import Caixa
+from app.models.conta_receber import ContaReceber
 from app.models.movimentacao_caixa import MovimentacaoCaixa
 from app.schemas.conta_receber import (
     ContaReceberAtualizar,
@@ -49,11 +49,55 @@ def validar_forma_pagamento(forma_pagamento: str | None):
             detail=(
                 "Forma de pagamento inválida. "
                 "Use: dinheiro, pix, cartao_credito, "
-                "cartao_debito, transferencia ou outro."
+                "cartao_debito, transferencia, "
+                "debito_automatico ou outro."
             ),
         )
 
     return forma
+
+
+def obter_caixa_aberto(db: Session):
+    return (
+        db.query(Caixa)
+        .filter(
+            Caixa.status == "aberto",
+            Caixa.ativo.is_(True),
+        )
+        .order_by(Caixa.id.desc())
+        .first()
+    )
+
+
+def criar_movimentacao_recebimento(
+    db: Session,
+    conta: ContaReceber,
+    valor_recebido,
+    forma_pagamento: str,
+):
+    caixa = obter_caixa_aberto(db)
+
+    if not caixa:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Não é possível registrar o recebimento "
+                "porque não existe caixa aberto."
+            ),
+        )
+
+    movimento = MovimentacaoCaixa(
+        caixa_id=caixa.id,
+        tipo="entrada",
+        categoria="recebimento",
+        descricao=f"Recebimento - {conta.descricao}",
+        valor=valor_recebido,
+        forma_pagamento=forma_pagamento,
+        observacoes=f"Conta a receber #{conta.id}",
+        ativo=True,
+    )
+
+    db.add(movimento)
 
 
 @router.post(
@@ -90,6 +134,15 @@ def criar_conta_receber(
                 ),
             )
 
+        if not forma_pagamento:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Uma conta com status pago "
+                    "deve possuir forma de pagamento."
+                ),
+            )
+
     conta = ContaReceber(
         paciente_id=dados.paciente_id,
         descricao=dados.descricao.strip(),
@@ -109,6 +162,17 @@ def criar_conta_receber(
     )
 
     db.add(conta)
+
+    if status == "pago":
+        db.flush()
+
+        criar_movimentacao_recebimento(
+            db=db,
+            conta=conta,
+            valor_recebido=dados.valor_pago,
+            forma_pagamento=forma_pagamento,
+        )
+
     db.commit()
     db.refresh(conta)
 
@@ -130,7 +194,7 @@ def listar_contas_receber(
 
     if not incluir_inativos:
         consulta = consulta.filter(
-            ContaReceber.ativo == True
+            ContaReceber.ativo.is_(True)
         )
 
     if status is not None:
@@ -172,7 +236,7 @@ def buscar_conta_receber(
         db.query(ContaReceber)
         .filter(
             ContaReceber.id == conta_id,
-            ContaReceber.ativo == True,
+            ContaReceber.ativo.is_(True),
         )
         .first()
     )
@@ -199,7 +263,7 @@ def atualizar_conta_receber(
         db.query(ContaReceber)
         .filter(
             ContaReceber.id == conta_id,
-            ContaReceber.ativo == True,
+            ContaReceber.ativo.is_(True),
         )
         .first()
     )
@@ -237,6 +301,66 @@ def atualizar_conta_receber(
         conta.status,
     )
 
+    # --------------------------------------------------------
+    # PROTEÇÃO DE INTEGRIDADE FINANCEIRA
+    # --------------------------------------------------------
+    # Uma conta já recebida não pode ter seus dados financeiros
+    # alterados diretamente, pois o recebimento já foi registrado
+    # no Caixa.
+    if status_anterior == "pago":
+        campos_financeiros = {
+            "valor",
+            "valor_pago",
+            "forma_pagamento",
+            "data_pagamento",
+        }
+
+        campos_financeiros_alterados = (
+            campos_financeiros.intersection(campos.keys())
+        )
+
+        if campos_financeiros_alterados:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Esta conta já está paga e possui lançamento "
+                    "registrado no Caixa. Não é permitido alterar "
+                    "valor, valor pago, forma de pagamento ou data "
+                    "de pagamento diretamente. Para corrigir um "
+                    "recebimento, será necessário utilizar uma rotina "
+                    "de estorno/correção."
+                ),
+            )
+
+    # Proteção financeira:
+    # uma conta já recebida não pode voltar diretamente
+    # para pendente, vencida ou cancelada.
+    if (
+        status_anterior == "pago"
+        and novo_status != "pago"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Uma conta já recebida não pode voltar "
+                "para pendente, vencida ou cancelada. "
+                "Para corrigir um recebimento, será necessário "
+                "utilizar uma rotina de estorno."
+            ),
+        )
+
+    if (
+        status_anterior == "cancelado"
+        and novo_status == "pago"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Uma conta cancelada não pode ser recebida "
+                "diretamente. Reative a conta antes do recebimento."
+            ),
+        )
+
     nova_data_pagamento = campos.get(
         "data_pagamento",
         conta.data_pagamento,
@@ -271,7 +395,7 @@ def atualizar_conta_receber(
                 ),
             )
 
-        if nova_forma_pagamento is None:
+        if not nova_forma_pagamento:
             raise HTTPException(
                 status_code=400,
                 detail=(
@@ -280,48 +404,26 @@ def atualizar_conta_receber(
                 ),
             )
 
-    # Atualiza a conta
     for campo, valor in campos.items():
         setattr(conta, campo, valor)
 
-    # Se a conta acabou de passar para paga,
-    # registra automaticamente a entrada no Caixa.
-    if status_anterior != "pago" and novo_status == "pago":
-        caixa = (
-            db.query(Caixa)
-            .filter(
-                Caixa.status == "aberto",
-                Caixa.ativo.is_(True),
-            )
-            .order_by(Caixa.id.desc())
-            .first()
-        )
+    # Só cria movimentação quando ocorre:
+    #
+    # pendente/vencido -> pago
+    #
+    # Se já estava pago, NÃO cria outra entrada.
+    if (
+        novo_status == "pago"
+        and status_anterior != "pago"
+    ):
+        db.flush()
 
-        if not caixa:
-            db.rollback()
-
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Não é possível registrar o recebimento "
-                    "porque não existe caixa aberto."
-                ),
-            )
-
-        movimento = MovimentacaoCaixa(
-            caixa_id=caixa.id,
-            tipo="entrada",
-            categoria="recebimento",
-            descricao=f"Recebimento - {conta.descricao}",
-            valor=novo_valor_pago,
+        criar_movimentacao_recebimento(
+            db=db,
+            conta=conta,
+            valor_recebido=novo_valor_pago,
             forma_pagamento=nova_forma_pagamento,
-            observacoes=(
-                f"Conta a receber #{conta.id}"
-            ),
-            ativo=True,
         )
-
-        db.add(movimento)
 
     db.commit()
     db.refresh(conta)
@@ -340,7 +442,7 @@ def desativar_conta_receber(
         db.query(ContaReceber)
         .filter(
             ContaReceber.id == conta_id,
-            ContaReceber.ativo == True,
+            ContaReceber.ativo.is_(True),
         )
         .first()
     )

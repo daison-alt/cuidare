@@ -1,3 +1,5 @@
+from app.routers import campanhas
+from app.routers import indicacoes
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,10 +9,21 @@ from app.models.paciente import Paciente
 from app.models.prontuario import Prontuario
 from app.models.evolucao import Evolucao
 from app.models.agendamento import Agendamento
+from app.models.agendamento_plano_pilates import AgendamentoPlanoPilates
 from app.models.servico import Servico
 from app.models.conta_receber import ContaReceber
+from app.models.recebimento_conta import RecebimentoConta
+from app.models.recebimento_conta_forma import RecebimentoContaForma
 from app.models.caixa import Caixa
 from app.models.movimentacao_caixa import MovimentacaoCaixa
+from app.models.conferencia_caixa import ConferenciaCaixa
+from app.models.estoque_produto import EstoqueProduto
+from app.models.movimentacao_estoque import MovimentacaoEstoque
+from app.models.configuracao_sistema import ConfiguracaoSistema
+from app.models.configuracao_cuidare_ia import ConfiguracaoCuidareIA
+from app.models.uso_cuidare_ia import UsoCuidareIA
+from app.models.plano_pilates import PlanoPilates
+from app.models.aluno_plano_pilates import AlunoPlanoPilates
 from app.routers.usuarios import router as usuarios_router
 from app.routers.auth import router as auth_router
 from app.routers.gestao_fiscal import router as gestao_fiscal_router
@@ -21,8 +34,16 @@ from app.routers.evolucoes import router as evolucoes_router
 from app.routers.agendamentos import router as agendamentos_router
 from app.routers.servicos import router as servicos_router
 from app.routers.contas_receber import router as contas_receber_router
+from app.routers.recebimentos_conta import router as recebimentos_conta_router
 from app.routers.contas_pagar import router as contas_pagar_router
 from app.routers.caixa import router as caixa_router
+from app.routers.conferencia_caixa import router as conferencia_caixa_router
+from app.routers.estoque import router as estoque_router
+from app.routers.configuracao_sistema import router as configuracao_sistema_router
+from app.routers.cuidare_ia import router as cuidare_ia_router
+from app.routers.planos_pilates import router as planos_pilates_router
+from app.routers.alunos_planos_pilates import router as alunos_planos_pilates_router
+from app.routers.recibo_pdf import router as recibo_pdf_router
 
 
 # Cria as tabelas do banco de dados
@@ -56,8 +77,13 @@ app.include_router(evolucoes_router)
 app.include_router(agendamentos_router)
 app.include_router(servicos_router)
 app.include_router(contas_receber_router)
+app.include_router(recebimentos_conta_router)
 app.include_router(contas_pagar_router)
 app.include_router(caixa_router)
+app.include_router(conferencia_caixa_router)
+app.include_router(estoque_router)
+app.include_router(configuracao_sistema_router)
+app.include_router(cuidare_ia_router)
 
 
 @app.get("/")
@@ -75,3 +101,11 @@ def health_check():
         "status": "ok",
         "service": "Cuidare API",
     }
+
+app.include_router(planos_pilates_router)
+app.include_router(alunos_planos_pilates_router)
+app.include_router(recibo_pdf_router)
+
+app.include_router(campanhas.router)
+
+app.include_router(indicacoes.router)

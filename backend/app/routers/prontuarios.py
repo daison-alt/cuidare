@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.evolucao import Evolucao
+from app.models.paciente import Paciente
 from app.models.prontuario import Prontuario
 from app.schemas.evolucao import EvolucaoCriar, EvolucaoResposta
 from app.schemas.prontuario import (
@@ -18,14 +19,23 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "",
-    response_model=ProntuarioResposta,
-)
+@router.post("", response_model=ProntuarioResposta)
 def criar_prontuario(
     dados: ProntuarioCriar,
     db: Session = Depends(get_db),
 ):
+    paciente = (
+        db.query(Paciente)
+        .filter(Paciente.id == dados.paciente_id)
+        .first()
+    )
+
+    if not paciente:
+        raise HTTPException(
+            status_code=404,
+            detail="Paciente não encontrado.",
+        )
+
     prontuario_existente = (
         db.query(Prontuario)
         .filter(Prontuario.paciente_id == dados.paciente_id)
@@ -33,7 +43,10 @@ def criar_prontuario(
     )
 
     if prontuario_existente:
-        return prontuario_existente
+        raise HTTPException(
+            status_code=409,
+            detail="Este paciente já possui um prontuário.",
+        )
 
     prontuario = Prontuario(
         paciente_id=dados.paciente_id,
@@ -61,6 +74,18 @@ def buscar_prontuario_por_paciente(
     paciente_id: int,
     db: Session = Depends(get_db),
 ):
+    paciente = (
+        db.query(Paciente)
+        .filter(Paciente.id == paciente_id)
+        .first()
+    )
+
+    if not paciente:
+        raise HTTPException(
+            status_code=404,
+            detail="Paciente não encontrado.",
+        )
+
     prontuario = (
         db.query(Prontuario)
         .filter(Prontuario.paciente_id == paciente_id)
@@ -68,15 +93,10 @@ def buscar_prontuario_por_paciente(
     )
 
     if not prontuario:
-        prontuario = Prontuario(
-            paciente_id=paciente_id,
-            observacoes_gerais="Prontuário inicial criado para validação do módulo clínico.",
-            ativo=True,
+        raise HTTPException(
+            status_code=404,
+            detail="Prontuário não encontrado.",
         )
-
-        db.add(prontuario)
-        db.commit()
-        db.refresh(prontuario)
 
     return prontuario
 
@@ -128,8 +148,7 @@ def atualizar_prontuario(
     campos = dados.model_dump(exclude_unset=True)
 
     for campo, valor in campos.items():
-        if valor is not None:
-            setattr(prontuario, campo, valor)
+        setattr(prontuario, campo, valor)
 
     db.commit()
     db.refresh(prontuario)
@@ -164,7 +183,7 @@ def criar_evolucao(
             detail="O prontuário informado não corresponde à rota.",
         )
 
-    if not dados.evolucao.strip():
+    if not dados.evolucao or not dados.evolucao.strip():
         raise HTTPException(
             status_code=400,
             detail="A evolução não pode estar vazia.",

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -77,6 +79,46 @@ def criar_gestao_fiscal(
     )
 
     db.add(registro)
+    db.commit()
+    db.refresh(registro)
+
+    return registro
+
+
+@router.put(
+    "/{registro_id}",
+    response_model=GestaoFiscalResposta,
+)
+def atualizar_gestao_fiscal(
+    registro_id: int,
+    dados: GestaoFiscalCriar,
+    db: Session = Depends(get_db),
+):
+    registro = (
+        db.query(GestaoFiscal)
+        .filter(
+            GestaoFiscal.id == registro_id,
+            GestaoFiscal.ativo == True,
+        )
+        .first()
+    )
+
+    if not registro:
+        raise HTTPException(
+            status_code=404,
+            detail="Registro fiscal não encontrado.",
+        )
+
+    registro.tipo_documento = dados.tipo_documento.strip()
+    registro.competencia = dados.competencia.strip()
+    registro.descricao = dados.descricao.strip()
+    registro.status = dados.status.strip().lower()
+    registro.vencimento = dados.vencimento
+    registro.valor = dados.valor
+    registro.observacoes = dados.observacoes
+    registro.arquivo = dados.arquivo
+    registro.atualizado_em = datetime.utcnow()
+
     db.commit()
     db.refresh(registro)
 

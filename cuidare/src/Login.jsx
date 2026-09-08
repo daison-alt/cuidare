@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./Login.css";
 
 const API_URL =
-  "https://humble-waddle-97x5v4vpg7j73ppxq-8000.app.github.dev";
+  window.location.hostname === "localhost"
+    ? "http://localhost:8000"
+    : `https://${window.location.hostname.replace(
+        /-5173\.app\.github\.dev$/,
+        "-8000.app.github.dev"
+      )}`;
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -10,6 +15,51 @@ function Login({ onLogin }) {
   const [lembrar, setLembrar] = useState(false);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
+
+  const [logoCuidare, setLogoCuidare] = useState(null);
+  const [logoVersao, setLogoVersao] = useState(Date.now());
+
+  useEffect(() => {
+    const emailSalvo = localStorage.getItem("cuidare_email");
+
+    if (emailSalvo) {
+      setEmail(emailSalvo);
+      setLembrar(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    async function carregarLogo() {
+      try {
+        const response = await fetch(
+          `${API_URL}/configuracoes/identidade`
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.logo_nome && data.logo_url) {
+          setLogoCuidare(data);
+          setLogoVersao(Date.now());
+        }
+      } catch (error) {
+        console.error("Erro ao carregar logo:", error);
+      }
+    }
+
+    carregarLogo();
+  }, []);
+
+  function obterLogoUrl() {
+    if (!logoCuidare?.logo_url) {
+      return "";
+    }
+
+    return `${API_URL}${logoCuidare.logo_url}?v=${logoVersao}`;
+  }
 
   async function handleLogin(event) {
     event.preventDefault();
@@ -45,20 +95,16 @@ function Login({ onLogin }) {
         return;
       }
 
-      // Guarda o token para as próximas requisições da aplicação
       localStorage.setItem(
         "cuidare_token",
         dados.access_token
       );
 
-      // Guarda os dados do usuário logado
       localStorage.setItem(
         "cuidare_usuario",
         JSON.stringify(dados.usuario)
       );
 
-      // Se o usuário marcou "Lembrar acesso",
-      // guarda o e-mail no navegador.
       if (lembrar) {
         localStorage.setItem(
           "cuidare_email",
@@ -80,28 +126,61 @@ function Login({ onLogin }) {
     }
   }
 
+  function abrirPrototipo() {
+    window.dispatchEvent(
+      new CustomEvent("cuidare-abrir-prototipo")
+    );
+  }
+
   return (
     <div className="login-page">
-      <div className="login-container">
 
-        <div className="login-brand">
-          <div className="login-logo-placeholder">
-            C
+      <div className="login-left">
+
+        <div className="login-brand-area">
+
+          {logoCuidare?.logo_url ? (
+            <img
+              src={obterLogoUrl()}
+              alt="Logo da clínica"
+              className="login-clinic-logo"
+            />
+          ) : (
+            <div className="login-logo-fallback">
+              C
+            </div>
+          )}
+
+          <div className="login-brand-text">
+            <h1>CUIDARE</h1>
+
+            <p>
+              FISIOTERAPIA E PILATES
+            </p>
           </div>
 
-          <h1>CUIDARE</h1>
+          <div className="login-slogan">
+            <strong>
+              Gestão inteligente.
+            </strong>
 
-          <p>
-            FISIOTERAPIA E PILATES
-          </p>
+            <span>
+              Cuidado mais humano.
+            </span>
+          </div>
+
         </div>
+
+      </div>
+
+      <div className="login-right">
 
         <div className="login-card">
 
           <div className="login-heading">
 
-            <span>
-              ACESSO AO SISTEMA
+            <span className="login-label">
+              ACESSO SEGURO
             </span>
 
             <h2>
@@ -109,7 +188,8 @@ function Login({ onLogin }) {
             </h2>
 
             <p>
-              Entre com suas credenciais para acessar o sistema.
+              Entre com suas credenciais para acessar
+              o sistema da clínica.
             </p>
 
           </div>
@@ -131,6 +211,7 @@ function Login({ onLogin }) {
                   setEmail(event.target.value)
                 }
                 autoComplete="username"
+                autoFocus
               />
 
             </div>
@@ -197,28 +278,48 @@ function Login({ onLogin }) {
               className="login-button"
               disabled={carregando}
             >
-              {carregando
-                ? "Entrando..."
-                : "Entrar"}
+              {carregando ? "Entrando..." : "Entrar"}
+            </button>
+
+            <button
+              type="button"
+              className="prototype-button"
+              onClick={abrirPrototipo}
+            >
+              Abrir protótipo
             </button>
 
           </form>
 
+          <div className="login-security">
+
+            <span className="security-icon">
+              🔒
+            </span>
+
+            <div>
+              <strong>
+                Ambiente protegido
+              </strong>
+
+              <p>
+                Seus dados são tratados com segurança
+                e acesso restrito.
+              </p>
+            </div>
+
+          </div>
+
         </div>
 
         <div className="login-footer">
-
           <span>
-            Cuidare
+            Cuidare • Gestão inteligente para uma clínica mais humana.
           </span>
-
-          <p>
-            Gestão inteligente para uma clínica mais humana.
-          </p>
-
         </div>
 
       </div>
+
     </div>
   );
 }

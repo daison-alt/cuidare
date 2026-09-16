@@ -1,4 +1,5 @@
 import os
+import json
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -54,7 +55,6 @@ from app.security.auth import verificar_token
 from app.security.permissoes import tem_permissao
 
 
-# Cria as tabelas do banco de dados
 Base.metadata.create_all(bind=engine)
 
 
@@ -64,15 +64,8 @@ app = FastAPI(
 )
 
 
-# Permite que o frontend React/Vite converse com a API.
-# Em produção, CUIDARE_CORS_ORIGINS deve conter as origens autorizadas,
-# separadas por vírgula. O fallback aberto existe apenas para desenvolvimento.
 cors_origins_env = os.getenv("CUIDARE_CORS_ORIGINS", "*")
-cors_origins = [
-    origem.strip()
-    for origem in cors_origins_env.split(",")
-    if origem.strip()
-]
+cors_origins = [origem.strip() for origem in cors_origins_env.split(",") if origem.strip()]
 
 app.add_middleware(
     CORSMiddleware,
@@ -83,7 +76,6 @@ app.add_middleware(
 )
 
 
-# Rotas públicas necessárias para o login e para a identidade visual.
 ROTAS_PUBLICAS = {
     "/",
     "/health",
@@ -92,9 +84,6 @@ ROTAS_PUBLICAS = {
 }
 
 
-# Permissões específicas de módulos que precisam ser aplicadas antes
-# da execução da rota. A autenticação continua sendo global; aqui
-# garantimos também a autorização por perfil.
 PERMISSOES_AGENDA = {
     "GET": "agenda.visualizar",
     "POST": "agenda.criar",
@@ -102,6 +91,37 @@ PERMISSOES_AGENDA = {
     "PATCH": "agenda.editar",
     "DELETE": "agenda.editar",
 }
+
+PERMISSOES_CAIXA = {
+    ("GET", "/caixa/proximo-troco"): "caixa.visualizar",
+    ("GET", "/caixa/aberto"): "caixa.visualizar",
+    ("POST", "/caixa/abrir"): "caixa.abrir",
+    ("POST", "/caixa/fechar"): "caixa.fechar",
+    ("GET", "/caixa/movimentacoes"): "caixa.visualizar",
+    ("GET", "/caixa/saldo"): "caixa.visualizar",
+    ("GET", "/caixa/historico"): "caixa.visualizar",
+    ("GET", "/caixa/conferencia"): "caixa.conferencia",
+    ("POST", "/caixa/conferencia"): "caixa.conferencia",
+}
+
+PERMISSOES_MOVIMENTACAO = {
+    "entrada": "caixa.entrada",
+    "saida": "caixa.saida",
+    "suprimento": "caixa.suprimento",
+    "sangria": "caixa.sangria",
+}
+
+
+def usuario_tem_permissao(payload, permissao: str) -> bool:
+    perfil = str(payload.get("perfil", "")).strip().lower()
+    return bool(perfil and tem_permissao(perfil, permissao))
+
+
+def resposta_sem_permissao():
+    return JSONResponse(
+        status_code=403,
+        content={"detail": "Usuário sem permissão para esta operação."},
+    )
 
 
 @app.middleware("http")
@@ -138,26 +158,41 @@ async def proteger_api(request: Request, call_next):
             content={"detail": "Token inválido ou expirado."},
         )
 
-    # Agenda: leitura para fisioterapeuta/Recepção/estagiário;
-    # criação/edição somente para quem possui a permissão correspondente.
-    if request.url.path == "/agendamentos" or request.url.path.startswith(
-        "/agendamentos/"
-    ):
+    if request.url.path == "/agendamentos" or request.url.path.startswith("/agendamentos/"):
         permissao = PERMISSOES_AGENDA.get(request.method)
+        if permissao and not usuario_tem_permissao(payload, permissao):
+            return resposta_sem_permissao()
 
-        if permissao and not tem_permissao(
-            str(payload.get("perfil", "")).strip().lower(),
-            permissao,
-        ):
-            return JSONResponse(
-                status_code=403,
-                content={"detail": "Usuário sem permissão para esta operação."},
-            )
+    if request.url.path.startswith("/caixa"):
+        permissao = PERMISSOES_CAIXA.get((request.method, request.url.path))
+
+        if permissao and not usuario_tem_permissao(payload, permissao):
+            return resposta_sem_permissao()
+
+        if request.method == "POST" and request.url.path == "/caixa/movimentacoes":
+            try:
+                body = await request.body()
+                dados = json.loads(body.decode("utf-8") or "{}")
+                tipo = str(dados.get("tipo", "")).strip().lower()
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Dados da movimentação inválidos."},
+                )
+
+            permissao_movimentacao = PERMISSOES_MOVIMENTACAO.get(tipo)
+            if not permissao_movimentacao:
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Tipo de movimentação inválido."},
+                )
+
+            if not usuario_tem_permissao(payload, permissao_movimentacao):
+                return resposta_sem_permissao()
 
     return await call_next(request)
 
 
-# Rotas
 app.include_router(usuarios_router)
 app.include_router(auth_router)
 app.include_router(gestao_fiscal_router)

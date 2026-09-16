@@ -10,8 +10,6 @@ FORMAS_PAGAMENTO_RECEBIMENTO_PERMITIDAS = {
     "cartao_credito",
     "cartao_debito",
     "transferencia",
-    "debito_automatico",
-    "outro",
 }
 
 

@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.security.auth import verificar_token
@@ -45,3 +45,26 @@ def exigir_permissao(permissao: str):
         return usuario
 
     return dependencia
+
+
+def exigir_permissao_agenda(
+    request: Request,
+    usuario=Depends(obter_usuario_atual),
+):
+    permissoes_por_metodo = {
+        "GET": "agenda.visualizar",
+        "POST": "agenda.criar",
+        "PUT": "agenda.editar",
+        "PATCH": "agenda.editar",
+        "DELETE": "agenda.editar",
+    }
+
+    permissao = permissoes_por_metodo.get(request.method)
+
+    if permissao is None or not tem_permissao(usuario["perfil"], permissao):
+        raise HTTPException(
+            status_code=403,
+            detail="Usuário sem permissão para esta operação.",
+        )
+
+    return usuario

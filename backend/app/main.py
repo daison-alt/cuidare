@@ -51,6 +51,7 @@ from app.routers import configuracao
 from app.routers import recibo_nfse
 from app.routers import contrato
 from app.security.auth import verificar_token
+from app.security.permissoes import tem_permissao
 
 
 # Cria as tabelas do banco de dados
@@ -91,6 +92,18 @@ ROTAS_PUBLICAS = {
 }
 
 
+# Permissões específicas de módulos que precisam ser aplicadas antes
+# da execução da rota. A autenticação continua sendo global; aqui
+# garantimos também a autorização por perfil.
+PERMISSOES_AGENDA = {
+    "GET": "agenda.visualizar",
+    "POST": "agenda.criar",
+    "PUT": "agenda.editar",
+    "PATCH": "agenda.editar",
+    "DELETE": "agenda.editar",
+}
+
+
 @app.middleware("http")
 async def proteger_api(request: Request, call_next):
     if request.method == "OPTIONS":
@@ -118,12 +131,28 @@ async def proteger_api(request: Request, call_next):
         )
 
     try:
-        verificar_token(token)
+        payload = verificar_token(token)
     except ValueError:
         return JSONResponse(
             status_code=401,
             content={"detail": "Token inválido ou expirado."},
         )
+
+    # Agenda: leitura para fisioterapeuta/Recepção/estagiário;
+    # criação/edição somente para quem possui a permissão correspondente.
+    if request.url.path == "/agendamentos" or request.url.path.startswith(
+        "/agendamentos/"
+    ):
+        permissao = PERMISSOES_AGENDA.get(request.method)
+
+        if permissao and not tem_permissao(
+            str(payload.get("perfil", "")).strip().lower(),
+            permissao,
+        ):
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "Usuário sem permissão para esta operação."},
+            )
 
     return await call_next(request)
 

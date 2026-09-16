@@ -16,6 +16,7 @@ from app.models.servico import Servico
 from app.models.conta_receber import ContaReceber
 from app.models.recebimento_conta import RecebimentoConta
 from app.models.recebimento_conta_forma import RecebimentoContaForma
+from app.models.auditoria_estorno import AuditoriaEstorno
 from app.models.caixa import Caixa
 from app.models.movimentacao_caixa import MovimentacaoCaixa
 from app.models.conferencia_caixa import ConferenciaCaixa

@@ -1,10 +1,8 @@
-from app.routers import contrato
-from app.routers import recibo_nfse
-from app.routers import configuracao
-from app.routers import campanhas
-from app.routers import indicacoes
-from fastapi import FastAPI
+import os
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.database import Base, engine
 from app.models.configuracao_fiscal import ConfiguracaoFiscal
@@ -47,6 +45,12 @@ from app.routers.cuidare_ia import router as cuidare_ia_router
 from app.routers.planos_pilates import router as planos_pilates_router
 from app.routers.alunos_planos_pilates import router as alunos_planos_pilates_router
 from app.routers.recibo_pdf import router as recibo_pdf_router
+from app.routers import campanhas
+from app.routers import indicacoes
+from app.routers import configuracao
+from app.routers import recibo_nfse
+from app.routers import contrato
+from app.security.auth import verificar_token
 
 
 # Cria as tabelas do banco de dados
@@ -59,14 +63,69 @@ app = FastAPI(
 )
 
 
-# Permite que o frontend React/Vite converse com a API
+# Permite que o frontend React/Vite converse com a API.
+# Em produção, CUIDARE_CORS_ORIGINS deve conter as origens autorizadas,
+# separadas por vírgula. O fallback aberto existe apenas para desenvolvimento.
+cors_origins_env = os.getenv("CUIDARE_CORS_ORIGINS", "*")
+cors_origins = [
+    origem.strip()
+    for origem in cors_origins_env.split(",")
+    if origem.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Rotas públicas necessárias para o login e para a identidade visual.
+ROTAS_PUBLICAS = {
+    "/",
+    "/health",
+    "/auth/login",
+    "/configuracoes/identidade",
+}
+
+
+@app.middleware("http")
+async def proteger_api(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
+    if request.url.path in ROTAS_PUBLICAS or request.url.path.startswith(
+        "/configuracoes/identidade/logo/"
+    ):
+        return await call_next(request)
+
+    authorization = request.headers.get("Authorization", "")
+
+    if not authorization.startswith("Bearer "):
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Autenticação necessária."},
+        )
+
+    token = authorization[7:].strip()
+
+    if not token:
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Token de autenticação ausente."},
+        )
+
+    try:
+        verificar_token(token)
+    except ValueError:
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Token inválido ou expirado."},
+        )
+
+    return await call_next(request)
 
 
 # Rotas
@@ -87,6 +146,14 @@ app.include_router(conferencia_caixa_router)
 app.include_router(estoque_router)
 app.include_router(configuracao_sistema_router)
 app.include_router(cuidare_ia_router)
+app.include_router(planos_pilates_router)
+app.include_router(alunos_planos_pilates_router)
+app.include_router(recibo_pdf_router)
+app.include_router(campanhas.router)
+app.include_router(indicacoes.router)
+app.include_router(configuracao.router)
+app.include_router(recibo_nfse.router)
+app.include_router(contrato.router)
 
 
 @app.get("/")
@@ -104,18 +171,3 @@ def health_check():
         "status": "ok",
         "service": "Cuidare API",
     }
-
-app.include_router(planos_pilates_router)
-app.include_router(alunos_planos_pilates_router)
-app.include_router(recibo_pdf_router)
-
-app.include_router(campanhas.router)
-
-app.include_router(indicacoes.router)
-
-app.include_router(configuracao.router)
-
-app.include_router(recibo_nfse.router)
-
-app.include_router(contrato.router)
-

@@ -15,6 +15,7 @@ from app.schemas.recebimento_conta import (
     RecebimentoContaCriar,
     RecebimentoContaResposta,
 )
+from app.security.autorizacao import exigir_permissao
 
 
 router = APIRouter(
@@ -44,8 +45,7 @@ def normalizar_forma_pagamento(forma_pagamento: str):
             detail=(
                 "Forma de pagamento inválida. "
                 "Use dinheiro, pix, cartao_credito, "
-                "cartao_debito, transferencia, "
-                "debito_automatico ou outro."
+                "cartao_debito ou transferencia."
             ),
         )
 
@@ -88,6 +88,7 @@ def montar_resposta(
 @router.get("/recibos")
 def listar_recibos_financeiros(
     db: Session = Depends(get_db),
+    usuario=Depends(exigir_permissao("financeiro.visualizar")),
 ):
     registros = (
         db.query(RecebimentoConta, ContaReceber, Paciente)
@@ -161,11 +162,9 @@ def criar_recebimento(
     conta_id: int,
     dados: RecebimentoContaCriar,
     db: Session = Depends(get_db),
+    usuario=Depends(exigir_permissao("financeiro.receber")),
 ):
     try:
-        # ----------------------------------------------------
-        # 1. LOCALIZA A CONTA
-        # ----------------------------------------------------
         conta = (
             db.query(ContaReceber)
             .filter(
@@ -181,23 +180,14 @@ def criar_recebimento(
                 detail="Conta a receber não encontrada.",
             )
 
-        # ----------------------------------------------------
-        # 2. PROTEÇÕES
-        # ----------------------------------------------------
         if conta.status == "cancelado":
             raise HTTPException(
                 status_code=400,
                 detail="Não é possível receber uma conta cancelada.",
             )
 
-        valor_total_conta = Decimal(
-            str(conta.valor or 0)
-        )
-
-        valor_recebido_anterior = Decimal(
-            str(conta.valor_pago or 0)
-        )
-
+        valor_total_conta = Decimal(str(conta.valor or 0))
+        valor_recebido_anterior = Decimal(str(conta.valor_pago or 0))
         valor_pendente_anterior = (
             valor_total_conta - valor_recebido_anterior
         )
@@ -208,9 +198,6 @@ def criar_recebimento(
                 detail="Esta conta já está totalmente recebida.",
             )
 
-        # ----------------------------------------------------
-        # 3. VALIDAR FORMAS DE PAGAMENTO
-        # ----------------------------------------------------
         if not dados.pagamentos:
             raise HTTPException(
                 status_code=400,
@@ -229,16 +216,14 @@ def criar_recebimento(
                 raise HTTPException(
                     status_code=400,
                     detail=(
-                        f"A forma de pagamento "
-                        f"'{forma}' foi informada mais de uma vez."
+                        f"A forma de pagamento '{forma}' "
+                        "foi informada mais de uma vez."
                     ),
                 )
 
             formas_utilizadas.add(forma)
 
-            valor = Decimal(
-                str(pagamento.valor)
-            )
+            valor = Decimal(str(pagamento.valor))
 
             if valor <= 0:
                 raise HTTPException(
@@ -248,23 +233,16 @@ def criar_recebimento(
 
             valor_recebimento += valor
 
-        # ----------------------------------------------------
-        # 4. NÃO PERMITIR RECEBIMENTO ACIMA DO PENDENTE
-        # ----------------------------------------------------
         if valor_recebimento > valor_pendente_anterior:
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "O valor informado ultrapassa o saldo "
-                    "pendente da conta. "
+                    "O valor informado ultrapassa o saldo pendente da conta. "
                     f"Pendente: R$ {valor_pendente_anterior:.2f}. "
                     f"Informado: R$ {valor_recebimento:.2f}."
                 ),
             )
 
-        # ----------------------------------------------------
-        # 5. EXIGIR CAIXA ABERTO
-        # ----------------------------------------------------
         caixa = obter_caixa_aberto(db)
 
         if not caixa:
@@ -276,9 +254,6 @@ def criar_recebimento(
                 ),
             )
 
-        # ----------------------------------------------------
-        # 6. CRIAR RECEBIMENTO
-        # ----------------------------------------------------
         recebimento = RecebimentoConta(
             conta_receber_id=conta.id,
             data_recebimento=dados.data_recebimento,
@@ -290,19 +265,11 @@ def criar_recebimento(
         db.add(recebimento)
         db.flush()
 
-        # ----------------------------------------------------
-        # 7. CRIAR FORMAS + MOVIMENTAÇÕES NO CAIXA
-        # ----------------------------------------------------
-        pagamentos_criados = []
-
         for pagamento in dados.pagamentos:
             forma = normalizar_forma_pagamento(
                 pagamento.forma_pagamento
             )
-
-            valor = Decimal(
-                str(pagamento.valor)
-            )
+            valor = Decimal(str(pagamento.valor))
 
             registro_forma = RecebimentoContaForma(
                 recebimento_id=recebimento.id,
@@ -310,21 +277,14 @@ def criar_recebimento(
                 valor=valor,
                 ativo=True,
             )
-
             db.add(registro_forma)
             db.flush()
-
-            pagamentos_criados.append(
-                registro_forma
-            )
 
             movimento = MovimentacaoCaixa(
                 caixa_id=caixa.id,
                 tipo="entrada",
                 categoria="recebimento",
-                descricao=(
-                    f"Recebimento - {conta.descricao}"
-                ),
+                descricao=f"Recebimento - {conta.descricao}",
                 valor=valor,
                 forma_pagamento=forma,
                 observacoes=(
@@ -333,21 +293,12 @@ def criar_recebimento(
                 ),
                 ativo=True,
             )
-
             db.add(movimento)
 
-        # ----------------------------------------------------
-        # 8. ATUALIZAR TOTAL RECEBIDO DA CONTA
-        # ----------------------------------------------------
         novo_valor_recebido = (
-            valor_recebido_anterior
-            + valor_recebimento
+            valor_recebido_anterior + valor_recebimento
         )
-
-        novo_valor_pendente = (
-            valor_total_conta
-            - novo_valor_recebido
-        )
+        novo_valor_pendente = valor_total_conta - novo_valor_recebido
 
         if novo_valor_pendente < 0:
             novo_valor_pendente = Decimal("0.00")
@@ -357,9 +308,6 @@ def criar_recebimento(
         if novo_valor_pendente == 0:
             conta.status = "pago"
             conta.data_pagamento = dados.data_recebimento
-
-            # Mantemos os campos antigos preenchidos
-            # apenas para compatibilidade/histórico.
             if len(dados.pagamentos) == 1:
                 conta.forma_pagamento = normalizar_forma_pagamento(
                     dados.pagamentos[0].forma_pagamento
@@ -367,26 +315,18 @@ def criar_recebimento(
             else:
                 conta.forma_pagamento = "multiplo"
         else:
-            # Pagamento parcial continua pendente.
             conta.status = "pendente"
 
-        # ----------------------------------------------------
-        # 9. COMMIT ÚNICO
-        # ----------------------------------------------------
         db.commit()
-
         db.refresh(recebimento)
 
         pagamentos_atualizados = (
             db.query(RecebimentoContaForma)
             .filter(
-                RecebimentoContaForma.recebimento_id
-                == recebimento.id,
+                RecebimentoContaForma.recebimento_id == recebimento.id,
                 RecebimentoContaForma.ativo.is_(True),
             )
-            .order_by(
-                RecebimentoContaForma.id.asc()
-            )
+            .order_by(RecebimentoContaForma.id.asc())
             .all()
         )
 
@@ -402,12 +342,7 @@ def criar_recebimento(
 
     except Exception as error:
         db.rollback()
-
-        print(
-            "Erro ao criar recebimento:",
-            repr(error),
-        )
-
+        print("Erro ao criar recebimento:", repr(error))
         raise HTTPException(
             status_code=500,
             detail=(

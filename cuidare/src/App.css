@@ -3828,3 +3828,83 @@ html[data-theme="escuro"] .estoque-page .empty-state span {
   color: #374151;
 }
 
+
+/* =========================================================
+   PADRÃO FINAL DOS BOTÕES — CUIDARE
+   ========================================================= */
+
+/* Botões principais */
+button[type="submit"],
+.primary-button,
+.estoque-primary-button,
+.estoque-page button[type="submit"],
+.page-header-actions .primary-button {
+  background: #0e4334 !important;
+  color: #ffffff !important;
+  border: 1px solid #0e4334 !important;
+}
+
+button[type="submit"]:hover:not(:disabled),
+.primary-button:hover:not(:disabled),
+.estoque-primary-button:hover:not(:disabled),
+.estoque-page button[type="submit"]:hover:not(:disabled),
+.page-header-actions .primary-button:hover:not(:disabled) {
+  background: #145a45 !important;
+  color: #ffffff !important;
+}
+
+/* Botões secundários / voltar / cancelar */
+.secondary-button,
+.estoque-secondary-button,
+.config-back-button,
+.config-cancel-button,
+.editar-paciente-back-button,
+.novo-paciente-back-button,
+.novo-paciente-cancel-button,
+.pacientes-back-button,
+.visualizar-paciente-back-button,
+.fiscal-back-button,
+.back-button {
+  background: #ffffff !important;
+  color: #0e4334 !important;
+  border: 1px solid #d7dfdb !important;
+}
+
+.secondary-button:hover:not(:disabled),
+.estoque-secondary-button:hover:not(:disabled),
+.config-back-button:hover:not(:disabled),
+.config-cancel-button:hover:not(:disabled),
+.editar-paciente-back-button:hover:not(:disabled),
+.novo-paciente-back-button:hover:not(:disabled),
+.novo-paciente-cancel-button:hover:not(:disabled),
+.pacientes-back-button:hover:not(:disabled),
+.visualizar-paciente-back-button:hover:not(:disabled),
+.fiscal-back-button:hover:not(:disabled),
+.back-button:hover:not(:disabled) {
+  background: #f3f7f5 !important;
+  color: #0e4334 !important;
+}
+
+/* Ações pequenas */
+.table-actions .small-button,
+.estoque-page .small-button {
+  background: #0e4334 !important;
+  color: #ffffff !important;
+  border: 1px solid #0e4334 !important;
+}
+
+.table-actions .small-button:hover:not(:disabled),
+.estoque-page .small-button:hover:not(:disabled) {
+  background: #145a45 !important;
+  color: #ffffff !important;
+}
+
+/* Botão de logout permanece destacado */
+.logout-button {
+  background: transparent !important;
+}
+
+/* Evita alteração de aparência em elementos desabilitados */
+button:disabled {
+  cursor: not-allowed;
+}

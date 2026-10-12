@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import "./Login.css";
 import { API_URL } from "./config";
 
-
 function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -29,9 +28,7 @@ function Login({ onLogin }) {
           `${API_URL}/configuracoes/identidade`
         );
 
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) return;
 
         const data = await response.json();
 
@@ -49,7 +46,7 @@ function Login({ onLogin }) {
 
   function obterLogoUrl() {
     if (!logoCuidare?.logo_url) {
-      return "";
+      return "/logo-cuidare-login.png";
     }
 
     return `${API_URL}${logoCuidare.logo_url}?v=${logoVersao}`;
@@ -83,8 +80,7 @@ function Login({ onLogin }) {
 
       if (!resposta.ok) {
         setErro(
-          dados.detail ||
-            "Não foi possível realizar o login."
+          dados.detail || "Não foi possível realizar o login."
         );
         return;
       }
@@ -129,50 +125,22 @@ function Login({ onLogin }) {
   return (
     <div className="login-page">
 
-      <div className="login-left">
+      <section className="login-left">
+        <img
+          src={logoCuidare ? obterLogoUrl() : "/logo-cuidare-login.png"}
+          alt="Cuidare - Fisioterapia e Pilates"
+          className="login-clinic-logo"
+        />
+      </section>
 
-        <div className="login-brand-area">
-
-          {logoCuidare?.logo_url ? (
-            <img
-              src={obterLogoUrl()}
-              alt="Logo da clínica"
-              className="login-clinic-logo"
-            />
-          ) : (
-            <div className="login-logo-fallback">
-              C
-            </div>
-          )}
-
-          <div className="login-brand-text">
-            <h1>CUIDARE</h1>
-
-            <p>
-              FISIOTERAPIA E PILATES
-            </p>
-          </div>
-
-          <div className="login-slogan">
-            <strong>
-              Gestão inteligente.
-            </strong>
-
-            <span>
-              Cuidado mais humano.
-            </span>
-          </div>
-
-        </div>
-
-      </div>
-
-      <div className="login-right">
+      <section className="login-right">
 
         <div className="login-card">
 
-          <div className="login-heading">
+          <div className="login-card-decoration login-card-decoration-top" />
+          <div className="login-card-decoration login-card-decoration-bottom" />
 
+          <div className="login-heading">
             <span className="login-label">
               ACESSO SEGURO
             </span>
@@ -184,13 +152,11 @@ function Login({ onLogin }) {
             <p>
               Entre com seu usuário e senha.
             </p>
-
           </div>
 
           <form onSubmit={handleLogin}>
 
             <div className="form-group">
-
               <label htmlFor="email">
                 Usuário ou e-mail
               </label>
@@ -206,11 +172,9 @@ function Login({ onLogin }) {
                 autoComplete="username"
                 autoFocus
               />
-
             </div>
 
             <div className="form-group">
-
               <label htmlFor="password">
                 Senha
               </label>
@@ -225,7 +189,6 @@ function Login({ onLogin }) {
                 }
                 autoComplete="current-password"
               />
-
             </div>
 
             {erro && (
@@ -237,7 +200,6 @@ function Login({ onLogin }) {
             <div className="login-options">
 
               <label className="remember">
-
                 <input
                   type="checkbox"
                   checked={lembrar}
@@ -246,10 +208,7 @@ function Login({ onLogin }) {
                   }
                 />
 
-                <span>
-                  Lembrar acesso
-                </span>
-
+                <span>Lembrar acesso</span>
               </label>
 
               <button
@@ -286,18 +245,18 @@ function Login({ onLogin }) {
 
           <div className="login-security">
             <span className="security-icon">🔒</span>
-            <span>Autenticação e permissões ficam no backend.</span>
+            <span>
+              Autenticação e permissões ficam no backend.
+            </span>
           </div>
 
         </div>
 
         <div className="login-footer">
-          <span>
-            Cuidare • Gestão inteligente para uma clínica mais humana.
-          </span>
+          Cuidare • Gestão inteligente para uma clínica mais humana.
         </div>
 
-      </div>
+      </section>
 
     </div>
   );

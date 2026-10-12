@@ -1202,7 +1202,7 @@ export default function AlunosPilates({ onVoltar }) {
                         automaticamente à
                         data de término.
                       </small>
-                    </div>
+                    </div>''
                   </div>
                 </div>
 

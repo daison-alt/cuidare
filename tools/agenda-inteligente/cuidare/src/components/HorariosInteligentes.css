@@ -1,0 +1,17 @@
+.horarios-inteligentes { grid-column: 1 / -1; width: 100%; padding: 22px; border: 1px solid #dce6df; border-radius: 16px; background: #f7faf8; box-sizing: border-box; }
+.horarios-inteligentes h3 { margin: 0 0 8px; color: #0e4334; font-size: 19px; }
+.horarios-inteligentes p { margin: 8px 0 15px; font-size: 13px; color: #5b6b62; line-height: 1.6; }
+.hi-contador { margin: 14px 0; padding: 12px 14px; border-radius: 10px; background: #e6f0e9; color: #174735; font-size: 13px; }
+.hi-semanas { display: grid; gap: 14px; }
+.hi-dia { padding: 12px; border: 1px solid #e0e9e2; background: white; border-radius: 12px; }
+.hi-dia > strong { font-size: 14px; color: #183b2c; }
+.hi-opcoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 8px; margin-top: 10px; }
+.hi-opcao { text-align: left; border: 1px solid #d8e5dc; border-radius: 10px; padding: 10px; background: white; color: #24483a; cursor: pointer; font: inherit; }
+.hi-opcao:hover:not(:disabled) { border-color: #c29b47; background: #fffdf6; }
+.hi-opcao:disabled { opacity: .45; cursor: not-allowed; }
+.hi-opcao.hi-selecionado { border: 2px solid #0e4334; background: #e8f2ec; }
+.hi-opcao .hi-hora { display: block; font-size: 14px; font-weight: 750; }
+.hi-opcao small { display: block; margin-top: 5px; font-size: 11px; line-height: 1.35; }
+.hi-opcao b { display: block; font-size: 11px; margin-top: 6px; }
+.hi-mostrar { border: 0; background: transparent; color: #0e4334; text-decoration: underline; padding: 12px 0; cursor: pointer; font-weight: 700; }
+.horarios-inteligentes .hi-nota { margin-bottom: 0; }

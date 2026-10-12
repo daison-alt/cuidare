@@ -11,6 +11,7 @@ from app.schemas.prontuario import (
     ProntuarioCriar,
     ProntuarioResposta,
 )
+from app.security.autorizacao import exigir_permissao
 
 
 router = APIRouter(
@@ -23,6 +24,7 @@ router = APIRouter(
 def criar_prontuario(
     dados: ProntuarioCriar,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("prontuarios.criar")),
 ):
     paciente = (
         db.query(Paciente)
@@ -73,6 +75,7 @@ def criar_prontuario(
 def buscar_prontuario_por_paciente(
     paciente_id: int,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("prontuarios.visualizar")),
 ):
     paciente = (
         db.query(Paciente)
@@ -108,6 +111,7 @@ def buscar_prontuario_por_paciente(
 def buscar_prontuario(
     prontuario_id: int,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("prontuarios.visualizar")),
 ):
     prontuario = (
         db.query(Prontuario)
@@ -132,6 +136,7 @@ def atualizar_prontuario(
     prontuario_id: int,
     dados: ProntuarioAtualizar,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("prontuarios.editar")),
 ):
     prontuario = (
         db.query(Prontuario)
@@ -164,6 +169,7 @@ def criar_evolucao(
     prontuario_id: int,
     dados: EvolucaoCriar,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("prontuarios.criar")),
 ):
     prontuario = (
         db.query(Prontuario)

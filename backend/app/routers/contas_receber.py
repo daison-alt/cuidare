@@ -109,8 +109,8 @@ def criar_movimentacao_recebimento(
 def criar_conta_receber(
     dados: ContaReceberCriar,
     db: Session = Depends(get_db),
+    usuario: dict = Depends(exigir_permissao("contas_receber.criar")),
 ):
-    usuario=Depends(exigir_permissao("contas_receber.criar")),
     status = validar_status(dados.status)
 
     forma_pagamento = validar_forma_pagamento(
@@ -191,8 +191,8 @@ def listar_contas_receber(
     vencimento: date | None = Query(default=None),
     incluir_inativos: bool = Query(default=False),
     db: Session = Depends(get_db),
+    usuario: dict = Depends(exigir_permissao("contas_receber.visualizar")),
 ):
-    usuario=Depends(exigir_permissao("contas_receber.visualizar")),
     consulta = db.query(ContaReceber)
 
     if not incluir_inativos:
@@ -234,8 +234,8 @@ def listar_contas_receber(
 def buscar_conta_receber(
     conta_id: int,
     db: Session = Depends(get_db),
+    usuario: dict = Depends(exigir_permissao("contas_receber.visualizar")),
 ):
-    usuario=Depends(exigir_permissao("contas_receber.visualizar")),
     conta = (
         db.query(ContaReceber)
         .filter(
@@ -262,8 +262,8 @@ def atualizar_conta_receber(
     conta_id: int,
     dados: ContaReceberAtualizar,
     db: Session = Depends(get_db),
+    usuario: dict = Depends(exigir_permissao("contas_receber.editar")),
 ):
-    usuario=Depends(exigir_permissao("contas_receber.editar")),
     conta = (
         db.query(ContaReceber)
         .filter(
@@ -306,12 +306,6 @@ def atualizar_conta_receber(
         conta.status,
     )
 
-    # --------------------------------------------------------
-    # PROTEÇÃO DE INTEGRIDADE FINANCEIRA
-    # --------------------------------------------------------
-    # Uma conta já recebida não pode ter seus dados financeiros
-    # alterados diretamente, pois o recebimento já foi registrado
-    # no Caixa.
     if status_anterior == "pago":
         campos_financeiros = {
             "valor",
@@ -337,9 +331,6 @@ def atualizar_conta_receber(
                 ),
             )
 
-    # Proteção financeira:
-    # uma conta já recebida não pode voltar diretamente
-    # para pendente, vencida ou cancelada.
     if (
         status_anterior == "pago"
         and novo_status != "pago"
@@ -412,11 +403,6 @@ def atualizar_conta_receber(
     for campo, valor in campos.items():
         setattr(conta, campo, valor)
 
-    # Só cria movimentação quando ocorre:
-    #
-    # pendente/vencido -> pago
-    #
-    # Se já estava pago, NÃO cria outra entrada.
     if (
         novo_status == "pago"
         and status_anterior != "pago"
@@ -442,8 +428,8 @@ def atualizar_conta_receber(
 def desativar_conta_receber(
     conta_id: int,
     db: Session = Depends(get_db),
+    usuario: dict = Depends(exigir_permissao("contas_receber.editar")),
 ):
-    usuario=Depends(exigir_permissao("contas_receber.editar")),
     conta = (
         db.query(ContaReceber)
         .filter(

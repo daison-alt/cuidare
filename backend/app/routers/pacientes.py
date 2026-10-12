@@ -8,6 +8,7 @@ from app.schemas.paciente import (
     PacienteCriar,
     PacienteResposta,
 )
+from app.security.autorizacao import exigir_permissao
 
 
 router = APIRouter(
@@ -30,6 +31,7 @@ def listar_pacientes(
         description="Inclui pacientes inativos na listagem.",
     ),
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("pacientes.visualizar")),
 ):
     consulta = db.query(Paciente)
 
@@ -54,6 +56,7 @@ def listar_pacientes(
 def buscar_paciente(
     paciente_id: int,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("pacientes.visualizar")),
 ):
     paciente = (
         db.query(Paciente)
@@ -85,6 +88,7 @@ def buscar_paciente(
 def criar_paciente(
     dados: PacienteCriar,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("pacientes.criar")),
 ):
     if dados.cpf:
         cpf_existente = (
@@ -122,6 +126,7 @@ def atualizar_paciente(
     paciente_id: int,
     dados: PacienteAtualizar,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("pacientes.editar")),
 ):
     paciente = (
         db.query(Paciente)
@@ -182,6 +187,7 @@ def atualizar_paciente(
 def desativar_paciente(
     paciente_id: int,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("pacientes.editar")),
 ):
     paciente = (
         db.query(Paciente)
@@ -219,6 +225,7 @@ def desativar_paciente(
 def reativar_paciente(
     paciente_id: int,
     db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("pacientes.editar")),
 ):
     paciente = (
         db.query(Paciente)

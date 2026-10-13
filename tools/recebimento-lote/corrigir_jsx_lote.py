@@ -30,7 +30,6 @@ if (
     bloco.count("Receber várias parcelas") != 1
     or bloco.count('className="financeiro-lote-acesso"') != 1
     or not re.search(r"\)\}\s*$", bloco)
-    or "        {aba ===" in bloco
 ):
     raise SystemExit("Bloco do botao diferente do esperado. Nada alterado.")
 

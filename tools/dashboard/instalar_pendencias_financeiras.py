@@ -148,31 +148,65 @@ trocar(
   const pacientesAtivos = dashboardDados.pacientes.filter('''
 )
 
-trocar(
-    '''            <div className="stat-card">
-              <span>Contas pendentes</span>
+# O cartao Contas pendentes pode ter sido alterado por outras melhorias.
+# Localizar a tag <div className="stat-card"> pelo JSX real, sem exigir
+# espacos, textos ou que o numero ainda seja um zero fixo.
+import re
 
-              <strong>0</strong>
+tags_div = re.finditer(r"</?div\b[^>]*>", app, re.I)
+pilha_div = []
+cartoes_pendentes = []
 
-              <small>
-                Nenhuma pendência financeira cadastrada
-              </small>
-            </div>''',
-    '''            {podeVerFinanceiroDashboard && (
-              <div className="stat-card">
-                <span>Contas pendentes</span>
-                <strong>
-                  {financeiroDashboard.carregando ? "..." :
-                    receitasPendentes.length + despesasPendentes.length}
-                </strong>
-                <small>
-                  {financeiroDashboard.erro
-                    ? "Consulta indisponível"
-                    : "Cobranças e despesas em aberto"}
-                </small>
-              </div>
-            )}'''
-)
+for match in tags_div:
+    tag = match.group(0)
+    if tag.lower().startswith("</div"):
+        if not pilha_div:
+            continue
+        inicio_tag, abertura = pilha_div.pop()
+        trecho = app[inicio_tag:match.end()]
+        if (
+            re.search(r'className\s*=\s*["\']stat-card["\']', abertura)
+            and re.search(r"contas\s+pendentes", trecho, re.I)
+        ):
+            cartoes_pendentes.append((inicio_tag, match.end()))
+    else:
+        pilha_div.append((match.start(), tag))
+
+if len(cartoes_pendentes) > 1:
+    raise SystemExit(
+        "Encontrei multiplos cartoes de contas pendentes. "
+        "Nenhum arquivo foi alterado."
+    )
+
+if len(cartoes_pendentes) == 1:
+    inicio_card, fim_card = cartoes_pendentes[0]
+    espacos = app[app.rfind("\n", 0, inicio_card) + 1:inicio_card]
+    novo_card = """{podeVerFinanceiroDashboard && (
+  <div className="stat-card">
+    <span>Contas pendentes</span>
+    <strong>
+      {financeiroDashboard.carregando
+        ? "..."
+        : receitasPendentes.length + despesasPendentes.length}
+    </strong>
+    <small>
+      {financeiroDashboard.erro
+        ? "Consulta indisponível"
+        : "Cobranças e despesas em aberto"}
+    </small>
+  </div>
+)}"""
+    novo_card = "\n".join(
+        espacos + linha if indice else linha
+        for indice, linha in enumerate(novo_card.split("\n"))
+    )
+    app = app[:inicio_card] + novo_card + app[fim_card:]
+    print("✅ Cartão Contas pendentes atualizado para dados reais.")
+else:
+    print(
+        "ℹ️ O cartão Contas pendentes já foi removido ou renomeado; "
+        "mantive os cartões atuais e acrescentei o painel de vencimentos."
+    )
 
 trocar(
     '''          <div className="content-grid">''',

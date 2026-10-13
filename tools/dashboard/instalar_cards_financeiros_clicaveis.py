@@ -44,7 +44,11 @@ trocar(
     '  const [currentPage, setCurrentPage] = useState("dashboard");',
     '''  const [currentPage, setCurrentPage] = useState("dashboard");
   // CUIDARE_ATALHOS_DASHBOARD_V1
-  const [atalhoFinanceiro, setAtalhoFinanceiro] = useState(null);'''
+  const [atalhoFinanceiro, setAtalhoFinanceiro] = useState(null);
+
+  useEffect(() => {
+    if (currentPage !== "financeiro") setAtalhoFinanceiro(null);
+  }, [currentPage]);'''
 )
 
 trocar(
@@ -80,31 +84,9 @@ dados[app_file] = (
     + origem[fim_financeiro:]
 )
 
-# Menu Financeiro geral não conserva um filtro antigo.
-trocar(
-    app_file,
-    '''onClick={() => setCurrentPage("financeiro")}
-          >
-            Financeiro''',
-    '''onClick={() => {
-              setAtalhoFinanceiro(null);
-              setCurrentPage("financeiro");
-            }}
-          >
-            Financeiro'''
-)
-
-# Acesso "Ver no Financeiro" também leva à visão geral.
-trocar(
-    app_file,
-    '''<button type="button" onClick={() => setCurrentPage("financeiro")}>
-                  Ver no Financeiro →''',
-    '''<button type="button" onClick={() => {
-                  setAtalhoFinanceiro(null);
-                  setCurrentPage("financeiro");
-                }}>
-                  Ver no Financeiro →'''
-)
+# Os atalhos especiais são limpos ao sair do Financeiro; não é necessário
+# alterar a implementação do menu lateral ou do botão geral, que variam
+# entre as versões do Cuidare.
 
 # 2) Os quatro cartões deixam de ser apenas informativos.
 cartoes = (

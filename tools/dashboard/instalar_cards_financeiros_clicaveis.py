@@ -58,21 +58,26 @@ trocar(
   function handleLogin(usuario) {'''
 )
 
-# Preserva demais props, inclusive onAbrirCaixa.
+# Encontra o componente real pelo JSX, sem depender do formato da rota
+# (a navegação pode ter sido alterada depois das últimas instalações).
 origem = dados[app_file]
-match = re.search(
-    r'(if \(currentPage === "financeiro"\) \{\s*return \(\s*<Financeiro\b)(.*?)(\s*/>)',
-    origem, flags=re.S,
-)
-if not match or origem.count('if (currentPage === "financeiro")') != 1:
-    raise SystemExit("Não consegui localizar a rota Financeiro no App.jsx. Nada foi alterado.")
-if "atalhoDashboard=" in match.group(0):
-    raise SystemExit("Atalho já detectado na rota Financeiro.")
+ocorrencias = list(re.finditer(r"<Financeiro\b", origem))
+if len(ocorrencias) != 1:
+    raise SystemExit(
+        f"Não consegui identificar o componente Financeiro ({len(ocorrencias)} ocorrências). "
+        "Nenhum arquivo alterado."
+    )
+inicio_financeiro = ocorrencias[0].start()
+fim_financeiro = origem.find("/>", inicio_financeiro)
+if fim_financeiro == -1 or fim_financeiro - inicio_financeiro > 1000:
+    raise SystemExit("Tag Financeiro não localizada com segurança. Nenhum arquivo alterado.")
+if "atalhoDashboard=" in origem[inicio_financeiro:fim_financeiro]:
+    raise SystemExit("O atalho do Financeiro já existe. Nenhum arquivo alterado.")
+
 dados[app_file] = (
-    origem[:match.start()] +
-    match.group(1) + match.group(2).rstrip() +
-    '\n        atalhoDashboard={atalhoFinanceiro}' +
-    match.group(3) + origem[match.end():]
+    origem[:fim_financeiro]
+    + "        atalhoDashboard={atalhoFinanceiro}\n      "
+    + origem[fim_financeiro:]
 )
 
 # Menu Financeiro geral não conserva um filtro antigo.

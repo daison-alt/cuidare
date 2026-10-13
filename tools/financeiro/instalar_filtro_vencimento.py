@@ -62,8 +62,18 @@ trocar(
     setFiltroVencimento("todos");'''
 )
 
+# Compatível com a visualização por aluno já instalada.
+expressao_com_aluno = "      return passouStatus && passouCategoria && passouAluno;"
+expressao_original = "      return passouStatus && passouCategoria;"
+if jsx.count(expressao_com_aluno) == 1:
+    expressao_atual = expressao_com_aluno
+elif jsx.count(expressao_original) == 1:
+    expressao_atual = expressao_original
+else:
+    raise SystemExit("⚠️ Filtro principal diferente. Nenhum arquivo alterado.")
+
 trocar(
-    '''      return passouStatus && passouCategoria;''',
+    expressao_atual,
     '''      const hoje = dataLocalFinanceiro();
       const passouVencimento =
         filtroVencimento === "todos" ||
@@ -77,7 +87,7 @@ trocar(
           status !== "pago" &&
           status !== "cancelado");
 
-      return passouStatus && passouCategoria && passouVencimento;'''
+''' + expressao_atual[:-1] + " && passouVencimento;"
 )
 
 trocar(
@@ -130,7 +140,10 @@ trocar(
               type="button"
               className={filtroVencimento === "hoje" ? "ativo" : ""}
               aria-pressed={filtroVencimento === "hoje"}
-              onClick={() => setFiltroVencimento("hoje")}
+              onClick={() => {
+                setFiltroVencimento("hoje");
+                if (aba === "receber") setVisaoCobrancas("todas");
+              }}
             >
               Vencem hoje
             </button>
@@ -138,7 +151,10 @@ trocar(
               type="button"
               className={filtroVencimento === "atrasados" ? "ativo" : ""}
               aria-pressed={filtroVencimento === "atrasados"}
-              onClick={() => setFiltroVencimento("atrasados")}
+              onClick={() => {
+                setFiltroVencimento("atrasados");
+                if (aba === "receber") setVisaoCobrancas("todas");
+              }}
             >
               Em atraso
             </button>
@@ -150,9 +166,13 @@ trocar(
                 onChange={(event) => {
                   setDataVencimento(event.target.value);
                   setFiltroVencimento(event.target.value ? "data" : "todos");
+                  if (event.target.value && aba === "receber") setVisaoCobrancas("todas");
                 }}
                 onClick={() => {
-                  if (dataVencimento) setFiltroVencimento("data");
+                  if (dataVencimento) {
+                    setFiltroVencimento("data");
+                    if (aba === "receber") setVisaoCobrancas("todas");
+                  }
                 }}
               />
             </label>

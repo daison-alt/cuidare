@@ -275,7 +275,7 @@ tela_depois = '''          {formulario.plano_id && (
               <small style={{ display: "block", color: "#60756a", lineHeight: 1.6 }}>
                 {numeroParcelas === 1
                   ? "Vencimento na data de início do plano. O pagamento será registrado depois, no Financeiro."
-                  : \`Serão criadas \${numeroParcelas} parcelas mensais, totalizando \${formatarValor(formulario.valor_contratado)}. A primeira vence no início do plano. Nenhuma parcela será marcada como paga antes do recebimento.\`}
+                  : `Serão criadas ${numeroParcelas} parcelas mensais, totalizando ${formatarValor(formulario.valor_contratado)}. A primeira vence no início do plano. Nenhuma parcela será marcada como paga antes do recebimento.`}
               </small>
             </section>
           )}
@@ -297,8 +297,8 @@ resultado_antes = '''          {resultadoMatricula.conta_receber_id ? (
 resultado_depois = '''          {resultadoMatricula.contas_receber_ids?.length ? (
             <p style={{ marginTop: 8 }}>
               {resultadoMatricula.numero_parcelas > 1
-                ? \`\${resultadoMatricula.numero_parcelas} cobranças mensais geradas: \${resultadoMatricula.contas_receber_ids.map((id) => "#" + id).join(", ")}.\`
-                : \`Cobrança #\${resultadoMatricula.conta_receber_id} gerada.\`}
+                ? `${resultadoMatricula.numero_parcelas} cobranças mensais geradas: ${resultadoMatricula.contas_receber_ids.map((id) => "#" + id).join(", ")}.`
+                : `Cobrança #${resultadoMatricula.conta_receber_id} gerada.`}
               {" "}Todas inicialmente pendentes no Financeiro; o Caixa registra
               o valor somente após o recebimento.
             </p>

@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import "./ContasReceber.css";
 import { useEffect, useMemo, useState } from "react";
 import { API_URL } from "../config";
@@ -76,7 +77,7 @@ function statusAutomatico(conta) {
 function ContasReceber({ onVoltar }) {
   const [contas, setContas] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
 
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");

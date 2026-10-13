@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import "./EditarPaciente.css";
 import { API_URL } from "../config";
@@ -27,7 +28,7 @@ function EditarPaciente({ pacienteId, onVoltar, onSalvo }) {
   const [formulario, setFormulario] = useState(formularioInicial);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
 
   useEffect(() => {
     async function carregarPaciente() {

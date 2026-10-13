@@ -1,3 +1,4 @@
+import { notificarErro } from "../components/avisos";
 import { useState } from "react";
 import "./NovoUsuario.css";
 
@@ -92,12 +93,12 @@ function EditarUsuario({ usuario, onVoltar, onSalvar }) {
 
   function handleSalvar() {
     if (!nome.trim()) {
-      alert("Digite o nome completo.");
+      notificarErro("Digite o nome completo.");
       return;
     }
 
     if (!email.trim()) {
-      alert("Digite o usuário ou e-mail.");
+      notificarErro("Digite o usuário ou e-mail.");
       return;
     }
 

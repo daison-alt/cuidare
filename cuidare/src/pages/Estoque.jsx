@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
+import AvisoSistema, {
+  prepararSomAviso
+} from "../components/AvisoSistema";
 
 
 function formatarNumero(valor) {
@@ -258,6 +261,7 @@ export default function Estoque({ onVoltar }) {
 
   async function registrarBaixa(event) {
     event.preventDefault();
+    prepararSomAviso();
     limparMensagens();
 
     if (!baixa.produto_id) {
@@ -525,7 +529,19 @@ export default function Estoque({ onVoltar }) {
         </div>
       </div>
 
-      {erro && <div className="alert-message error">{erro}</div>}
+      {erro && (
+        <AvisoSistema
+          titulo={
+            erro.includes("Quantidade insuficiente")
+              ? "Estoque insuficiente"
+              : "Operação não concluída"
+          }
+          mensagem={erro}
+          instrucao="Confira os dados e a quantidade disponível antes de continuar."
+          botao="Entendi"
+          aoFechar={() => setErro("")}
+        />
+      )}
 
       {sucesso && <div className="alert-message success">{sucesso}</div>}
 

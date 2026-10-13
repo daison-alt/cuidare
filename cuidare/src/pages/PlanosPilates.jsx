@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 
@@ -11,7 +12,7 @@ const PERIODOS = {
 export default function PlanosPilates({ onVoltar }) {
   const [planos, setPlanos] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
   const [modalAberto, setModalAberto] = useState(false);
   const [planoEditando, setPlanoEditando] = useState(null);
   const [salvando, setSalvando] = useState(false);
@@ -206,7 +207,12 @@ export default function PlanosPilates({ onVoltar }) {
           </div>
         ) : (
           <div className="planos-pilates-organizado">
-            {[1, 2].map((frequencia) => (
+            {["grupo", "individual"].map((modalidade) => (
+              <div key={modalidade} style={{ display: "grid", gap: 18 }}>
+                <h3 style={{ margin: "8px 0", color: "#0e4334" }}>
+                  Pilates {modalidade === "grupo" ? "em grupo" : "individual"}
+                </h3>
+                {[1, 2].map((frequencia) => (
               <section
                 key={frequencia}
                 className="planos-pilates-grupo"
@@ -230,7 +236,8 @@ export default function PlanosPilates({ onVoltar }) {
                         (item) =>
                           Number(item.frequencia_semanal) ===
                             frequencia &&
-                          item.periodo === periodo
+                          item.periodo === periodo &&
+                          (item.modalidade || "grupo") === modalidade
                       );
 
                       if (!plano) {
@@ -341,6 +348,8 @@ export default function PlanosPilates({ onVoltar }) {
                   )}
                 </div>
               </section>
+                ))}
+              </div>
             ))}
           </div>
         )}

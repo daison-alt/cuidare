@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.aluno_plano_pilates import AlunoPlanoPilates
+from app.services.cobranca_pilates import criar_cobranca_plano  # CUIDARE_COBRANCA_PILATES_V1
 from app.models.paciente import Paciente
 from app.models.plano_pilates import PlanoPilates
 from app.schemas.aluno_plano_pilates import (
@@ -137,6 +138,8 @@ def criar_contrato(
     )
 
     db.add(registro)
+    db.flush()
+    criar_cobranca_plano(db, registro, plano)
     db.commit()
     db.refresh(registro)
 

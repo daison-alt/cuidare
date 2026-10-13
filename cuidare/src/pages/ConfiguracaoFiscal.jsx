@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import "./ConfiguracaoFiscal.css";
 import { API_URL } from "../config";
@@ -53,14 +54,14 @@ function ConfiguracaoFiscal({ onVoltar }) {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState("");
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
 
   const [logo, setLogo] = useState(null);
   const [logoCarregando, setLogoCarregando] = useState(true);
   const [logoEnviando, setLogoEnviando] = useState(false);
   const [logoRemovendo, setLogoRemovendo] = useState(false);
   const [logoMensagem, setLogoMensagem] = useState("");
-  const [logoErro, setLogoErro] = useState("");
+  const [logoErro, setLogoErro] = useErro();
   const [logoVersao, setLogoVersao] = useState(Date.now());
 
   useEffect(() => {

@@ -1,5 +1,8 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useMemo, useState } from "react";
 import "./Caixa.css";
+import "./CaixaVisual.css";
+import "./CaixaAbas.css";
 import { API_URL } from "../config";
 
 
@@ -40,12 +43,13 @@ function Caixa({ onVoltar }) {
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [historicoCaixas, setHistoricoCaixas] = useState([]);
   const [mostrarHistorico, setMostrarHistorico] = useState(false);
+  const [painelCaixa, setPainelCaixa] = useState("resumo");
   const [caixaHistoricoSelecionado, setCaixaHistoricoSelecionado] = useState(null);
   const [detalhesCaixaHistorico, setDetalhesCaixaHistorico] = useState(null);
   const [carregandoDetalhesHistorico, setCarregandoDetalhesHistorico] = useState(false);
 
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
   const [sucesso, setSucesso] = useState("");
 
   const [mostrarAbertura, setMostrarAbertura] = useState(false);
@@ -386,6 +390,7 @@ function Caixa({ onVoltar }) {
       setCaixa(null);
       setSaldo(null);
       setMovimentacoes([]);
+      setPainelCaixa("resumo");
 
       setSucesso("Caixa fechado com sucesso.");
     } catch (error) {
@@ -523,6 +528,37 @@ function Caixa({ onVoltar }) {
         )}
       </header>
 
+      <div className="caixa-abas" aria-label="Áreas do caixa">
+        {(caixa
+          ? [
+              ["resumo", "Visão geral"],
+              ["movimentacoes", "Movimentações"],
+              ["fechamento", "Fechamento"],
+              ["historico", "Histórico"],
+            ]
+          : [
+              ["resumo", "Abertura"],
+              ["historico", "Histórico"],
+            ]
+        ).map(([id, nome]) => (
+          <button
+            key={id}
+            type="button"
+            className={painelCaixa === id ? "selecionada" : ""}
+            aria-pressed={painelCaixa === id}
+            onClick={() => {
+              setPainelCaixa(id);
+              if (id === "historico") {
+                setMostrarHistorico(true);
+                carregarHistorico();
+              }
+            }}
+          >
+            {nome}
+          </button>
+        ))}
+      </div>
+
       {erro && (
         <div className="caixa-alerta caixa-alerta-erro">
           {erro}
@@ -536,7 +572,7 @@ function Caixa({ onVoltar }) {
       )}
 
       {!caixa ? (
-        <section className="caixa-card caixa-card-abertura">
+        <section className={`caixa-card caixa-card-abertura ${painelCaixa === "historico" ? "caixa-oculto" : ""}`}>
           <div className="caixa-section-header">
             <div>
               <span className="caixa-kicker">
@@ -668,7 +704,7 @@ function Caixa({ onVoltar }) {
         </section>
       ) : (
         <>
-          <section className="caixa-card">
+          <section className={`caixa-card ${painelCaixa !== "resumo" ? "caixa-oculto" : ""}`}>
             <div className="caixa-section-header">
               <div>
                 <span className="caixa-kicker">
@@ -681,14 +717,21 @@ function Caixa({ onVoltar }) {
                 </p>
               </div>
 
-              <span className="caixa-status-aberto">
-                CAIXA ABERTO
-              </span>
+              <div className="caixa-status-conjunto">
+                <span className="caixa-status-aberto">
+                  Caixa aberto · Nº {caixa.id}
+                </span>
+                {caixa.data_abertura && (
+                  <small>
+                    Aberto em {formatarData(caixa.data_abertura)}
+                  </small>
+                )}
+              </div>
             </div>
 
             <div className="caixa-resumo-grid">
               <div className="caixa-resumo-card caixa-resumo-destaque">
-                <span>SALDO FINANCEIRO</span>
+                <span>TOTAL REGISTRADO</span>
                 <strong>
                   {formatarMoeda(totalFinanceiroEsperado)}
                 </strong>
@@ -726,9 +769,13 @@ function Caixa({ onVoltar }) {
               </div>
             </div>
 
+            <div className="caixa-meios-header">
+              <strong>Movimentação por forma de pagamento</strong>
+              <span>Valores líquidos, sem o saldo inicial</span>
+            </div>
             <div className="caixa-formas-grid">
               <div className="caixa-forma-card caixa-forma-especie">
-                <span>DINHEIRO</span>
+                <span>MOV. EM DINHEIRO</span>
                 <strong>
                   {formatarMoeda(
                     resumoFormasPagamento.dinheiro
@@ -804,7 +851,7 @@ function Caixa({ onVoltar }) {
             </div>
           </section>
 
-          <section className="caixa-card">
+          <section className={`caixa-card ${painelCaixa !== "movimentacoes" ? "caixa-oculto" : ""}`}>
             <div className="caixa-section-header">
               <div>
                 <span className="caixa-kicker">
@@ -1008,6 +1055,12 @@ function Caixa({ onVoltar }) {
                             {item.descricao}
                           </strong>
 
+                          {item.paciente_nome && (
+                            <small className="caixa-identificacao-paciente">
+                              Paciente: <b>{item.paciente_nome}</b>
+                            </small>
+                          )}
+
                           {item.categoria && (
                             <small>
                               {item.categoria}
@@ -1024,7 +1077,16 @@ function Caixa({ onVoltar }) {
                         </td>
 
                         <td>
-                          {formatarMoeda(item.valor)}
+                          <strong className={`caixa-valor ${
+                            ["saida", "sangria"].includes(item.tipo)
+                              ? "caixa-valor-negativo"
+                              : "caixa-valor-positivo"
+                          }`}>
+                            {["saida", "sangria"].includes(item.tipo)
+                              ? "−"
+                              : "+"}
+                            {formatarMoeda(item.valor)}
+                          </strong>
                         </td>
                       </tr>
                     ))}
@@ -1034,7 +1096,7 @@ function Caixa({ onVoltar }) {
             </div>
           </section>
 
-          <section className="caixa-card caixa-card-fechamento">
+          <section className={`caixa-card caixa-card-fechamento ${painelCaixa !== "fechamento" ? "caixa-oculto" : ""}`}>
             <div className="caixa-section-header">
               <div>
                 <span className="caixa-kicker">
@@ -1320,7 +1382,7 @@ function Caixa({ onVoltar }) {
 
       )}
 
-      <section className="caixa-card caixa-historico">
+      <section className={`caixa-card caixa-historico ${painelCaixa !== "historico" ? "caixa-oculto" : ""}`}>
         <div className="caixa-section-header">
           <div>
             <h2>📋 Histórico de Caixas</h2>
@@ -1665,7 +1727,14 @@ function Caixa({ onVoltar }) {
 
                               <td>{movimento.categoria || "-"}</td>
 
-                              <td>{movimento.descricao || "-"}</td>
+                              <td>
+                                <span>{movimento.descricao || "-"}</span>
+                                {movimento.paciente_nome && (
+                                  <small className="caixa-identificacao-paciente">
+                                    Paciente: <b>{movimento.paciente_nome}</b>
+                                  </small>
+                                )}
+                              </td>
 
                               <td>{movimento.forma_pagamento || "-"}</td>
 

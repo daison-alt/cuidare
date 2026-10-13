@@ -3908,3 +3908,236 @@ button[type="submit"]:hover:not(:disabled),
 button:disabled {
   cursor: not-allowed;
 }
+
+/* CUIDARE - Refinamento visual do Dashboard */
+
+.brand-icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.welcome-card {
+  min-height: 166px;
+  padding: 24px 32px;
+  gap: 24px;
+  background: linear-gradient(115deg, #ffffff 70%, #f7f3e8);
+}
+
+.welcome-card h3 {
+  font-size: 23px !important;
+}
+
+.welcome-card p {
+  font-size: 15px !important;
+  line-height: 1.5;
+}
+
+.card-symbol {
+  width: 122px;
+  height: 122px;
+  margin-right: 4px;
+  background: transparent;
+  border: 1px solid #e8dcc1;
+  box-shadow: 0 0 0 8px rgba(194, 155, 71, 0.08);
+}
+
+.card-symbol img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .card-symbol {
+    display: none;
+  }
+}
+
+/* CUIDARE_TURNO_GRADE_V1 — Lista de atendimentos do turno no Dashboard */
+.dashboard-turno-contador {
+  display: block; margin-top: 6px; color: #677e74; font-size: 12px;
+}
+.dashboard-appointments {
+  margin-top: 18px; display: grid; gap: 8px;
+  max-height: 520px; overflow-y: auto; padding-right: 4px;
+}
+.dashboard-appointment {
+  display: grid; grid-template-columns: 93px minmax(0, 1fr);
+  align-items: center; column-gap: 14px; padding: 12px;
+  border: 1px solid #e2eae6; border-radius: 12px;
+  background: #f9fbfa; min-width: 0;
+}
+.dashboard-appointment > div { min-width: 0; }
+.dashboard-appointment > div:first-child {
+  display: flex; flex-direction: column; gap: 4px;
+  padding-right: 12px; border-right: 1px solid #dbe6e1;
+}
+.dashboard-appointment > div:last-child {
+  display: flex; flex-direction: column; gap: 5px;
+}
+.dashboard-appointment strong {
+  display: block; color: #163f32; font-size: 14px;
+  overflow-wrap: anywhere; line-height: 1.4;
+}
+.dashboard-appointment > div:first-child strong { font-size: 20px; }
+.dashboard-appointment span { display: block; color: #697c74; font-size: 12px; }
+@media (max-width: 650px) {
+  .dashboard-appointment { grid-template-columns: 76px minmax(0, 1fr); gap: 10px; }
+}
+
+/* CUIDARE_DASHBOARD_FINANCEIRO_V1 — Somente consulta financeira no Dashboard */
+.dashboard-financeiro-diario {
+  margin-top: 20px;
+  padding: 22px;
+  border: 1px solid #e4e4df;
+  border-radius: 16px;
+  background: #fff;
+  color: #173f32;
+  box-shadow: 0 3px 14px rgba(14, 67, 52, .04);
+}
+.dashboard-financeiro-topo {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap; margin-bottom: 18px;
+}
+.dashboard-financeiro-topo span {
+  display: block; font-weight: 750; letter-spacing: .09em;
+  color: #ba9140; font-size: 12px;
+}
+.dashboard-financeiro-topo h3 {
+  font-size: 21px; color: #143f32; margin: 4px 0 0;
+}
+.dashboard-financeiro-topo button {
+  padding: 10px 14px; background: #f3ebd8;
+  color: #0e4334; border: 1px solid #d9c28b; border-radius: 9px;
+  font-size: 14px; font-weight: 650; cursor: pointer;
+}
+.dashboard-financeiro-resumos {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.dashboard-financeiro-resumos > div {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 16px; border-radius: 12px;
+  background: #f7faf8; border: 1px solid #e2eae4;
+  min-width: 0;
+}
+.dashboard-financeiro-resumos span { color: #536a5f; font-size: 13px; }
+.dashboard-financeiro-resumos strong {
+  color: #104632; font-size: clamp(17px, 1.6vw, 23px);
+  overflow-wrap: anywhere;
+}
+.dashboard-financeiro-resumos small { color: #758279; font-size: 12px; }
+.dashboard-financeiro-resumos .dashboard-financeiro-atencao {
+  border-color: #edcfb4; background: #fff8ee;
+}
+.dashboard-financeiro-resumos .dashboard-financeiro-atencao strong { color: #98542a; }
+.dashboard-financeiro-lista { margin-top: 20px; }
+.dashboard-financeiro-lista-titulo {
+  display: block; margin-bottom: 9px; font-size: 14px; color: #214f3f;
+}
+.dashboard-financeiro-item {
+  display: grid;
+  grid-template-columns: 115px minmax(0, 1fr) 98px 110px;
+  gap: 13px; padding: 11px 6px;
+  align-items: center; border-bottom: 1px solid #edf1eb;
+  font-size: 13px;
+}
+.dashboard-financeiro-item > strong { overflow-wrap: anywhere; color: #25483a; }
+.dashboard-financeiro-item > span { color: #6a776c; }
+.dashboard-financeiro-item > b { text-align: right; color: #173f32; }
+.dashboard-financeiro-tipo {
+  display: inline-block; padding: 5px 7px;
+  border-radius: 7px; background: #ebf6f0;
+  color: #21674b !important; font-weight: 700; text-align: center;
+}
+.dashboard-financeiro-tipo.atrasado {
+  color: #964728 !important; background: #fff0e4;
+}
+.dashboard-financeiro-mensagem { padding: 18px 0 2px; color: #667b70; font-size: 14px; }
+.dashboard-financeiro-erro {
+  background: #fff5ee; color: #854729; border-radius: 10px;
+  padding: 12px; font-size: 14px;
+}
+@media (max-width: 1180px) {
+  .dashboard-financeiro-resumos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .dashboard-financeiro-diario { padding: 15px; }
+  .dashboard-financeiro-resumos { grid-template-columns: 1fr; }
+  .dashboard-financeiro-item {
+    grid-template-columns: 1fr auto; gap: 6px 12px;
+  }
+  .dashboard-financeiro-item > b { text-align: right; }
+}
+
+
+/* CUIDARE_ATALHOS_DASHBOARD_V1 — cartões clicáveis */
+.dashboard-financeiro-resumos > .dashboard-financeiro-cartao-atalho {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e2eae4;
+  border-radius: 12px;
+  background: #f7faf8;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.dashboard-financeiro-resumos > .dashboard-financeiro-cartao-atalho:hover {
+  border-color: #c29b47;
+  box-shadow: 0 5px 14px rgba(14,67,52,.12);
+  transform: translateY(-2px);
+}
+.dashboard-financeiro-resumos .dashboard-financeiro-cartao-atalho.dashboard-financeiro-atencao {
+  border-color: #edcfb4;
+  background: #fff8ee;
+}
+.dashboard-financeiro-cartao-atalho span { color: #536a5f; font-size: 13px; }
+.dashboard-financeiro-cartao-atalho strong {
+  color: #104632;
+  font-size: clamp(17px,1.6vw,23px);
+  overflow-wrap: anywhere;
+}
+.dashboard-financeiro-cartao-atalho small { color: #758279; font-size: 12px; }
+.dashboard-financeiro-cartao-atalho.dashboard-financeiro-atencao strong { color: #98542a; }
+.dashboard-financeiro-item-atalho {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #edf1eb;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.dashboard-financeiro-item-atalho:hover { background: #f7faf8; }
+.dashboard-financeiro-item-atalho:focus-visible,
+.dashboard-financeiro-cartao-atalho:focus-visible {
+  outline: 3px solid #c29b47;
+  outline-offset: 2px;
+}

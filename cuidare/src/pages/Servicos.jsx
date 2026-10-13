@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useMemo, useState } from "react";
 import "./Servicos.css";
 import { API_URL } from "../config";
@@ -65,7 +66,7 @@ const formularioInicial = {
 export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunosPilates }) {
   const [servicos, setServicos] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
   const [mensagem, setMensagem] = useState("");
 
   const [modalAberto, setModalAberto] = useState(false);

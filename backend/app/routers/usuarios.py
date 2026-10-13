@@ -5,6 +5,8 @@ from app.database import get_db
 from app.models.usuario import Usuario
 from app.schemas.usuario import UsuarioCriar, UsuarioResposta, UsuarioAtualizar
 from app.security.auth import pwd_context, verificar_token
+from app.security.autorizacao import exigir_permissao
+from pydantic import BaseModel
 
 
 router = APIRouter(
@@ -56,6 +58,33 @@ def verificar_administrador(
         )
 
     return payload
+
+
+
+class ProfissionalAgendaResposta(BaseModel):
+    id: int
+    nome: str
+    perfil: str
+    status: bool
+
+
+@router.get(
+    "/profissionais",
+    response_model=list[ProfissionalAgendaResposta],
+)
+def listar_profissionais_agenda(
+    db: Session = Depends(get_db),
+    _: dict = Depends(exigir_permissao("agenda.visualizar")),
+):
+    return (
+        db.query(Usuario)
+        .filter(
+            Usuario.perfil == "fisioterapeuta",
+            Usuario.status.is_(True),
+        )
+        .order_by(Usuario.nome.asc())
+        .all()
+    )
 
 
 @router.get(

@@ -36,6 +36,8 @@ class AgendamentoCriar(BaseModel):
 
     tipo_atendimento: str = "normal"
 
+    valor_cobrado: Decimal | None = Field(default=None, ge=0)
+
     aluno_plano_id: int | None = None
 
     motivo_cortesia: str | None = Field(

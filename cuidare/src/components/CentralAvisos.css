@@ -1,0 +1,23 @@
+/* As mensagens de erro são exibidas pela Central de Avisos. */
+
+body:has(.cuidare-aviso-overlay) .login-error,
+body:has(.cuidare-aviso-overlay) .agenda-error,
+body:has(.cuidare-aviso-overlay) .novo-agendamento-error,
+body:has(.cuidare-aviso-overlay) .caixa-alerta-erro,
+body:has(.cuidare-aviso-overlay) .contas-pagar-error,
+body:has(.cuidare-aviso-overlay) .finance-error,
+body:has(.cuidare-aviso-overlay) .editar-paciente-alert,
+body:has(.cuidare-aviso-overlay) .novo-paciente-alert,
+body:has(.cuidare-aviso-overlay) .pacientes-alert,
+body:has(.cuidare-aviso-overlay) .alert-message.error,
+body:has(.cuidare-aviso-overlay) .financeiro-alert-erro,
+body:has(.cuidare-aviso-overlay) .fiscal-alert,
+body:has(.cuidare-aviso-overlay) .config-error,
+body:has(.cuidare-aviso-overlay) .visualizar-agendamento-alert,
+body:has(.cuidare-aviso-overlay) .visualizar-paciente-alert,
+body:has(.cuidare-aviso-overlay) .prontuario-alert,
+body:has(.cuidare-aviso-overlay) .ia-erro,
+body:has(.cuidare-aviso-overlay) .servicos-alert.error,
+body:has(.cuidare-aviso-overlay) .error-message {
+  display: none !important;
+}

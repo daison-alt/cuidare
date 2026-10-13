@@ -1,0 +1,50 @@
+/* CUIDARE - Navegação operacional do Caixa */
+
+.caixa-page .caixa-oculto {
+  display: none !important;
+}
+
+.caixa-page .caixa-abas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 6px;
+  margin-bottom: 20px;
+  background: #e9efea;
+  border: 1px solid #dbe5dd;
+  border-radius: 14px;
+}
+
+.caixa-page .caixa-abas button {
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #49695c;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.caixa-page .caixa-abas button:hover {
+  background: rgba(255,255,255,.65);
+}
+
+.caixa-page .caixa-abas button.selecionada {
+  color: #0e4334;
+  background: #ffffff;
+  border-color: #d9e4db;
+  box-shadow: 0 2px 8px rgba(14,67,52,.08);
+}
+
+.caixa-page .caixa-abas button:focus-visible {
+  outline: 2px solid #c29b47;
+  outline-offset: 2px;
+}
+
+@media (max-width: 650px) {
+  .caixa-page .caixa-abas {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+}

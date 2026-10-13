@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import "./Pacientes.css";
 import { API_URL } from "../config";
@@ -5,13 +6,12 @@ import { API_URL } from "../config";
 
 function Pacientes({
   onNovoPaciente,
-  onVoltar,
   onVisualizarPaciente,
   onEditarPaciente,
 }) {
   const [pacientes, setPacientes] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
   const [busca, setBusca] = useState("");
 
   async function carregarPacientes() {
@@ -64,7 +64,13 @@ function Pacientes({
       paciente.cpf?.toLowerCase().includes(termo) ||
       paciente.telefone?.toLowerCase().includes(termo)
     );
-  });
+  }).sort((a, b) =>
+    String(a.nome || "").localeCompare(
+      String(b.nome || ""),
+      "pt-BR",
+      { sensitivity: "base" }
+    )
+  );
 
   function formatarData(data) {
     if (!data) {
@@ -143,14 +149,6 @@ function Pacientes({
         </div>
 
         <div className="pacientes-header-actions">
-          <button
-            type="button"
-            className="pacientes-back-button"
-            onClick={onVoltar}
-          >
-            Voltar
-          </button>
-
           <button
             type="button"
             className="pacientes-new-button"

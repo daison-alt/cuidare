@@ -1,3 +1,4 @@
+import { notificarErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 
@@ -73,7 +74,7 @@ export default function Campanhas({ onVoltar }) {
     e.preventDefault();
 
     if (!form.nome.trim() || !form.data_inicio) {
-      alert("Informe o nome e a data inicial da campanha.");
+      notificarErro("Informe o nome e a data inicial da campanha.");
       return;
     }
 
@@ -92,7 +93,7 @@ export default function Campanhas({ onVoltar }) {
     });
 
     if (!resposta.ok) {
-      alert("Não foi possível salvar a campanha.");
+      notificarErro("Não foi possível salvar a campanha.");
       return;
     }
 
@@ -116,12 +117,12 @@ export default function Campanhas({ onVoltar }) {
     e.preventDefault();
 
     if (!indicacao.indicador_id || !indicacao.indicado_id) {
-      alert("Selecione quem indicou e quem foi indicado.");
+      notificarErro("Selecione quem indicou e quem foi indicado.");
       return;
     }
 
     if (indicacao.indicador_id === indicacao.indicado_id) {
-      alert("O paciente não pode indicar a si mesmo.");
+      notificarErro("O paciente não pode indicar a si mesmo.");
       return;
     }
 
@@ -138,7 +139,7 @@ export default function Campanhas({ onVoltar }) {
 
     if (!resposta.ok) {
       const erro = await resposta.json().catch(() => ({}));
-      alert(erro.detail || "Não foi possível registrar a indicação.");
+      notificarErro(erro.detail || "Não foi possível registrar a indicação.");
       return;
     }
 
@@ -150,7 +151,7 @@ export default function Campanhas({ onVoltar }) {
     setMostrarIndicacao(false);
     carregar();
 
-    alert("Indicação registrada! Benefício de 10% de desconto gerado.");
+    window.alert("Indicação registrada! Benefício de 10% de desconto gerado.");
   }
 
   function nomePaciente(id) {
@@ -423,7 +424,7 @@ export default function Campanhas({ onVoltar }) {
                     );
 
                     if (!resposta.ok) {
-                      alert("Não foi possível remover a indicação.");
+                      notificarErro("Não foi possível remover a indicação.");
                       return;
                     }
 

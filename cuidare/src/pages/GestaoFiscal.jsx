@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import "./GestaoFiscal.css";
 import { API_URL } from "../config";
@@ -84,7 +85,7 @@ function obterStatusExibicao(registro) {
 function GestaoFiscal({ onVoltar }) {
   const [registros, setRegistros] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
   const [sucesso, setSucesso] = useState("");
 
   const [formulario, setFormulario] = useState(

@@ -1045,3 +1045,14 @@
   }
 }
 
+
+/* CUIDARE_NOME_PACIENTE_CAIXA_V1 */
+.caixa-identificacao-paciente {
+  display: block;
+  margin-top: 6px;
+  color: #0e4334;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.caixa-identificacao-paciente b { font-weight: 750; }

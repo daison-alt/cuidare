@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -287,6 +288,13 @@ def atualizar_conta_pagar(
             detail="Conta a pagar não encontrada.",
         )
 
+    # CUIDARE_INTEGRIDADE_FINANCEIRA_V1
+    if conta.status == "pago" or Decimal(str(conta.valor_pago or 0)) > 0:
+        raise HTTPException(
+            status_code=409,
+            detail="Despesa com pagamento registrado nao pode ser editada. Corrija por rotina de estorno."
+        )
+
     status_anterior = conta.status
 
     campos = dados.model_dump(
@@ -471,6 +479,13 @@ def desativar_conta_pagar(
         raise HTTPException(
             status_code=404,
             detail="Conta a pagar não encontrada.",
+        )
+
+    # CUIDARE_INTEGRIDADE_FINANCEIRA_V1
+    if conta.status == "pago" or Decimal(str(conta.valor_pago or 0)) > 0:
+        raise HTTPException(
+            status_code=409,
+            detail="Despesa paga nao pode ser excluida: o movimento integra o Caixa."
         )
 
     conta.ativo = False

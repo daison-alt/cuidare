@@ -10,6 +10,8 @@ class Servico(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
+    modalidade_pilates = Column(String(20), nullable=True)
+
     nome = Column(
         String(150),
         nullable=False,

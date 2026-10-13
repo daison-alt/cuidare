@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import "./VisualizarPaciente.css";
 import { API_URL } from "../config";
@@ -6,7 +7,7 @@ import { API_URL } from "../config";
 function VisualizarPaciente({ pacienteId, onVoltar, onAbrirProntuario }) {
   const [paciente, setPaciente] = useState(null);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
 
   useEffect(() => {
     async function carregarPaciente() {

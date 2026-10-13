@@ -1,9 +1,10 @@
+import { useMensagem, mensagemEhErro } from "./components/avisos";
 import React, { useState, useEffect } from "react";
 import API_URL from "./config";
 
 export default function GestaoContratos() {
   const [contratos, setContratos] = useState([]);
-  const [mensagem, setMensagem] = useState("");
+  const [mensagem, setMensagem] = useMensagem();
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({
     titulo: "Contrato de Prestação de Serviços - Pilates",
@@ -69,7 +70,7 @@ export default function GestaoContratos() {
   return (
     <div style={{ padding: "20px", maxWidth: "1100px", margin: "0 auto" }}>
       <h2>Gestão de Contratos e Termos</h2>
-      {mensagem && <div style={{ padding: "10px", background: "#d4edda", color: "#155724", marginBottom: "15px" }}>{mensagem}</div>}
+      {mensagem && !mensagemEhErro(mensagem) && <div style={{ padding: "10px", background: "#d4edda", color: "#155724", marginBottom: "15px" }}>{mensagem}</div>}
 
       <button onClick={() => setModal(true)} style={{ padding: "10px 15px", background: "#007bff", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer", marginBottom: "20px" }}>
         + Novo Contrato / Termo

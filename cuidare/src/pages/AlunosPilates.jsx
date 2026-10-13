@@ -1,5 +1,7 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
+import HorariosInteligentes from "../components/HorariosInteligentes";
 
 
 const STATUS_LABELS = {
@@ -20,8 +22,12 @@ export default function AlunosPilates({ onVoltar }) {
   const [alunos, setAlunos] = useState([]);
   const [pacientes, setPacientes] = useState([]);
   const [planos, setPlanos] = useState([]);
+  const [profissionais, setProfissionais] = useState([]);
+  const [horarios, setHorarios] = useState([]);
+  const [resultadoMatricula, setResultadoMatricula] = useState(null);
+  const [numeroParcelas, setNumeroParcelas] = useState(1);  // CUIDARE_PARCELAS_PILATES_V1
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
   const [salvando, setSalvando] = useState(false);
   const [modalEdicaoAberto, setModalEdicaoAberto] = useState(false);
   const [alunoEditando, setAlunoEditando] = useState(null);
@@ -29,6 +35,7 @@ export default function AlunosPilates({ onVoltar }) {
   const [formulario, setFormulario] = useState({
     paciente_id: "",
     plano_id: "",
+    profissional_id: "",
     data_inicio: "",
     data_fim: "",
     valor_contratado: "",
@@ -87,10 +94,12 @@ export default function AlunosPilates({ onVoltar }) {
         alunosData,
         pacientesData,
         planosData,
+        profissionaisData,
       ] = await Promise.all([
         requisicao("/alunos-planos-pilates"),
         requisicao("/pacientes?ativo=true"),
         requisicao("/planos-pilates?ativo=true"),
+        requisicao("/usuarios/profissionais"),
       ]);
 
       setAlunos(
@@ -110,6 +119,7 @@ export default function AlunosPilates({ onVoltar }) {
           ? planosData
           : []
       );
+      setProfissionais(Array.isArray(profissionaisData) ? profissionaisData : []);
     } catch (error) {
       console.error(error);
       setErro(
@@ -248,8 +258,13 @@ export default function AlunosPilates({ onVoltar }) {
 
   function alterarCampo(event) {
     const { name, value } = event.target;
+    if (["paciente_id", "plano_id", "profissional_id", "data_inicio", "data_fim"].includes(name)) {
+      setHorarios([]);
+    }
+    setResultadoMatricula(null);
 
     if (name === "plano_id") {
+      setNumeroParcelas(1);
       const plano = planos.find(
         (item) =>
           String(item.id) === String(value)
@@ -335,12 +350,18 @@ export default function AlunosPilates({ onVoltar }) {
       return;
     }
 
+    const plano = obterPlanoSelecionado();
+    if (!formulario.profissional_id || horarios.length !== Number(plano?.frequencia_semanal || 0)) {
+      setErro("Selecione o fisioterapeuta e os horários fixos antes de matricular.");
+      return;
+    }
+
     try {
       setSalvando(true);
       setErro("");
 
-      await requisicao(
-        "/alunos-planos-pilates",
+      const novaMatricula = await requisicao(
+        "/matriculas-inteligentes",
         {
           method: "POST",
           body: JSON.stringify({
@@ -350,6 +371,9 @@ export default function AlunosPilates({ onVoltar }) {
             plano_id: Number(
               formulario.plano_id
             ),
+            profissional_id: Number(formulario.profissional_id),
+            horarios_semanais: horarios,
+            numero_parcelas: numeroParcelas,
             data_inicio:
               formulario.data_inicio,
             data_fim:
@@ -367,6 +391,7 @@ export default function AlunosPilates({ onVoltar }) {
       setFormulario({
         paciente_id: "",
         plano_id: "",
+        profissional_id: "",
         data_inicio: "",
         data_fim: "",
         valor_contratado: "",
@@ -374,6 +399,9 @@ export default function AlunosPilates({ onVoltar }) {
         observacoes: "",
       });
 
+      setHorarios([]);
+      setNumeroParcelas(1);
+      setResultadoMatricula(novaMatricula);
       await carregarDados();
     } catch (error) {
       console.error(error);
@@ -618,6 +646,26 @@ export default function AlunosPilates({ onVoltar }) {
         </div>
       )}
 
+      {resultadoMatricula && (
+        <div className="content-card" role="status" style={{ color: "#0e4334" }}>
+          Matrícula #{resultadoMatricula.matricula_id} criada com sucesso.
+          {" "}{resultadoMatricula.aulas_agendadas} aulas já reservadas na Agenda.
+          {resultadoMatricula.contas_receber_ids?.length ? (
+            <p style={{ marginTop: 8 }}>
+              {resultadoMatricula.numero_parcelas > 1
+                ? `${resultadoMatricula.numero_parcelas} cobranças mensais geradas: ${resultadoMatricula.contas_receber_ids.map((id) => "#" + id).join(", ")}.`
+                : `Cobrança #${resultadoMatricula.conta_receber_id} gerada.`}
+              {" "}Todas inicialmente pendentes no Financeiro; o Caixa registra
+              o valor somente após o recebimento.
+            </p>
+          ) : (
+            <p style={{ marginTop: 8 }}>
+              Matrícula sem cobrança (valor contratado zero).
+            </p>
+          )}
+        </div>
+      )}
+
       <div
         id="matricula-pilates"
         className="content-card"
@@ -690,6 +738,17 @@ export default function AlunosPilates({ onVoltar }) {
           </div>
 
           <div className="form-group">
+            <label>Fisioterapeuta</label>
+            <select name="profissional_id" value={formulario.profissional_id}
+              onChange={alterarCampo} required>
+              <option value="">Selecione o fisioterapeuta</option>
+              {profissionais.filter((p) => p.status).map((p) => (
+                <option value={p.id} key={p.id}>{p.nome}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
             <label>
               Data de início
             </label>
@@ -716,6 +775,52 @@ export default function AlunosPilates({ onVoltar }) {
               required
             />
           </div>
+
+          {formulario.plano_id && (
+            <section className="pilates-opcoes-cobranca"
+              style={{
+                gridColumn: "1 / -1",
+                padding: "18px 20px",
+                borderRadius: 14,
+                border: "1px solid #dfebe4",
+                background: "#f7faf8",
+              }}>
+              <strong style={{ color: "#0e4334", display: "block", marginBottom: 8 }}>
+                Como o aluno vai pagar o plano?
+              </strong>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <input type="radio" name="cobranca_pilates"
+                  checked={numeroParcelas === 1}
+                  onChange={() => setNumeroParcelas(1)} />
+                À vista — uma cobrança pelo valor total
+              </label>
+              {["trimestral", "semestral"].includes(obterPlanoSelecionado()?.periodo) && (
+                <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <input type="radio" name="cobranca_pilates"
+                    checked={numeroParcelas === (obterPlanoSelecionado()?.periodo === "trimestral" ? 3 : 6)}
+                    onChange={() => setNumeroParcelas(
+                      obterPlanoSelecionado()?.periodo === "trimestral" ? 3 : 6
+                    )} />
+                  Parcelado — {obterPlanoSelecionado()?.periodo === "trimestral" ? 3 : 6} cobranças mensais
+                </label>
+              )}
+              <small style={{ display: "block", color: "#60756a", lineHeight: 1.6 }}>
+                {numeroParcelas === 1
+                  ? "Vencimento na data de início do plano. O pagamento será registrado depois, no Financeiro."
+                  : `Serão criadas ${numeroParcelas} parcelas mensais, totalizando ${formatarValor(formulario.valor_contratado)}. A primeira vence no início do plano. Nenhuma parcela será marcada como paga antes do recebimento.`}
+              </small>
+            </section>
+          )}
+
+          <HorariosInteligentes
+            pacienteId={formulario.paciente_id}
+            planoId={formulario.plano_id}
+            profissionalId={formulario.profissional_id}
+            inicio={formulario.data_inicio}
+            fim={formulario.data_fim}
+            selecionados={horarios}
+            onChange={setHorarios}
+          />
 
           <div className="form-group">
             <label>

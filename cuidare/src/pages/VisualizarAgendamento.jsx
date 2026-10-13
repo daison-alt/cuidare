@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import "./VisualizarAgendamento.css";
 import { API_URL } from "../config";
@@ -36,7 +37,7 @@ function VisualizarAgendamento({
   const [profissional, setProfissional] = useState(null);
 
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
 
   useEffect(() => {
     async function carregarDados() {

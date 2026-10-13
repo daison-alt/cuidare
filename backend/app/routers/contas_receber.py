@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -6,6 +7,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.caixa import Caixa
 from app.models.conta_receber import ContaReceber
+from app.models.recebimento_conta import RecebimentoConta
+from app.models.cobranca_plano_pilates import CobrancaPlanoPilates
+from app.models.parcela_plano_pilates import ParcelaPlanoPilates
 from app.models.movimentacao_caixa import MovimentacaoCaixa
 from app.security.autorizacao import exigir_permissao
 from app.schemas.conta_receber import (
@@ -101,6 +105,32 @@ def criar_movimentacao_recebimento(
     db.add(movimento)
 
 
+# CUIDARE_INTEGRIDADE_FINANCEIRA_V1
+def bloquear_alteracao_conta_protegida(db: Session, conta: ContaReceber):
+    """Recibos e matriculas nunca podem ser alterados por edicao livre."""
+    if conta.status == "pago" or Decimal(str(conta.valor_pago or 0)) > 0:
+        raise HTTPException(
+            status_code=409,
+            detail="Conta com pagamento registrado. Utilize o estorno autorizado para corrigir."
+        )
+    if db.query(RecebimentoConta.id).filter(
+        RecebimentoConta.conta_receber_id == conta.id
+    ).first():
+        raise HTTPException(
+            status_code=409,
+            detail="Esta conta possui historico de recebimentos ou estornos e nao pode ser editada/excluida."
+        )
+    if db.query(CobrancaPlanoPilates.id).filter(
+        CobrancaPlanoPilates.conta_receber_id == conta.id
+    ).first() or db.query(ParcelaPlanoPilates.id).filter(
+        ParcelaPlanoPilates.conta_receber_id == conta.id
+    ).first():
+        raise HTTPException(
+            status_code=409,
+            detail="Cobrança vinculada ao Pilates. Alterações exigem uma rotina de cancelamento ou renegociação."
+        )
+
+
 @router.post(
     "",
     response_model=ContaReceberResposta,
@@ -112,6 +142,20 @@ def criar_conta_receber(
     usuario: dict = Depends(exigir_permissao("contas_receber.criar")),
 ):
     status = validar_status(dados.status)
+    if status == "pago":
+        raise HTTPException(
+            status_code=409,
+            detail="Cadastre a cobrança como pendente e utilize Receber para registrar o pagamento e gerar recibo."
+        )
+    if (
+        (dados.valor_pago is not None and Decimal(str(dados.valor_pago)) != 0)
+        or dados.data_pagamento is not None
+        or dados.forma_pagamento is not None
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Dados de pagamento devem ser registrados pela ação Receber."
+        )
 
     forma_pagamento = validar_forma_pagamento(
         dados.forma_pagamento
@@ -279,6 +323,8 @@ def atualizar_conta_receber(
             detail="Conta a receber não encontrada.",
         )
 
+    bloquear_alteracao_conta_protegida(db, conta)
+
     status_anterior = conta.status
 
     campos = dados.model_dump(
@@ -305,6 +351,15 @@ def atualizar_conta_receber(
         "status",
         conta.status,
     )
+
+    if novo_status == "pago" or any(
+        campos.get(campo) is not None
+        for campo in ("valor_pago", "forma_pagamento", "data_pagamento")
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Para receber pagamentos, utilize Receber; nao altere os valores manualmente."
+        )
 
     if status_anterior == "pago":
         campos_financeiros = {
@@ -445,6 +500,7 @@ def desativar_conta_receber(
             detail="Conta a receber não encontrada.",
         )
 
+    bloquear_alteracao_conta_protegida(db, conta)
     conta.ativo = False
 
     db.commit()

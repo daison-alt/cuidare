@@ -13,6 +13,8 @@ class PlanoPilates(Base):
 
     nome = Column(String(150), nullable=False, unique=True, index=True)
 
+    modalidade = Column(String(20), nullable=False, default="grupo")
+
     periodo = Column(
         String(20),
         nullable=False,

@@ -1,0 +1,60 @@
+/* Painel de conferência: estilos isolados dos demais módulos. */
+.conciliacao-card {
+  margin: 0 0 24px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #d8e6da;
+  border-radius: 16px;
+  color: #244a37;
+}
+.conciliacao-cabecalho {
+  display: flex; justify-content: space-between; align-items: start;
+  flex-wrap: wrap; gap: 20px; margin-bottom: 20px;
+}
+.conciliacao-cabecalho h2 {
+  margin: 4px 0 5px; font-size: 23px; color: #0e4334;
+}
+.conciliacao-cabecalho p { font-size: 14px; color: #586a5e; }
+.conciliacao-marca {
+  color: #956c20; font-size: 11px; font-weight: 750;
+  letter-spacing: .8px;
+}
+.conciliacao-botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.conciliacao-botoes button {
+  cursor: pointer; border: 1px solid #c8d9ce; background: #f8faf8;
+  border-radius: 9px; padding: 10px 13px; font-weight: 650; color: #0e4334;
+}
+.conciliacao-botoes button:disabled { opacity: .5; cursor: wait; }
+.conciliacao-indicadores {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px; margin: 15px 0 24px;
+}
+.conciliacao-indicadores > div {
+  display: flex; flex-direction: column; gap: 9px;
+  background: #f5f8f5; border: 1px solid #e2ebe2;
+  padding: 16px; border-radius: 12px;
+}
+.conciliacao-indicadores span { color: #617468; font-size: 12px; }
+.conciliacao-indicadores strong { font-size: 20px; overflow-wrap: anywhere; }
+.conciliacao-vermelho { color: #b33e36; }
+.conciliacao-verde { color: #167349; }
+.conciliacao-grupo { margin: 18px 0; }
+.conciliacao-grupo h3 { font-size: 16px; margin: 0 0 11px; color: #173e30; }
+.conciliacao-grupo ul { margin: 0; padding: 0; list-style: none; }
+.conciliacao-grupo li {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px; margin: 7px 0;
+  border: 1px solid #eee1d3; border-radius: 9px; background: #fffaf5;
+  color: #614735; font-size: 13px;
+}
+.conciliacao-grupo li strong { text-transform: uppercase; font-size: 11px; }
+.conciliacao-vazio { color: #607666; font-size: 14px; }
+.conciliacao-erro { background: #fff1f1; color: #a12b2b; padding: 12px; border-radius: 8px; }
+.conciliacao-nota { font-size: 12px; color: #6f776f; padding-top: 12px; border-top: 1px solid #e5ebe5; }
+@media (max-width: 880px) {
+  .conciliacao-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .conciliacao-indicadores { grid-template-columns: 1fr; }
+  .conciliacao-card { padding: 15px; }
+}

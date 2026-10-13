@@ -109,3 +109,21 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+
+/* CUIDARE_FULLSCREEN_INTERNO_V1 */
+/* Sistema interno ocupando toda a largura da tela */
+
+body:has(.app) #root {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  text-align: left;
+}
+
+.app {
+  width: 100%;
+  min-width: 0;
+}

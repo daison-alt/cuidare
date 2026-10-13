@@ -1,0 +1,244 @@
+/* Recebimento de várias parcelas: componente isolado. */
+.cuidare-lote-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(10, 34, 26, .58);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+.cuidare-lote-modal {
+  width: min(100%, 780px);
+  max-height: min(93vh, 950px);
+  overflow: auto;
+  background: #fff;
+  color: #193d30;
+  border-radius: 17px;
+  box-shadow: 0 25px 85px rgba(0,0,0,.24);
+  border: 1px solid #dfe7df;
+}
+.cuidare-lote-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f9fbf9;
+  padding: 22px 26px 16px;
+  border-bottom: 1px solid #e0e9e1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.cuidare-lote-header small {
+  color: #af8739;
+  font-weight: 750;
+  letter-spacing: .1em;
+}
+.cuidare-lote-header h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(21px, 3vw, 27px);
+  color: #0e4334;
+}
+.cuidare-lote-header p { margin: 0; font-size: 14px; color: #52695b; }
+.cuidare-lote-fechar {
+  border: 0;
+  border-radius: 10px;
+  font-size: 27px;
+  background: #eaf0eb;
+  cursor: pointer;
+  color: #0e4334;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+}
+.cuidare-lote-corpo { padding: 20px 26px; }
+.cuidare-lote-corpo h3 {
+  margin: 14px 0 10px;
+  color: #154637;
+  font-size: 17px;
+}
+.cuidare-lote-corpo h3:first-child { margin-top: 0; }
+.cuidare-lote-instrucao {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #67776e;
+}
+.cuidare-lote-lista {
+  max-height: 240px;
+  overflow-y: auto;
+  display: grid;
+  gap: 7px;
+  padding: 4px 2px;
+}
+.cuidare-lote-parcela {
+  display: grid;
+  grid-template-columns: 21px minmax(0,1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 15px;
+  background: #fbfcfb;
+  border: 1px solid #e1e9e1;
+  border-radius: 11px;
+  cursor: pointer;
+}
+.cuidare-lote-parcela:has(input:checked) {
+  border-color: #9bbca8;
+  background: #edf7f0;
+}
+.cuidare-lote-parcela input { width: 17px; height: 17px; accent-color: #0e4334; }
+.cuidare-lote-parcela span { min-width: 0; }
+.cuidare-lote-parcela span strong {
+  display: block;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.cuidare-lote-parcela span small { color: #6e796f; font-size: 12px; }
+.cuidare-lote-parcela > strong { font-size: 14px; white-space: nowrap; }
+.cuidare-lote-total {
+  margin: 14px 0 24px;
+  padding: 15px 18px;
+  background: #0e4334;
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.cuidare-lote-total span { font-size: 13px; }
+.cuidare-lote-total strong { font-size: 24px; }
+.cuidare-lote-data, .cuidare-lote-obs {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 650;
+  margin: 8px 0 15px;
+}
+.cuidare-lote-data input { max-width: 220px; }
+.cuidare-lote-data input, .cuidare-lote-obs textarea,
+.cuidare-lote-forma input, .cuidare-lote-forma select {
+  border: 1px solid #ccdcd0;
+  border-radius: 9px;
+  padding: 10px 12px;
+  color: #183e30;
+  background: #fff;
+  font-size: 14px;
+  width: 100%;
+}
+.cuidare-lote-forma {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 170px 36px;
+  align-items: end;
+  gap: 10px;
+  margin: 10px 0;
+}
+.cuidare-lote-forma label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.cuidare-lote-remover {
+  height: 43px;
+  border: 1px solid #e6d8d8;
+  background: #fff7f7;
+  color: #a23131;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 23px;
+}
+.cuidare-lote-acoes-formas { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.cuidare-lote-acoes-formas button {
+  background: #edf3ee;
+  border: 1px solid #cddfd2;
+  color: #0e4334;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.cuidare-lote-soma {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 20px;
+  justify-content: space-between;
+  margin: 15px 0;
+  padding: 14px;
+  border-radius: 11px;
+  background: #f3f7f4;
+  font-size: 14px;
+}
+.cuidare-lote-soma .ok { color: #167349; }
+.cuidare-lote-soma .pendente { color: #9b642c; }
+.cuidare-lote-erro {
+  margin: 12px 0;
+  padding: 12px 14px;
+  background: #fff1f1;
+  color: #9d2525;
+  border-radius: 10px;
+  border: 1px solid #f0cece;
+  font-size: 13px;
+}
+.cuidare-lote-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 16px 26px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #fff;
+  border-top: 1px solid #e5ebe5;
+}
+.cuidare-lote-footer button, .cuidare-lote-confirmar {
+  padding: 12px 17px;
+  border: 1px solid #cad9cc;
+  border-radius: 10px;
+  background: #fff;
+  color: #0e4334;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+}
+.cuidare-lote-footer .cuidare-lote-confirmar, .cuidare-lote-confirmar {
+  background: #0e4334;
+  color: #fff;
+  border-color: #0e4334;
+}
+.cuidare-lote-footer button:disabled { opacity: .5; cursor: not-allowed; }
+.cuidare-lote-sucesso { padding: 24px 26px; }
+.cuidare-lote-sucesso h3 { color: #167349; font-size: 22px; margin: 0 0 10px; }
+.cuidare-lote-sucesso p { color: #567063; font-size: 14px; line-height: 1.6; }
+.cuidare-lote-recibos { display: grid; gap: 9px; margin: 17px 0; }
+.cuidare-lote-recibos button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  flex-wrap: wrap;
+  padding: 13px;
+  border: 1px solid #d7e6db;
+  border-radius: 10px;
+  background: #f7faf7;
+  color: #0e4334;
+  cursor: pointer;
+  text-align: left;
+}
+.cuidare-lote-sucesso > .cuidare-lote-confirmar { margin-top: 12px; }
+.cuidare-lote-observacao { border-left: 3px solid #c29b47; padding-left: 12px; }
+.cuidare-lote-footer button:focus-visible, .cuidare-lote-modal button:focus-visible,
+.cuidare-lote-modal input:focus-visible, .cuidare-lote-modal select:focus-visible {
+  outline: 2px solid #c29b47;
+  outline-offset: 2px;
+}
+@media (max-width: 620px) {
+  .cuidare-lote-modal { max-height: 97vh; }
+  .cuidare-lote-header, .cuidare-lote-corpo,
+  .cuidare-lote-footer, .cuidare-lote-sucesso { padding: 15px; }
+  .cuidare-lote-forma { grid-template-columns: minmax(0,1fr) minmax(0,1fr) 30px; }
+  .cuidare-lote-parcela { padding: 9px; gap: 7px; }
+  .cuidare-lote-total strong { font-size: 19px; }
+}

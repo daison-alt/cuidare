@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import "./Agenda.css";
 import { useEffect, useMemo, useState } from "react";
 import { API_URL } from "../config";
@@ -38,7 +39,7 @@ function Agenda({
   const [usuarios, setUsuarios] = useState([]);
 
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
   const [registrandoPresenca, setRegistrandoPresenca] = useState(null);
 
   async function carregarDados() {
@@ -66,7 +67,7 @@ function Agenda({
         fetch(`${API_URL}/agendamentos`, { headers }),
         fetch(`${API_URL}/pacientes`, { headers }),
         fetch(`${API_URL}/servicos`, { headers }),
-        fetch(`${API_URL}/usuarios`, { headers }),
+        fetch(`${API_URL}/usuarios/profissionais`, { headers }),
       ]);
 
       if (
@@ -218,6 +219,18 @@ function Agenda({
       .sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
   }, [agendamentos, dataSelecionada]);
 
+  // CUIDARE_TURNO_GRADE_V1 — grade das 06h às 21h, incluindo eventuais horários extras.
+  const faixasAgenda = useMemo(() => {
+    const todas = new Set(
+      Array.from({ length: 16 }, (_, i) => String(i + 6).padStart(2, "0"))
+    );
+    agendamentosDoDia.forEach((item) => {
+      const h = String(item.hora_inicio || "").slice(0, 2);
+      if (/^\d{2}$/.test(h) && Number(h) < 24) todas.add(h);
+    });
+    return [...todas].sort((a, b) => Number(a) - Number(b));
+  }, [agendamentosDoDia]);
+
   function buscarPaciente(id) {
     return pacientes.find((paciente) => paciente.id === id);
   }
@@ -291,22 +304,32 @@ function Agenda({
             <strong>Carregando agenda...</strong>
             <p>Aguarde enquanto buscamos os atendimentos.</p>
           </div>
-        ) : agendamentosDoDia.length === 0 ? (
-          <div className="agenda-empty">
-            <div className="agenda-empty-icon">◷</div>
-            <strong>Nenhum atendimento neste dia</strong>
-            <p>Não existem atendimentos ativos para a data selecionada.</p>
-            <button
-              type="button"
-              className="agenda-primary-button"
-              onClick={onNovoAgendamento}
-            >
-              + Criar agendamento
-            </button>
-          </div>
-        ) : (
-          <div className="agenda-list">
-            {agendamentosDoDia.map((agendamento) => {
+         ) : (
+          <div className="agenda-grade">
+            {faixasAgenda.map((faixa) => {
+              const itens = agendamentosDoDia.filter(
+                (a) => String(a.hora_inicio || "").slice(0, 2) === faixa
+              );
+              const ativos = itens.filter(
+                (a) => !["cancelado", "faltou"].includes(a.status)
+              ).length;
+              return (
+                <section className="agenda-faixa" key={faixa}>
+                  <div className="agenda-faixa-horario">
+                    <strong>{faixa}:00</strong>
+                    <span>{ativos > 0 ? (
+                      ativos + (ativos === 1 ? " atendimento" : " atendimentos")
+                    ) : "Livre"}</span>
+                  </div>
+                  <div className="agenda-faixa-conteudo">
+                    {itens.length === 0 ? (
+                      <button type="button" className="agenda-faixa-livre"
+                        onClick={onNovoAgendamento}>
+                        + Horário livre
+                      </button>
+                    ) : (
+                      <div className="agenda-list">
+                        {itens.map((agendamento) => {
               const paciente = buscarPaciente(agendamento.paciente_id);
               const servico = buscarServico(agendamento.servico_id);
               const profissional = buscarProfissional(agendamento.profissional_id);
@@ -428,6 +451,12 @@ function Agenda({
                     )}
                   </div>
                 </article>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </section>
               );
             })}
           </div>

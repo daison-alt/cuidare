@@ -11,6 +11,7 @@ from app.models.agendamento_plano_pilates import AgendamentoPlanoPilates
 from app.models.aluno_plano_pilates import AlunoPlanoPilates
 from app.models.paciente import Paciente
 from app.models.servico import Servico
+from app.models.plano_pilates import PlanoPilates
 from app.models.usuario import Usuario
 from app.schemas.agendamento import (
     AgendamentoAtualizar,
@@ -162,17 +163,25 @@ def validar_servico(
 def verificar_conflito(
     db: Session,
     profissional_id: int,
+    paciente_id: int,
+    servico: Servico,
     data: date,
     hora_inicio: time,
     hora_fim: time,
+    status: str = "agendado",
+    ativo: bool = True,
     agendamento_id: int | None = None,
 ):
+    # Cancelamentos, faltas e registros inativos não ocupam vagas.
+    if not ativo or status in {"cancelado", "faltou"}:
+        return
+
     consulta = (
         db.query(Agendamento)
         .filter(
             Agendamento.profissional_id == profissional_id,
             Agendamento.data == data,
-            Agendamento.ativo == True,
+            Agendamento.ativo.is_(True),
             Agendamento.status.notin_(["cancelado", "faltou"]),
             Agendamento.hora_inicio < hora_fim,
             Agendamento.hora_fim > hora_inicio,
@@ -184,12 +193,71 @@ def verificar_conflito(
             Agendamento.id != agendamento_id
         )
 
-    conflito = consulta.first()
+    ocupantes = consulta.all()
 
-    if conflito:
+    if not ocupantes:
+        return
+
+    modalidade = servico.modalidade_pilates
+
+    # Fisioterapia e demais serviços são individuais.
+    if modalidade not in {"grupo", "individual"}:
         raise HTTPException(
             status_code=409,
-            detail="Já existe um agendamento para este profissional nesse horário.",
+            detail=(
+                "Já existe um agendamento para este "
+                "profissional nesse horário."
+            ),
+        )
+
+    # O mesmo paciente não pode ocupar duas vagas na turma.
+    if any(
+        item.paciente_id == paciente_id
+        for item in ocupantes
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Este paciente já possui um agendamento "
+                "nesse horário."
+            ),
+        )
+
+    # Pilates individual tem capacidade de uma pessoa.
+    if modalidade == "individual":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Horário indisponível. O Pilates Individual "
+                "permite somente 1 aluno por horário e fisioterapeuta."
+            ),
+        )
+
+    # Uma turma em grupo admite até três alunos no mesmo horário.
+    # Outros serviços ou sobreposições parciais são bloqueados.
+    for item in ocupantes:
+        if (
+            item.servico_id != servico.id
+            or item.hora_inicio != hora_inicio
+            or item.hora_fim != hora_fim
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "O fisioterapeuta já possui outro atendimento "
+                    "ou turma com horário sobreposto."
+                ),
+            )
+
+    # Capacidade máxima: 3 alunos simultâneos.
+    if len(ocupantes) >= 3:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Turma de Pilates lotada. "
+                "O limite é de 3 alunos por horário "
+                "e fisioterapeuta."
+            ),
         )
 
 
@@ -250,6 +318,35 @@ def validar_plano_aluno(
         )
 
     return aluno_plano
+
+
+
+def validar_modalidade_plano(
+    db: Session,
+    servico: Servico,
+    contrato: AlunoPlanoPilates,
+):
+    plano = (
+        db.query(PlanoPilates)
+        .filter(PlanoPilates.id == contrato.plano_id)
+        .first()
+    )
+
+    if not plano:
+        raise HTTPException(
+            status_code=404,
+            detail="Plano de Pilates não encontrado.",
+        )
+
+    if plano.modalidade != servico.modalidade_pilates:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "O serviço selecionado não corresponde à modalidade "
+                "do plano contratado. Escolha Pilates ou "
+                "Pilates Individual conforme a matrícula."
+            ),
+        )
 
 
 def obter_vinculo_plano(
@@ -346,9 +443,13 @@ def criar_agendamento(
     verificar_conflito(
         db=db,
         profissional_id=dados.profissional_id,
+        paciente_id=dados.paciente_id,
+        servico=servico,
         data=dados.data,
         hora_inicio=dados.hora_inicio,
         hora_fim=dados.hora_fim,
+        status=dados.status,
+        ativo=dados.ativo,
     )
 
     motivo_cortesia = None
@@ -391,6 +492,8 @@ def criar_agendamento(
             dados.data,
             db,
         )
+
+        validar_modalidade_plano(db, servico, aluno_plano)
 
         valor_cobrado = Decimal("0.00")
 
@@ -686,6 +789,25 @@ def atualizar_agendamento(
                 detail="Informe o plano ativo do aluno para este atendimento.",
             )
 
+        contrato_selecionado = (
+            db.query(AlunoPlanoPilates)
+            .filter(AlunoPlanoPilates.id == novo_aluno_plano_id)
+            .first()
+        )
+
+        if (
+            not contrato_selecionado
+            or contrato_selecionado.paciente_id != novo_paciente_id
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="O plano não pertence ao paciente selecionado.",
+            )
+
+        validar_modalidade_plano(
+            db, servico, contrato_selecionado
+        )
+
         if (
             not vinculo
             or vinculo.aluno_plano_id
@@ -751,9 +873,13 @@ def atualizar_agendamento(
     verificar_conflito(
         db=db,
         profissional_id=novo_profissional_id,
+        paciente_id=novo_paciente_id,
+        servico=servico,
         data=nova_data,
         hora_inicio=nova_hora_inicio,
         hora_fim=nova_hora_fim,
+        status=novo_status,
+        ativo=campos.get("ativo", agendamento.ativo),
         agendamento_id=agendamento_id,
     )
 

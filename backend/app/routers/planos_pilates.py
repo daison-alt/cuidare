@@ -41,6 +41,7 @@ def criar_plano(
 
     plano = PlanoPilates(
         nome=nome,
+        modalidade=dados.modalidade,
         periodo=dados.periodo,
         frequencia_semanal=dados.frequencia_semanal,
         quantidade_aulas=dados.quantidade_aulas,

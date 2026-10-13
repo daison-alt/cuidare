@@ -20,6 +20,7 @@ class ServicoAtualizar(BaseModel):
 
 
 class ServicoResposta(BaseModel):
+    modalidade_pilates: str | None
     model_config = ConfigDict(from_attributes=True)
 
     id: int

@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useState } from "react";
 import "./NovoPaciente.css";
 import { API_URL } from "../config";
@@ -72,7 +73,7 @@ function obterMensagemErro(resultado) {
 function NovoPaciente({ onVoltar, onSalvo }) {
   const [formulario, setFormulario] = useState(formularioInicial);
   const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
 
   function alterarCampo(event) {
     const { name, value } = event.target;

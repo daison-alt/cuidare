@@ -1,3 +1,4 @@
+import { useErro } from "./components/avisos";
 import React, { useEffect, useState } from "react";
 import { API_URL } from "./config";
 
@@ -32,7 +33,7 @@ function nomeFormaPagamento(forma) {
 export default function CentralRecibos({ onVoltar }) {
   const [recibos, setRecibos] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
 
   async function carregarRecibos() {
     try {

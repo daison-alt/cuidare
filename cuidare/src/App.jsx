@@ -1,4 +1,6 @@
+import { notificarErro } from "./components/avisos";
 import "./App.css";
+import LayoutPrincipal from "./LayoutPrincipal";
 import { useEffect, useState } from "react";
 
 import Login from "./Login";
@@ -26,6 +28,7 @@ import Campanhas from "./pages/Campanhas";
 import CentralRecibos from "./CentralRecibos";
 import NotasNFSe from "./NotasNFSe";
 import { API_URL } from "./config";
+import ResumoPendencias from "./ResumoPendencias";
 
 
 const STATUS_LABELS = {
@@ -43,6 +46,23 @@ function formatarData(data) {
   const [ano, mes, dia] = data.split("-");
 
   return `${dia}/${mes}/${ano}`;
+}
+
+// CUIDARE_DASHBOARD_FINANCEIRO_V1
+function saldoPendenteDashboard(conta) {
+  if (!conta || conta.ativo === false || ["cancelado", "pago"].includes(conta.status)) {
+    return 0;
+  }
+  return Math.max(0, Math.round(
+    (Number(conta.valor || 0) - Number(conta.valor_pago || 0)) * 100
+  ) / 100);
+}
+
+function formatarDinheiroDashboard(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }
 
 function App() {
@@ -66,6 +86,21 @@ function App() {
   });
 
   const [currentPage, setCurrentPage] = useState("dashboard");
+  // CUIDARE_ATALHOS_DASHBOARD_V1
+  const [atalhoFinanceiro, setAtalhoFinanceiro] = useState(null);
+
+  useEffect(() => {
+    if (currentPage !== "financeiro") setAtalhoFinanceiro(null);
+  }, [currentPage]);
+  // CUIDARE_TURNO_GRADE_V1
+  const [relogioDashboard, setRelogioDashboard] = useState(() => new Date());
+
+  useEffect(() => {
+    if (currentPage !== "dashboard") return;
+    setRelogioDashboard(new Date());
+    const timer = setInterval(() => setRelogioDashboard(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, [currentPage]);
 
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
 
@@ -77,6 +112,13 @@ function App() {
   const [dashboardDados, setDashboardDados] = useState({
     pacientes: [],
     agendamentos: [],
+    carregando: true,
+    erro: "",
+  });
+
+  const [financeiroDashboard, setFinanceiroDashboard] = useState({
+    receber: [],
+    pagar: [],
     carregando: true,
     erro: "",
   });
@@ -161,6 +203,9 @@ function App() {
         });
       } catch (error) {
         console.error("Erro ao carregar Dashboard:", error);
+        notificarErro(
+          "Não foi possível carregar os dados do Dashboard."
+        );
 
         setDashboardDados((atual) => ({
           ...atual,
@@ -173,6 +218,61 @@ function App() {
 
     carregarDashboard();
   }, [usuarioLogado, currentPage]);
+
+  // CUIDARE_DASHBOARD_FINANCEIRO_V1
+  const podeVerFinanceiroDashboard = [
+    "administrador", "secretaria", "recepcao", "recepção",
+  ].includes(String(usuarioLogado?.perfil || "").trim().toLocaleLowerCase("pt-BR"));
+
+  useEffect(() => {
+    if (!usuarioLogado || currentPage !== "dashboard" || !podeVerFinanceiroDashboard) {
+      return;
+    }
+
+    const controller = new AbortController();
+    setFinanceiroDashboard((atual) => ({
+      ...atual, carregando: true, erro: "",
+    }));
+
+    async function consultarFinanceiro() {
+      try {
+        const [receberRes, pagarRes] = await Promise.all([
+          fetch(API_URL + "/contas-receber", { signal: controller.signal }),
+          fetch(API_URL + "/contas-pagar", { signal: controller.signal }),
+        ]);
+        if (!receberRes.ok || !pagarRes.ok) {
+          throw new Error("Os vencimentos não puderam ser consultados.");
+        }
+        const [receber, pagar] = await Promise.all([
+          receberRes.json(), pagarRes.json(),
+        ]);
+        if (!controller.signal.aborted) {
+          setFinanceiroDashboard({
+            receber: Array.isArray(receber) ? receber : [],
+            pagar: Array.isArray(pagar) ? pagar : [],
+            carregando: false,
+            erro: "",
+          });
+        }
+      } catch (erro) {
+        if (!controller.signal.aborted) {
+          setFinanceiroDashboard((atual) => ({
+            ...atual,
+            carregando: false,
+            erro: "Não foi possível consultar as pendências financeiras agora.",
+          }));
+        }
+      }
+    }
+
+    consultarFinanceiro();
+    return () => controller.abort();
+  }, [usuarioLogado, currentPage, podeVerFinanceiroDashboard]);
+
+  function abrirFinanceiroComFiltro(aba, vencimento = "todos", contaId = null) {
+    setAtalhoFinanceiro({ aba, vencimento, contaId });
+    setCurrentPage("financeiro");
+  }
 
   function handleLogin(usuario) {
     setUsuarioLogado(usuario);
@@ -270,7 +370,7 @@ function App() {
         error
       );
 
-      alert(
+      notificarErro(
         error.message ||
           "Não foi possível carregar os usuários."
       );
@@ -338,7 +438,7 @@ function App() {
         error
       );
 
-      alert(
+      notificarErro(
         error.message ||
           "Não foi possível criar o usuário."
       );
@@ -399,7 +499,7 @@ function App() {
         error
       );
 
-      alert(
+      notificarErro(
         error.message ||
           "Não foi possível atualizar o usuário."
       );
@@ -449,7 +549,7 @@ function App() {
         error
       );
 
-      alert(
+      notificarErro(
         error.message ||
           "Não foi possível alterar o status do usuário."
       );
@@ -467,26 +567,49 @@ function App() {
 
   if (currentPage === "prontuario") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <Prontuario
         pacienteId={pacienteSelecionado}
         onVoltar={() => {
           setCurrentPage("pacientes");
         }}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "novo-agendamento") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <NovoAgendamento
         onVoltar={() => setCurrentPage("agenda")}
         onSalvo={() => setCurrentPage("agenda")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "editar-agendamento") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <EditarAgendamento
         agendamentoId={agendamentoSelecionado}
         onVoltar={() => {
@@ -498,11 +621,19 @@ function App() {
           setCurrentPage("agenda");
         }}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "agenda") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <Agenda
         onVoltar={() => setCurrentPage("dashboard")}
         onNovoAgendamento={() => setCurrentPage("novo-agendamento")}
@@ -511,11 +642,19 @@ function App() {
           setCurrentPage("editar-agendamento");
         }}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "pacientes") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <Pacientes
         onNovoPaciente={() => setCurrentPage("novo-paciente")}
         onVisualizarPaciente={(pacienteId) => {
@@ -528,20 +667,36 @@ function App() {
         }}
         onVoltar={() => setCurrentPage("dashboard")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "novo-paciente") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <NovoPaciente
         onVoltar={() => setCurrentPage("pacientes")}
         onSalvo={() => setCurrentPage("pacientes")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "editar-paciente") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <EditarPaciente
         pacienteId={pacienteSelecionado}
         onVoltar={() => {
@@ -551,11 +706,19 @@ function App() {
           setCurrentPage("pacientes");
         }}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "visualizar-paciente") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <VisualizarPaciente
         pacienteId={pacienteSelecionado}
         onVoltar={() => {
@@ -566,11 +729,19 @@ function App() {
           setCurrentPage("prontuario");
         }}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "usuarios") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <Usuarios
         usuarios={usuarios}
         onNovoUsuario={() => setCurrentPage("novo-usuario")}
@@ -578,144 +749,274 @@ function App() {
         onAlterarStatus={alterarStatusUsuario}
         onVoltar={() => setCurrentPage("dashboard")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "novo-usuario") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <NovoUsuario
         onVoltar={() => setCurrentPage("usuarios")}
         onSalvar={adicionarUsuario}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "gestao-fiscal") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <GestaoFiscal
         onVoltar={() => setCurrentPage("dashboard")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "configuracao-fiscal") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <ConfiguracaoFiscal
         configuracaoId={configuracaoFiscalSelecionada}
         onVoltar={() => setCurrentPage("dashboard")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "editar-usuario") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <EditarUsuario
         usuario={usuarioSelecionado}
         onVoltar={() => setCurrentPage("usuarios")}
         onSalvar={atualizarUsuario}
       />
+      </LayoutPrincipal>
     );
   }
 
 
   if (currentPage === "financeiro") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <Financeiro
         onVoltar={() => setCurrentPage("dashboard")}
+        onAbrirCaixa={() => setCurrentPage("caixa")} // CUIDARE_INTEGRIDADE_FINANCEIRA_V1
+              atalhoDashboard={atalhoFinanceiro}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "caixa") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <Caixa
         onVoltar={() => setCurrentPage("financeiro")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "estoque") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <Estoque
         onVoltar={() => setCurrentPage("dashboard")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "alunos-pilates") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <AlunosPilates
         onVoltar={() => setCurrentPage("servicos")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "planos-pilates") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <PlanosPilates
         onVoltar={() => setCurrentPage("servicos")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "campanhas") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <Campanhas
         onVoltar={() => setCurrentPage("dashboard")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "recibos") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <CentralRecibos
         onVoltar={() => setCurrentPage("financeiro")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "notas") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <NotasNFSe
         onVoltar={() => setCurrentPage("dashboard")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "servicos") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <Servicos
         onVoltar={() => setCurrentPage("dashboard")}
         onAbrirPlanosPilates={() => setCurrentPage("planos-pilates")}
         onAbrirAlunosPilates={() => setCurrentPage("alunos-pilates")}
       />
+      </LayoutPrincipal>
     );
   }
 
   if (currentPage === "contas-receber") {
     return (
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
       <ContasReceber
         onVoltar={() => setCurrentPage("financeiro")}
       />
+      </LayoutPrincipal>
     );
   }
 
-  const nomeUsuario = usuarioLogado?.nome || "Usuário";
-  const perfilUsuario = usuarioLogado?.perfil || "Usuário";
+  const hoje = [
+    relogioDashboard.getFullYear(),
+    String(relogioDashboard.getMonth() + 1).padStart(2, "0"),
+    String(relogioDashboard.getDate()).padStart(2, "0"),
+  ].join("-");
 
-  const horaAtual = new Date().getHours();
+  const receitasPendentes = financeiroDashboard.receber.filter(
+    (conta) => saldoPendenteDashboard(conta) > 0
+  );
+  const despesasPendentes = financeiroDashboard.pagar.filter(
+    (conta) => saldoPendenteDashboard(conta) > 0
+  );
 
-  let saudacao = "Boa noite";
+  const receitasHoje = receitasPendentes.filter((c) => c.vencimento === hoje);
+  const despesasHoje = despesasPendentes.filter((c) => c.vencimento === hoje);
+  const receitasAtrasadas = receitasPendentes.filter((c) => c.vencimento < hoje);
+  const despesasAtrasadas = despesasPendentes.filter((c) => c.vencimento < hoje);
 
-  if (horaAtual >= 5 && horaAtual < 12) {
-    saudacao = "Bom dia";
-  } else if (horaAtual >= 12 && horaAtual < 18) {
-    saudacao = "Boa tarde";
+  function somaPendente(lista) {
+    return lista.reduce((soma, conta) => soma + saldoPendenteDashboard(conta), 0);
   }
 
-  const primeiroNome = nomeUsuario.trim().split(/\s+/)[0] || "Usuário";
-
-  const hoje = new Date().toISOString().slice(0, 10);
+  const itensFinanceirosPrioritarios = [
+    ...receitasAtrasadas.map((c) => ({ ...c, tipo: "Receber", atrasado: true })),
+    ...despesasAtrasadas.map((c) => ({ ...c, tipo: "Pagar", atrasado: true })),
+    ...receitasHoje.map((c) => ({ ...c, tipo: "Receber", atrasado: false })),
+    ...despesasHoje.map((c) => ({ ...c, tipo: "Pagar", atrasado: false })),
+  ].sort((a, b) =>
+    String(a.vencimento).localeCompare(String(b.vencimento)) ||
+    String(a.tipo).localeCompare(String(b.tipo))
+  ).slice(0, 6);
 
   const pacientesAtivos = dashboardDados.pacientes.filter(
     (paciente) => paciente.ativo
@@ -728,22 +1029,21 @@ function App() {
       !["cancelado", "faltou"].includes(agendamento.status)
   );
 
-  const proximosAtendimentos = dashboardDados.agendamentos
-    .filter(
-      (agendamento) =>
-        agendamento.ativo &&
-        agendamento.data >= hoje &&
-        !["cancelado", "faltou", "concluido"].includes(
-          agendamento.status
-        )
-    )
-    .sort((a, b) => {
-      const dataHoraA = `${a.data}T${a.hora_inicio}`;
-      const dataHoraB = `${b.data}T${b.hora_inicio}`;
+  const turnoAtual = relogioDashboard.getHours() < 12
+    ? { nome: "Manhã", inicio: "00:00", fim: "12:00" }
+    : { nome: "Tarde e noite", inicio: "12:00", fim: "24:00" };
 
-      return dataHoraA.localeCompare(dataHoraB);
-    })
-    .slice(0, 5);
+  const proximosAtendimentos = dashboardDados.agendamentos
+    .filter((agendamento) => (
+      agendamento.ativo &&
+      agendamento.data === hoje &&
+      !["cancelado", "faltou"].includes(agendamento.status) &&
+      String(agendamento.hora_inicio || "") >= turnoAtual.inicio &&
+      String(agendamento.hora_inicio || "") < turnoAtual.fim
+    ))
+    .sort((a, b) =>
+      String(a.hora_inicio || "").localeCompare(String(b.hora_inicio || ""))
+    );
 
   function buscarPaciente(id) {
     return dashboardDados.pacientes.find(
@@ -752,192 +1052,13 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-icon">
-            {logoCuidare ? (
-              <img
-                src={obterLogoCuidareUrl()}
-                alt="Logo Cuidare"
-              />
-            ) : (
-              "C"
-            )}
-          </div>
-
-          <div>
-            <h1>Cuidare</h1>
-            <span>Gestão em Saúde</span>
-          </div>
-        </div>
-
-        <nav className="menu">
-          <button
-            className={`menu-item ${
-              currentPage === "dashboard" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("dashboard")}
-          >
-            Dashboard
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "pacientes" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("pacientes")}
-          >
-            Pacientes
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "agenda" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("agenda")}
-          >
-            Agenda
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "financeiro" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("financeiro")}
-          >
-            Financeiro
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "recibos" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("recibos")}
-          >
-            Recibos
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "notas" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("notas")}
-          >
-            Notas / NFS-e
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "caixa" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("caixa")}
-          >
-            Caixa
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "estoque" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("estoque")}
-          >
-            Estoque
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "campanhas" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("campanhas")}
-          >
-            Marketing
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "servicos" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("servicos")}
-          >
-            Serviços
-          </button>
-
-          <button
-            className={`menu-item ${
-              currentPage === "configuracao-fiscal"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setCurrentPage("configuracao-fiscal")
-            }
-          >
-            Configurações
-          </button>
-
-          {["Administrador", "administrador"].includes(
-            usuarioLogado?.perfil
-          ) && (
-            <button
-              className={`menu-item ${
-                currentPage === "usuarios" ? "active" : ""
-              }`}
-              onClick={() => setCurrentPage("usuarios")}
-            >
-              Usuários
-            </button>
-          )}
-
-          <button
-            className={`menu-item ${
-              currentPage === "gestao-fiscal"
-                ? "active"
-                : ""
-            }`}
-            onClick={() => setCurrentPage("gestao-fiscal")}
-          >
-            Gestão Fiscal
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <span>{perfilUsuario}</span>
-
-          <strong>{nomeUsuario}</strong>
-
-          <button
-            onClick={handleLogout}
-            className="logout-button"
-          >
-            Sair
-          </button>
-        </div>
-      </aside>
-
-      <main className="main-content">
-        <header className="topbar">
-          <div>
-            <span className="welcome">
-              {saudacao}, {primeiroNome}!
-            </span>
-
-            <h2>Dashboard</h2>
-          </div>
-
-          <div className="user-area">
-            <div className="avatar">
-              {nomeUsuario.charAt(0).toUpperCase()}
-            </div>
-
-            <div>
-              <strong>{nomeUsuario}</strong>
-
-              <span>{perfilUsuario}</span>
-            </div>
-          </div>
-        </header>
-
+      <LayoutPrincipal
+        pagina={currentPage}
+        usuario={usuarioLogado}
+        logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      >
         <section className="dashboard">
           <div className="welcome-card">
             <div>
@@ -1006,16 +1127,115 @@ function App() {
               </small>
             </div>
 
-            <div className="stat-card">
-              <span>Contas pendentes</span>
-
-              <strong>0</strong>
-
-              <small>
-                Nenhuma pendência financeira cadastrada
-              </small>
-            </div>
+            {podeVerFinanceiroDashboard && (
+              <div className="stat-card">
+                <span>Contas pendentes</span>
+                <strong>
+                  {financeiroDashboard.carregando
+                    ? "..."
+                    : receitasPendentes.length + despesasPendentes.length}
+                </strong>
+                <small>
+                  {financeiroDashboard.erro
+                    ? "Consulta indisponível"
+                    : "Cobranças e despesas em aberto"}
+                </small>
+              </div>
+            )}
           </div>
+
+          {podeVerFinanceiroDashboard && (
+            <section className="dashboard-financeiro-diario">
+              <header className="dashboard-financeiro-topo">
+                <div>
+                  <span>FINANCEIRO DO DIA</span>
+                  <h3>Vencimentos e pendências</h3>
+                </div>
+                <button type="button" onClick={() => setCurrentPage("financeiro")}>
+                  Ver no Financeiro →
+                </button>
+              </header>
+
+              {financeiroDashboard.carregando ? (
+                <p className="dashboard-financeiro-mensagem">Consultando vencimentos...</p>
+              ) : financeiroDashboard.erro ? (
+                <p className="dashboard-financeiro-erro" role="status">
+                  {financeiroDashboard.erro}
+                </p>
+              ) : (
+                <>
+                  <div className="dashboard-financeiro-resumos">
+                    <button type="button"
+                      className={"dashboard-financeiro-cartao-atalho"}
+                      onClick={() => abrirFinanceiroComFiltro("receber", "hoje")}
+                      aria-label="Consultar receber hoje no Financeiro">
+                      <span>Receber hoje</span>
+                      <strong>{formatarDinheiroDashboard(somaPendente(receitasHoje))}</strong>
+                      <small>{receitasHoje.length} cobrança(s)</small>
+                    </button>
+                    <button type="button"
+                      className={"dashboard-financeiro-cartao-atalho"}
+                      onClick={() => abrirFinanceiroComFiltro("pagar", "hoje")}
+                      aria-label="Consultar pagar hoje no Financeiro">
+                      <span>Pagar hoje</span>
+                      <strong>{formatarDinheiroDashboard(somaPendente(despesasHoje))}</strong>
+                      <small>{despesasHoje.length} despesa(s)</small>
+                    </button>
+                    <button type="button"
+                      className={"dashboard-financeiro-cartao-atalho" + (receitasAtrasadas.length ? " dashboard-financeiro-atencao" : "")}
+                      onClick={() => abrirFinanceiroComFiltro("receber", "atrasados")}
+                      aria-label="Consultar recebimentos em atraso no Financeiro">
+                      <span>Recebimentos em atraso</span>
+                      <strong>{formatarDinheiroDashboard(somaPendente(receitasAtrasadas))}</strong>
+                      <small>{receitasAtrasadas.length} cobrança(s)</small>
+                    </button>
+                    <button type="button"
+                      className={"dashboard-financeiro-cartao-atalho" + (despesasAtrasadas.length ? " dashboard-financeiro-atencao" : "")}
+                      onClick={() => abrirFinanceiroComFiltro("pagar", "atrasados")}
+                      aria-label="Consultar despesas em atraso no Financeiro">
+                      <span>Despesas em atraso</span>
+                      <strong>{formatarDinheiroDashboard(somaPendente(despesasAtrasadas))}</strong>
+                      <small>{despesasAtrasadas.length} despesa(s)</small>
+                    </button>
+                  </div>
+
+                  {itensFinanceirosPrioritarios.length > 0 ? (
+                    <div className="dashboard-financeiro-lista">
+                      <strong className="dashboard-financeiro-lista-titulo">
+                        Pendências prioritárias
+                      </strong>
+                      {itensFinanceirosPrioritarios.map((item) => (
+                        <button type="button" className="dashboard-financeiro-item dashboard-financeiro-item-atalho"
+                          key={item.tipo + "-" + item.id}
+                          onClick={() => abrirFinanceiroComFiltro(
+                            item.tipo === "Receber" ? "receber" : "pagar",
+                            item.atrasado ? "atrasados" : "hoje",
+                            item.id
+                          )}
+                          title="Abrir este lançamento no Financeiro">
+                          <span className={
+                            item.atrasado
+                              ? "dashboard-financeiro-tipo atrasado"
+                              : "dashboard-financeiro-tipo"
+                          }>
+                            {item.atrasado ? "Atrasado · " : "Hoje · "}
+                            {item.tipo}
+                          </span>
+                          <strong title={item.descricao}>{item.descricao}</strong>
+                          <span>{item.vencimento?.split("-").reverse().join("/")}</span>
+                          <b>{formatarDinheiroDashboard(saldoPendenteDashboard(item))}</b>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="dashboard-financeiro-mensagem">
+                      Nenhuma cobrança ou despesa vencida ou vencendo hoje.
+                    </p>
+                  )}
+                </>
+              )}
+            </section>
+          )}
 
           <div className="content-grid">
             <section className="panel">
@@ -1023,7 +1243,10 @@ function App() {
                 <div>
                   <span>AGENDA</span>
 
-                  <h3>Próximos atendimentos</h3>
+                  <h3>Agenda do turno · {turnoAtual.nome}</h3>
+                  <small className="dashboard-turno-contador">
+                    {proximosAtendimentos.length} atendimento(s) hoje neste turno
+                  </small>
                 </div>
 
                 <button
@@ -1051,11 +1274,11 @@ function App() {
                   <div className="empty-icon">◷</div>
 
                   <strong>
-                    Nenhum atendimento agendado
+                    Nenhum atendimento neste turno
                   </strong>
 
                   <p>
-                    Os próximos atendimentos aparecerão
+                    Os atendimentos deste turno aparecerão
                     aqui.
                   </p>
                 </div>
@@ -1146,8 +1369,7 @@ function App() {
             </section>
           </div>
         </section>
-      </main>
-    </div>
+      </LayoutPrincipal>
   );
 }
 

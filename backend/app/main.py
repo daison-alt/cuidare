@@ -14,6 +14,8 @@ from app.models.agendamento import Agendamento
 from app.models.agendamento_plano_pilates import AgendamentoPlanoPilates
 from app.models.servico import Servico
 from app.models.conta_receber import ContaReceber
+from app.models.cobranca_plano_pilates import CobrancaPlanoPilates
+from app.models.parcela_plano_pilates import ParcelaPlanoPilates  # CUIDARE_PARCELAS_PILATES_V1  # CUIDARE_COBRANCA_PILATES_V1
 from app.models.recebimento_conta import RecebimentoConta
 from app.models.recebimento_conta_forma import RecebimentoContaForma
 from app.models.auditoria_estorno import AuditoriaEstorno
@@ -38,6 +40,8 @@ from app.routers.agendamentos import router as agendamentos_router
 from app.routers.servicos import router as servicos_router
 from app.routers.contas_receber import router as contas_receber_router
 from app.routers.recebimentos_conta import router as recebimentos_conta_router
+from app.routers.recebimento_lote import router as recebimento_lote_router  # CUIDARE_RECEBIMENTO_LOTE_V1
+from app.routers.conciliacao_financeira import router as conciliacao_financeira_router  # CUIDARE_CONCILIACAO_LEITURA_V1
 from app.routers.contas_pagar import router as contas_pagar_router
 from app.routers.caixa import router as caixa_router
 from app.routers.conferencia_caixa import router as conferencia_caixa_router
@@ -46,6 +50,7 @@ from app.routers.configuracao_sistema import router as configuracao_sistema_rout
 from app.routers.cuidare_ia import router as cuidare_ia_router
 from app.routers.planos_pilates import router as planos_pilates_router
 from app.routers.alunos_planos_pilates import router as alunos_planos_pilates_router
+from app.routers.matriculas_inteligentes import router as matriculas_inteligentes_router
 from app.routers.recibo_pdf import router as recibo_pdf_router
 from app.routers import campanhas
 from app.routers import indicacoes
@@ -204,6 +209,8 @@ app.include_router(evolucoes_router)
 app.include_router(agendamentos_router)
 app.include_router(servicos_router)
 app.include_router(recebimentos_conta_router)
+app.include_router(recebimento_lote_router)
+app.include_router(conciliacao_financeira_router)
 app.include_router(contas_receber_router)
 app.include_router(contas_pagar_router)
 app.include_router(caixa_router)
@@ -213,6 +220,7 @@ app.include_router(configuracao_sistema_router)
 app.include_router(cuidare_ia_router)
 app.include_router(planos_pilates_router)
 app.include_router(alunos_planos_pilates_router)
+app.include_router(matriculas_inteligentes_router)
 app.include_router(recibo_pdf_router)
 app.include_router(campanhas.router)
 app.include_router(indicacoes.router)

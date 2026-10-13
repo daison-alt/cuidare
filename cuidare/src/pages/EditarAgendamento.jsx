@@ -1,6 +1,8 @@
+import { useErro } from "../components/avisos";
 import "./NovoAgendamento.css";
 import { useEffect, useMemo, useState } from "react";
 import { API_URL } from "../config";
+import AvisoSistema, { prepararSomAviso } from "../components/AvisoSistema";
 
 
 const STATUS_OPTIONS = [
@@ -72,7 +74,7 @@ function EditarAgendamento({ agendamentoId, onVoltar, onSalvo }) {
   const [carregando, setCarregando] = useState(true);
   const [carregandoPlanos, setCarregandoPlanos] = useState(false);
   const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
 
   useEffect(() => {
     async function carregarDados() {
@@ -102,7 +104,7 @@ function EditarAgendamento({ agendamentoId, onVoltar, onSalvo }) {
           }),
           fetch(`${API_URL}/pacientes`, { headers }),
           fetch(`${API_URL}/servicos`, { headers }),
-          fetch(`${API_URL}/usuarios`, { headers }),
+          fetch(`${API_URL}/usuarios/profissionais`, { headers }),
         ]);
 
         if (
@@ -304,6 +306,7 @@ function EditarAgendamento({ agendamentoId, onVoltar, onSalvo }) {
 
   async function salvar(event) {
     event.preventDefault();
+    prepararSomAviso();
 
     try {
       setErro("");
@@ -476,11 +479,7 @@ function EditarAgendamento({ agendamentoId, onVoltar, onSalvo }) {
         className="novo-agendamento-form"
         onSubmit={salvar}
       >
-        {erro && (
-          <div className="novo-agendamento-error">
-            {erro}
-          </div>
-        )}
+
 
         <section className="novo-agendamento-card">
           <div className="novo-agendamento-card-header">

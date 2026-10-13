@@ -1,3 +1,4 @@
+import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import "./Prontuario.css";
 import { API_URL } from "../config";
@@ -11,7 +12,7 @@ function Prontuario({
   const [prontuario, setProntuario] = useState(null);
   const [evolucoes, setEvolucoes] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useErro();
   const [salvando, setSalvando] = useState(false);
 
   const [queixaPrincipal, setQueixaPrincipal] = useState("");
@@ -22,7 +23,7 @@ function Prontuario({
   const [novaEvolucao, setNovaEvolucao] = useState("");
 
   const [iaCarregando, setIaCarregando] = useState(false);
-  const [iaErro, setIaErro] = useState("");
+  const [iaErro, setIaErro] = useErro();
   const [iaResultado, setIaResultado] = useState(null);
 
   function obterToken() {

@@ -1,3 +1,4 @@
+import { useMensagem, mensagemEhErro } from "./components/avisos";
 import React, { useState, useEffect } from "react";
 import API_URL from "./config";
 
@@ -9,7 +10,7 @@ export default function ContaConfiguracoes() {
     telefone: "", email: "", regime_tributario: "Simples Nacional",
     codigo_servico_municipal: "", aliquota_iss: "", responsavel_tecnico: "", crefito_responsavel: ""
   });
-  const [mensagem, setMensagem] = useState("");
+  const [mensagem, setMensagem] = useMensagem();
 
   useEffect(() => {
     fetch(`${API_URL}/configuracao`)
@@ -37,7 +38,7 @@ export default function ContaConfiguracoes() {
   return (
     <div style={{ padding: "20px", maxWidth: "900px", margin: "0 auto" }}>
       <h2>Configurações da Conta & Clínica</h2>
-      {mensagem && <div style={{ padding: "10px", background: "#d4edda", color: "#155724", marginBottom: "15px" }}>{mensagem}</div>}
+      {mensagem && !mensagemEhErro(mensagem) && <div style={{ padding: "10px", background: "#d4edda", color: "#155724", marginBottom: "15px" }}>{mensagem}</div>}
       
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "1px solid #ccc" }}>
         <button type="button" onClick={() => setAba("empresa")} style={{ padding: "10px", background: aba === "empresa" ? "#ddd" : "transparent", border: "none", cursor: "pointer" }}>Empresa & Endereço</button>

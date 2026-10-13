@@ -36,6 +36,7 @@ class MovimentacaoCaixaResposta(BaseModel):
     tipo: str
     categoria: str
     descricao: str
+    paciente_nome: str | None = None  # CUIDARE_NOME_PACIENTE_CAIXA_V1
     valor: Decimal
     forma_pagamento: str | None
     observacoes: str | None

@@ -1,3 +1,4 @@
+import { useMensagem, mensagemEhErro } from "./components/avisos";
 import React, { useEffect, useState } from "react";
 import { API_URL } from "./config";
 
@@ -40,7 +41,7 @@ function statusStyle(status) {
 export default function NotasNFSe({ onVoltar }) {
   const [notas, setNotas] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [mensagem, setMensagem] = useState("");
+  const [mensagem, setMensagem] = useMensagem();
 
   async function carregarNotas() {
     try {
@@ -90,7 +91,7 @@ export default function NotasNFSe({ onVoltar }) {
       await carregarNotas();
     } catch (error) {
       console.error(error);
-      setMensagem(error.message || "Erro ao emitir NFS-e.");
+      setMensagem(`Erro ao emitir NFS-e: ${error.message || "Falha desconhecida."}`);
     }
   }
 
@@ -136,7 +137,7 @@ export default function NotasNFSe({ onVoltar }) {
         </button>
       </div>
 
-      {mensagem && (
+      {mensagem && !mensagemEhErro(mensagem) && (
         <div
           style={{
             padding: "12px 14px",

@@ -1,0 +1,67 @@
+/* Layout compartilhado do Cuidare */
+
+.cuidare-layout .main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.cuidare-layout .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+}
+
+.cuidare-layout .layout-heading {
+  min-width: 0;
+}
+
+.cuidare-layout .sidebar .logout-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 650px) {
+  .cuidare-layout .main-content {
+    width: 100%;
+  }
+
+  .cuidare-layout .user-area > div:last-child {
+    display: none;
+  }
+}
+
+/* Breadcrumb e leitura do cadastro */
+
+.cuidare-layout .layout-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+  color: #76847e;
+}
+
+.cuidare-layout .layout-breadcrumb span {
+  font-size: 13px;
+}
+
+.cuidare-layout .layout-breadcrumb span:last-child {
+  color: #0e4334;
+  font-weight: 650;
+}
+
+.cuidare-layout .paciente-info strong,
+.cuidare-layout .paciente-contact strong {
+  font-size: 14px;
+}
+
+.cuidare-layout .paciente-info span,
+.cuidare-layout .paciente-contact span,
+.cuidare-layout .paciente-birth {
+  font-size: 12px;
+}
+
+.cuidare-layout .paciente-actions button {
+  font-size: 12px;
+  padding: 8px 10px;
+}

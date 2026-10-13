@@ -1,4 +1,5 @@
 from decimal import Decimal
+import re  # CUIDARE_NOME_PACIENTE_CAIXA_V1
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,6 +9,8 @@ from app.database import get_db
 from app.models.caixa import Caixa
 from app.models.conferencia_caixa import ConferenciaCaixa
 from app.models.movimentacao_caixa import MovimentacaoCaixa
+from app.models.conta_receber import ContaReceber
+from app.models.paciente import Paciente
 from app.schemas.caixa import (
     CaixaCriar,
     CaixaFechar,
@@ -428,6 +431,50 @@ def fechar_caixa(
     return caixa
 
 
+
+# CUIDARE_NOME_PACIENTE_CAIXA_V1
+def listar_movimentacoes_com_pacientes(db: Session, movimentos):
+    """Acrescenta nome do paciente SEM gravar nem alterar movimentacoes.
+
+    A relacao ja existe em observacoes: Conta a receber #123 | Recibo #000456.
+    Consultamos contas/pacientes em lote para evitar uma busca por movimento.
+    Recebimentos antigos sao incluidos; demais movimentacoes mantem nome vazio.
+    """
+    contas_dos_movimentos = {}
+    for movimento in movimentos:
+        if movimento.tipo != "entrada" or movimento.categoria != "recebimento":
+            continue
+        match = re.search(
+            r"\bConta a receber\s*#\s*(\d+)\b",
+            movimento.observacoes or "",
+            flags=re.IGNORECASE,
+        )
+        if match:
+            contas_dos_movimentos[movimento.id] = int(match.group(1))
+
+    nomes = {}
+    if contas_dos_movimentos:
+        ids = set(contas_dos_movimentos.values())
+        registros = (
+            db.query(ContaReceber.id, Paciente.nome)
+            .outerjoin(Paciente, Paciente.id == ContaReceber.paciente_id)
+            .filter(ContaReceber.id.in_(ids))
+            .all()
+        )
+        nomes = {
+            conta_id: nome
+            for conta_id, nome in registros
+            if nome
+        }
+
+    resultado = []
+    for movimento in movimentos:
+        dados = MovimentacaoCaixaResposta.model_validate(movimento).model_dump()
+        dados["paciente_nome"] = nomes.get(contas_dos_movimentos.get(movimento.id))
+        resultado.append(dados)
+    return resultado
+
+
 # ============================================================
 # MOVIMENTAÇÕES
 # ============================================================
@@ -438,14 +485,14 @@ def fechar_caixa(
 )
 def listar_movimentacoes(
     db: Session = Depends(get_db),
-):
     usuario=Depends(exigir_permissao("caixa.visualizar")),
+):
     caixa = obter_caixa_aberto(db)
 
     if not caixa:
         return []
 
-    return (
+    movimentos = (
         db.query(MovimentacaoCaixa)
         .filter(
             MovimentacaoCaixa.caixa_id == caixa.id,
@@ -456,6 +503,7 @@ def listar_movimentacoes(
         )
         .all()
     )
+    return listar_movimentacoes_com_pacientes(db, movimentos)
 
 
 @router.post(
@@ -602,8 +650,8 @@ def listar_caixas_fechados(
 def detalhes_caixa_historico(
     caixa_id: int,
     db: Session = Depends(get_db),
-):
     usuario=Depends(exigir_permissao("caixa.visualizar")),
+):
     caixa = (
         db.query(Caixa)
         .filter(
@@ -641,6 +689,6 @@ def detalhes_caixa_historico(
 
     return {
         "caixa": caixa,
-        "movimentacoes": movimentacoes,
+        "movimentacoes": listar_movimentacoes_com_pacientes(db, movimentacoes),
         "conferencia": conferencia,
     }

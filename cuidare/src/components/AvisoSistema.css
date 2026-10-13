@@ -1,0 +1,126 @@
+.cuidare-aviso-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(10, 35, 28, 0.49);
+  backdrop-filter: blur(4px);
+  animation: cuidare-aviso-fundo 0.18s ease;
+}
+
+.cuidare-aviso-modal {
+  width: 100%;
+  max-width: 440px;
+  box-sizing: border-box;
+  padding: 34px 32px 30px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #edf0eb;
+  border-top: 4px solid #c29b47;
+  border-radius: 22px;
+  box-shadow: 0 24px 75px rgba(0, 0, 0, 0.19);
+  animation: cuidare-aviso-entrada 0.24s ease;
+}
+
+.cuidare-aviso-icone {
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #fff0ed;
+  border: 1px solid #ffd5cf;
+  color: #c64b3c;
+  font-size: 35px;
+  font-weight: 750;
+}
+
+.cuidare-aviso-etiqueta {
+  display: block;
+  color: #b18a3e;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+}
+
+.cuidare-aviso-modal h2 {
+  margin: 10px 0 12px;
+  color: #0e4334;
+  font-size: 25px;
+  line-height: 1.25;
+}
+
+.cuidare-aviso-modal p {
+  margin: 0;
+  color: #43544d;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.cuidare-aviso-instrucao {
+  margin-top: 22px;
+  padding: 13px 16px;
+  border: 1px solid #e7ede8;
+  border-radius: 11px;
+  background: #f6f9f6;
+  color: #53695e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.cuidare-aviso-botao {
+  width: 100%;
+  margin-top: 24px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 11px;
+  background: #0e4334;
+  color: white;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cuidare-aviso-botao:hover {
+  background: #176349;
+}
+
+.cuidare-aviso-botao:focus-visible {
+  outline: 3px solid #c29b47;
+  outline-offset: 3px;
+}
+
+@keyframes cuidare-aviso-fundo {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cuidare-aviso-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cuidare-aviso-overlay,
+  .cuidare-aviso-modal {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .cuidare-aviso-modal {
+    padding: 28px 22px 24px;
+  }
+}

@@ -343,3 +343,54 @@
     justify-content: flex-start;
   }
 }
+
+/* CUIDARE_TURNO_GRADE_V1 — Grade de horários da Agenda */
+.agenda-grade {
+  display: grid; gap: 0; border: 1px solid #dee9e3;
+  border-radius: 15px; background: #fff; overflow: hidden;
+}
+.agenda-faixa {
+  display: grid; grid-template-columns: 100px minmax(0, 1fr);
+  min-width: 0; border-bottom: 1px solid #e6efea;
+}
+.agenda-faixa:last-child { border-bottom: none; }
+.agenda-faixa-horario {
+  background: #f1f6f3; border-right: 1px solid #e1eae4;
+  padding: 18px 10px; display: flex; flex-direction: column;
+  gap: 7px; text-align: center;
+}
+.agenda-faixa-horario strong { font-size: 18px; color: #0e4334; }
+.agenda-faixa-horario span { font-size: 11px; color: #607a6c; }
+.agenda-faixa-conteudo {
+  min-height: 74px; padding: 10px 12px; min-width: 0;
+}
+.agenda-faixa .agenda-list { display: grid; gap: 9px; }
+.agenda-faixa .agenda-card {
+  border: 1px solid #e3ebe7; border-radius: 10px;
+  padding: 12px; box-shadow: none; background: #fff;
+  grid-template-columns: 85px minmax(0,1fr) auto; gap: 14px;
+}
+.agenda-faixa .agenda-time strong { font-size: 16px; color: #0e4334; }
+.agenda-faixa .agenda-card-top h2 { font-size: 15px; }
+.agenda-faixa .agenda-details { gap: 7px 15px; margin-top: 6px; }
+.agenda-faixa-livre {
+  border: 1px dashed #d8e7df; border-radius: 10px; width: 100%;
+  min-height: 52px; text-align: left; padding: 10px 14px;
+  background: #fbfdfb; color: #688577; font-size: 13px;
+  cursor: pointer;
+}
+.agenda-faixa-livre:hover { background: #ecf6ef; color: #0e4334; }
+@media (max-width: 950px) {
+  .agenda-faixa .agenda-card {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+  .agenda-faixa .agenda-card-actions { grid-column: 1 / -1; justify-content: flex-end; }
+}
+@media (max-width: 560px) {
+  .agenda-faixa { grid-template-columns: 66px minmax(0,1fr); }
+  .agenda-faixa-horario { padding: 14px 5px; }
+  .agenda-faixa-horario strong { font-size: 14px; }
+  .agenda-faixa .agenda-card { grid-template-columns: minmax(0,1fr); }
+  .agenda-faixa .agenda-time { border: 0; padding: 0; }
+  .agenda-faixa .agenda-card-actions { grid-column: 1; flex-wrap: wrap; }
+}

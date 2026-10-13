@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -17,6 +18,7 @@ FREQUENCIAS_VALIDAS = {
 
 
 class PlanoPilatesCriar(BaseModel):
+    modalidade: Literal["grupo", "individual"] = "grupo"
     nome: str = Field(min_length=3, max_length=150)
     periodo: str
     frequencia_semanal: int
@@ -87,6 +89,7 @@ class PlanoPilatesAtualizar(BaseModel):
 
 
 class PlanoPilatesResposta(BaseModel):
+    modalidade: str
     model_config = ConfigDict(from_attributes=True)
 
     id: int

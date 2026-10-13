@@ -173,6 +173,12 @@ trocar(
 # Despesas pagas ja passaram pelo Caixa. Nao ocultar ou editar seu historico.
 trocar(
     pagar,
+    "from datetime import date\n",
+    "from datetime import date\nfrom decimal import Decimal\n",
+)
+
+trocar(
+    pagar,
     '''    status_anterior = conta.status
 
     campos = dados.model_dump(''',
@@ -283,7 +289,7 @@ trocar(
                         Number(conta.valor_pago || 0) > 0 ||
                         (
                           conta.categoria === "Pilates" &&
-                          /Matrícula\\s*#\\d+/i.test(conta.descricao || "")
+                          /Matrícula\s*#\d+/i.test(conta.descricao || "")
                         )
                       )) ||
                       (aba === "pagar" && (

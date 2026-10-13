@@ -37,10 +37,10 @@ def trocar(caminho, antes, depois):
 
 trocar(
     schema,
-    '    descricao: str\n    valor: Decimal',
-    '    descricao: str\n'
+    '    categoria: str\n    descricao: str\n    valor: Decimal\n',
+    '    categoria: str\n    descricao: str\n'
     '    paciente_nome: str | None = None  # ' + marca + '\n'
-    '    valor: Decimal',
+    '    valor: Decimal\n',
 )
 
 trocar(

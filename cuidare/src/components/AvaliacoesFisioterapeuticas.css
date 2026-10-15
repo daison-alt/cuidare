@@ -44,7 +44,7 @@
 }
 .avaliacoes-fisio-campo textarea { min-height: 94px; line-height: 1.5; resize: vertical; }
 .avaliacoes-fisio-campo :is(textarea,input,select):disabled { background: #f8faf7; opacity: 1; color: #3c4f43; }
-.avaliacoes-fisio-opcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.avaliacoes-fisio-opcoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .avaliacoes-fisio-opcoes button {
   background: #fff; border: 1px solid #dbe4dc; border-radius: 9px; padding: 11px;
   text-align: left; display: flex; flex-direction: column; gap: 4px; color: #3d5b47;
@@ -61,4 +61,15 @@
   .avaliacoes-fisio-topo { flex-direction: column; }
   .avaliacoes-fisio-campos, .avaliacoes-fisio-opcoes { grid-template-columns: 1fr; }
   .avaliacoes-fisio-contexto > * { width: 100%; }
+}
+
+/* Conceitos clinicos exibidos ao lado dos termos — CUIDARE_DOR_CLINICA_V2 */
+.avaliacoes-fisio-opcoes .avaliacoes-fisio-definicao {
+  font-weight: 400;
+  color: #5d7163;
+  line-height: 1.5;
+  font-size: 11px;
+}
+.avaliacoes-fisio-opcoes button.selecionado .avaliacoes-fisio-definicao {
+  color: #395e48;
 }

@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 ROOT = Path("/workspaces/cuidare")
-PIN = "2d8c5b655e7ba949a9a240b1028add9f50807a4c"
+PIN = "027bcded9b941cf2489d571bfc4f0186fc954485"
 MARCA_V4 = "CUIDARE_AGENDA_FILTRO_FAIXAS_V4"
 MARCA = "CUIDARE_AGENDA_FINANCEIRO_V1"
 API = ROOT / "backend/app/main.py"
@@ -195,8 +195,8 @@ agenda = trocar(
       if (!corpo.conta?.id) throw new Error("A cobrança não retornou identificação.");
       onAbrirFinanceiro(corpo.conta.id, dataSelecionada);
     } catch (error) {
+      setResumoFinanceiro(null);
       setErroFinanceiro(error.message || "Falha ao gerar cobrança.");
-      await atualizarResumoFinanceiro(dataSelecionada);
     } finally {
       setGerandoCobranca(null);
     }
@@ -240,6 +240,16 @@ agenda = trocar(
       )}''',
     "cuidare/src/pages/Agenda.jsx",
 )
+agenda = trocar(
+    agenda,
+    '        onAtualizar={carregarDados}',
+    '''        onAtualizar={() => {
+          carregarDados();
+          if (onAbrirFinanceiro) atualizarResumoFinanceiro(dataSelecionada);
+        }}''',
+    "cuidare/src/pages/Agenda.jsx",
+)
+
 agenda = trocar(
     agenda,
     '''                  <div className="agenda-card-actions">''',

@@ -22,13 +22,14 @@ export default function AtendimentoFinanceiro({
   }
 
   const contas = Array.isArray(dados.contas) ? dados.contas : [];
-  const pendentes = contas.filter(
-    (item) => item.status !== "cancelado" && Number(item.saldo_pendente) > 0
+  const ativas = contas.filter((item) => item.status !== "cancelado");
+  const pendentes = ativas.filter(
+    (item) => Number(item.saldo_pendente) > 0
   );
   const saldo = pendentes.reduce(
     (total, item) => total + Number(item.saldo_pendente || 0), 0
   );
-  const primeira = pendentes[0] || contas[0];
+  const primeira = pendentes[0] || ativas[0] || contas[0];
 
   if (contas.length) {
     return (
@@ -36,7 +37,7 @@ export default function AtendimentoFinanceiro({
         <span className={pendentes.length ? "atendimento-financeiro-pendente" : "atendimento-financeiro-quitado"}>
           {pendentes.length
             ? `${tipo === "plano" ? "Plano · " : ""}Em aberto: ${moeda(saldo)}`
-            : "✓ Cobrança quitada"}
+            : ativas.length ? "✓ Cobrança quitada" : "Cobrança cancelada"}
         </span>
         {pendentes.length > 1 && (
           <small>{pendentes.length} cobranças/parcelas em aberto</small>

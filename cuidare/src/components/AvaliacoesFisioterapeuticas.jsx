@@ -4,13 +4,22 @@ import { useErro } from "./avisos";
 import "./AvaliacoesFisioterapeuticas.css";
 
 const DESCRITORES_DOR = [
-  { valor: "pontada", nome: "Pontada", ajuda: "Fisgada ou dor aguda" },
-  { valor: "queimacao", nome: "Queimação", ajuda: "Ardência ou calor" },
-  { valor: "latejante", nome: "Latejante", ajuda: "Sensação pulsátil" },
-  { valor: "pressao_aperto", nome: "Pressão ou aperto", ajuda: "Compressão ou peso" },
-  { valor: "choque_eletrico", nome: "Choque elétrico", ajuda: "Sensação de descarga" },
-  { valor: "profunda_surda", nome: "Profunda ou surda", ajuda: "Incômodo profundo e pouco localizado" },
+  { valor: "neuropatica", nome: "Dor neuropática", ajuda: "decorrente de lesão ou doença do sistema nervoso somatossensorial" },
+  { valor: "nociceptiva_inflamatoria", nome: "Dor nociceptiva ou inflamatória", ajuda: "associada à ativação dos receptores de dor por lesão ou inflamação dos tecidos" },
+  { valor: "nociplastica", nome: "Dor nociplástica", ajuda: "alteração da nocicepção sem lesão tecidual ou nervosa suficiente para explicar a dor" },
+  { valor: "hiperalgesia", nome: "Hiperalgesia", ajuda: "dor aumentada diante de estímulo normalmente doloroso" },
+  { valor: "alodinia", nome: "Alodínia", ajuda: "dor provocada por estímulo normalmente não doloroso" },
+  { valor: "cronica", nome: "Dor crônica", ajuda: "dor persistente ou recorrente por mais de três meses" },
 ];
+
+const DESCRITORES_LEGADOS = {
+  pontada: "Pontada",
+  queimacao: "Queimação",
+  latejante: "Latejante",
+  pressao_aperto: "Pressão ou aperto",
+  choque_eletrico: "Choque elétrico",
+  profunda_surda: "Profunda ou surda",
+};
 
 const SECOES = [
   {
@@ -31,7 +40,7 @@ const SECOES = [
     titulo: "Avaliação da dor",
     campos: [
       ["intensidade_dor", "Intensidade (escala de 0 a 10)", "", "numero"],
-      ["caracteristica_dor", "Característica predominante da dor", "", "dor"],
+      ["caracteristicas_dor", "Características clínicas da dor", "", "dor"],
       ["localizacao_dor", "Localização da dor"],
       ["frequencia_dor", "Frequência e duração da dor"],
       ["irradiacao_dor", "Irradiação"],
@@ -71,7 +80,7 @@ const MODELO_VAZIO = Object.fromEntries(
   SECOES.flatMap(({ campos }) =>
     campos.map(([chave, , , tipo]) => [
       chave,
-      tipo === "numero" || tipo === "dor" ? null : "",
+      tipo === "dor" ? [] : tipo === "numero" ? null : "",
     ])
   )
 );
@@ -85,12 +94,11 @@ function formatarRegistro(data) {
 }
 
 function preenchido(dados) {
-  return Object.values(dados).some(
-    (valor) =>
-      valor !== null &&
-      valor !== undefined &&
-      (typeof valor !== "string" || valor.trim() !== "")
-  );
+  return Object.values(dados).some((valor) => {
+    if (valor === null || valor === undefined) return false;
+    if (Array.isArray(valor)) return valor.length > 0;
+    return typeof valor !== "string" || valor.trim() !== "";
+  });
 }
 
 export default function AvaliacoesFisioterapeuticas({ prontuarioId }) {
@@ -295,7 +303,15 @@ export default function AvaliacoesFisioterapeuticas({ prontuarioId }) {
                 <h4>{secao.titulo}</h4>
                 {secao.chave === "dor" && (
                   <p className="avaliacoes-fisio-instrucao">
-                    Selecione apenas a característica predominante da dor. Registre detalhes adicionais no campo de descrição complementar.
+                    Selecione uma ou mais opções conforme a avaliação clínica. Mecanismos de dor, alterações da sensibilidade e duração podem coexistir. Registre detalhes adicionais no campo complementar.
+                  </p>
+                )}
+                {secao.chave === "dor" && emConsulta && selecionada.formulario?.caracteristica_dor && (
+                  <p className="avaliacoes-fisio-instrucao">
+                    Característica registrada em versão anterior:{" "}
+                    {DESCRITORES_LEGADOS[selecionada.formulario.caracteristica_dor] ||
+                      selecionada.formulario.caracteristica_dor}.
+                    Esse registro histórico foi preservado.
                   </p>
                 )}
                 <div className="avaliacoes-fisio-campos">
@@ -305,17 +321,20 @@ export default function AvaliacoesFisioterapeuticas({ prontuarioId }) {
                       <label htmlFor={`avaliacao-${chave}`}>{nome}</label>
                       {tipoCampo === "dor" ? (
                         <div className="avaliacoes-fisio-opcoes" id={`avaliacao-${chave}`}
-                          role="radiogroup" aria-label={nome}>
+                          role="group" aria-label={nome}>
                           {DESCRITORES_DOR.map((opcao) => (
                             <button key={opcao.valor} type="button"
-                              role="radio"
-                              aria-checked={exibido[chave] === opcao.valor}
+                              role="checkbox"
+                              aria-checked={Array.isArray(exibido[chave]) && exibido[chave].includes(opcao.valor)}
                               disabled={emConsulta || salvando}
-                              className={exibido[chave] === opcao.valor ? "selecionado" : ""}
-                              onClick={() => atualizarCampo(
-                                chave, exibido[chave] === opcao.valor ? null : opcao.valor
-                              )}>
-                              <strong>{opcao.nome}</strong><small>{opcao.ajuda}</small>
+                              className={Array.isArray(exibido[chave]) && exibido[chave].includes(opcao.valor) ? "selecionado" : ""}
+                              onClick={() => {
+                                const atuais = Array.isArray(exibido[chave]) ? exibido[chave] : [];
+                                atualizarCampo(chave, atuais.includes(opcao.valor)
+                                  ? atuais.filter((valor) => valor !== opcao.valor)
+                                  : [...atuais, opcao.valor]);
+                              }}>
+                              <strong>{opcao.nome} <span className="avaliacoes-fisio-definicao">({opcao.ajuda})</span></strong>
                             </button>
                           ))}
                         </div>

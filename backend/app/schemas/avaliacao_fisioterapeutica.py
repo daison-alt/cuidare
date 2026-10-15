@@ -5,13 +5,22 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-CaracteristicaDor = Literal[
+CaracteristicaDorLegada = Literal[
     "pontada",
     "queimacao",
     "latejante",
     "pressao_aperto",
     "choque_eletrico",
     "profunda_surda",
+]
+
+CaracteristicaClinicaDor = Literal[
+    "neuropatica",
+    "nociceptiva_inflamatoria",
+    "nociplastica",
+    "hiperalgesia",
+    "alodinia",
+    "cronica",
 ]
 
 
@@ -29,7 +38,11 @@ class FormularioAvaliacao(BaseModel):
 
     # Dor
     intensidade_dor: int | None = Field(default=None, ge=0, le=10)
-    caracteristica_dor: CaracteristicaDor | None = None
+    # Mantido somente para leitura de avaliacoes gravadas na primeira versao.
+    caracteristica_dor: CaracteristicaDorLegada | None = None
+    caracteristicas_dor: list[CaracteristicaClinicaDor] = Field(
+        default_factory=list, max_length=6
+    )
     localizacao_dor: str = Field(default="", max_length=10000)
     frequencia_dor: str = Field(default="", max_length=10000)
     irradiacao_dor: str = Field(default="", max_length=10000)

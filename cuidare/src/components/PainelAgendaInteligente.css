@@ -7,7 +7,7 @@
 .agenda-inteligente-nav button:hover:not(:disabled) { background:#e9f3ec; border-color:#accbb5; }
 .agenda-inteligente-nav button:disabled { opacity:.55; cursor:wait; }
 .agenda-inteligente-indicadores { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
-.agenda-inteligente-indicadores>div { background:#fff; border:1px solid #dde8df; border-radius:11px; padding:16px; display:grid; gap:5px; }
+.agenda-inteligente-indicadores>button { background:#fff; border:1px solid #dde8df; border-radius:11px; padding:16px; display:grid; gap:5px; text-align:left; cursor:pointer; font:inherit; transition:background .15s,border-color .15s,transform .15s; }
 .agenda-inteligente-indicadores strong { font-size:26px; color:#0e4334; line-height:1; }
 .agenda-inteligente-indicadores span { color:#627b69; font-size:11px; line-height:1.4; }
 .agenda-inteligente-filtros { display:grid; grid-template-columns: minmax(180px,2fr) repeat(2,minmax(135px,1fr)); gap:12px; padding:16px; border-radius:12px; border:1px solid #dde8df; background:#fff; }
@@ -35,3 +35,11 @@
   .agenda-inteligente-indicadores { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .agenda-inteligente-filtros { grid-template-columns:1fr; }
 }
+
+/* CUIDARE_AGENDA_ATALHOS_V3 */
+.agenda-inteligente-indicadores>button:hover { background:#f1f8f2; border-color:#8fb59c; transform:translateY(-1px); }
+.agenda-inteligente-indicadores>button:focus-visible { outline:3px solid #c29b47; outline-offset:2px; }
+.agenda-inteligente-indicadores>button.ativo { border-color:#0e4334; background:#e7f3e9; box-shadow:inset 0 0 0 1px #0e4334; }
+.agenda-inteligente-indicadores>button.ativo strong { color:#0e4334; }
+.agenda-inteligente-indicadores>button small { color:#758c7b; font-size:10px; line-height:1.35; }
+.agenda-inteligente-indicadores>button.ativo small { font-weight:700; color:#0e4334; }

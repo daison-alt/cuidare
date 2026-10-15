@@ -50,6 +50,15 @@ export default function PainelAgendaInteligente({
     };
   }, [agendamentos]);
 
+  // CUIDARE_AGENDA_ATALHOS_V3: alterna o filtro sem alterar agendamentos.
+  function escolherAtalho(situacao) {
+    onStatusMudar(status === situacao ? "todos" : situacao);
+    // Os contadores representam o dia inteiro; limpa filtros anteriores
+    // para que o resultado do atalho corresponda ao numero exibido.
+    onBuscaMudar("");
+    onModalidadeMudar("todos");
+  }
+
   const turmas = useMemo(() => {
     const grupos = new Map();
     for (const a of agendamentos) {
@@ -90,12 +99,27 @@ export default function PainelAgendaInteligente({
         </button>
       </div>
 
-      <div className="agenda-inteligente-indicadores">
-        <div><strong>{resumo.agendados}</strong><span>Agendados / confirmados</span></div>
-        <div><strong>{resumo.atendendo}</strong><span>Em atendimento</span></div>
-        <div><strong>{resumo.concluidos}</strong><span>Concluídos</span></div>
-        <div><strong>{resumo.ausencias}</strong><span>Faltas</span></div>
-        <div><strong>{resumo.cancelados}</strong><span>Cancelados</span></div>
+      <div className="agenda-inteligente-indicadores" aria-label="Atalhos de situação da Agenda">
+        {[
+          { chave: "agendados_confirmados", total: resumo.agendados, titulo: "Agendados / confirmados" },
+          { chave: "em_atendimento", total: resumo.atendendo, titulo: "Em atendimento" },
+          { chave: "concluido", total: resumo.concluidos, titulo: "Concluídos" },
+          { chave: "faltou", total: resumo.ausencias, titulo: "Faltas" },
+          { chave: "cancelado", total: resumo.cancelados, titulo: "Cancelados" },
+        ].map(({ chave, total, titulo }) => (
+          <button
+            type="button"
+            key={chave}
+            className={status === chave ? "ativo" : ""}
+            aria-pressed={status === chave}
+            title={status === chave ? "Mostrar todos os agendamentos" : `Filtrar: ${titulo}`}
+            onClick={() => escolherAtalho(chave)}
+          >
+            <strong>{total}</strong>
+            <span>{titulo}</span>
+            <small>{status === chave ? "Exibindo esta situação" : "Clique para filtrar"}</small>
+          </button>
+        ))}
       </div>
 
       <div className="agenda-inteligente-filtros">
@@ -110,6 +134,7 @@ export default function PainelAgendaInteligente({
           <select id="agenda-filtro-status" value={status}
             onChange={(e) => onStatusMudar(e.target.value)}>
             <option value="todos">Todas</option>
+            <option value="agendados_confirmados">Agendados / confirmados</option>
             <option value="agendado">Agendado</option>
             <option value="confirmado">Confirmado</option>
             <option value="em_atendimento">Em atendimento</option>

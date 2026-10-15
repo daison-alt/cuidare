@@ -394,3 +394,15 @@
   .agenda-faixa .agenda-time { border: 0; padding: 0; }
   .agenda-faixa .agenda-card-actions { grid-column: 1; flex-wrap: wrap; }
 }
+
+/* CUIDARE_AGENDA_PRONTUARIO_V1 */
+.agenda-card-actions { flex-wrap: wrap; }
+.agenda-card-actions .agenda-prontuario-atalho {
+  background: #0e4334;
+  color: #fff;
+  border-color: #0e4334;
+}
+.agenda-card-actions .agenda-prontuario-atalho:hover {
+  background: #166149;
+  color: #fff;
+}

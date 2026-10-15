@@ -2,11 +2,13 @@ import { useErro } from "../components/avisos";
 import { useEffect, useState } from "react";
 import "./Prontuario.css";
 import { API_URL } from "../config";
+import AvaliacoesFisioterapeuticas from "../components/AvaliacoesFisioterapeuticas"; // CUIDARE_AVALIACAO_FISIO_V1
 
 
 function Prontuario({
   pacienteId,
   onVoltar,
+  atendimentoAgenda = null, // CUIDARE_AGENDA_PRONTUARIO_V1
 }) {
   const [paciente, setPaciente] = useState(null);
   const [prontuario, setProntuario] = useState(null);
@@ -447,6 +449,40 @@ function Prontuario({
 
       </div>
 
+      {atendimentoAgenda && (
+        <div className="prontuario-atendimento-vinculado" role="note">
+          <div className="prontuario-atendimento-vinculado-titulo">
+            <strong>Atendimento selecionado na Agenda</strong>
+            <span>#{atendimentoAgenda.id}</span>
+          </div>
+          <p>
+            {(() => {
+              const partes = String(atendimentoAgenda.data || "").split("-");
+              return partes.length === 3
+                ? [partes[2], partes[1], partes[0]].join("/")
+                : "Data não informada";
+            })()}
+            {" · "}
+            {String(atendimentoAgenda.hora_inicio || "--:--").slice(0, 5)}
+            {" às "}
+            {String(atendimentoAgenda.hora_fim || "--:--").slice(0, 5)}
+            {" · "}
+            {{
+              agendado: "Agendado",
+              confirmado: "Confirmado",
+              em_atendimento: "Em atendimento",
+              concluido: "Concluído",
+              cancelado: "Cancelado",
+              faltou: "Faltou",
+            }[atendimentoAgenda.status] || atendimentoAgenda.status}
+          </p>
+          <small>
+            Este atalho apenas identifica o atendimento. Registrar evolução
+            clínica não altera automaticamente a presença na Agenda.
+          </small>
+        </div>
+      )}
+
       {erro && (
         <div className="prontuario-alert">
           {erro}
@@ -502,6 +538,7 @@ function Prontuario({
       <div className="prontuario-grid">
 
         <div className="prontuario-main">
+          <AvaliacoesFisioterapeuticas prontuarioId={prontuario?.id} />
 
           <div className="prontuario-card">
 

@@ -735,3 +735,37 @@
     flex-direction: column;
   }
 }
+
+/* CUIDARE_AGENDA_PRONTUARIO_V1 */
+.prontuario-atendimento-vinculado {
+  margin: 0 0 20px;
+  padding: 15px 19px;
+  border: 1px solid #c5e0cc;
+  border-left: 4px solid #0e4334;
+  border-radius: 12px;
+  background: #f2f8f3;
+  color: #164332;
+}
+.prontuario-atendimento-vinculado-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 14px;
+}
+.prontuario-atendimento-vinculado-titulo span {
+  color: #61776a;
+  font-size: 12px;
+}
+.prontuario-atendimento-vinculado p {
+  margin: 7px 0 5px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.prontuario-atendimento-vinculado small {
+  display: block;
+  color: #567363;
+  font-size: 12px;
+  line-height: 1.5;
+}

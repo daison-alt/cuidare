@@ -68,6 +68,9 @@ function formatarDinheiroDashboard(valor) {
 function App() {
   const [pacienteSelecionado, setPacienteSelecionado] = useState(null);
   const [agendamentoSelecionado, setAgendamentoSelecionado] = useState(null);
+  // CUIDARE_AGENDA_PRONTUARIO_V1
+  const [origemProntuario, setOrigemProntuario] = useState("pacientes");
+  const [atendimentoAgendaProntuario, setAtendimentoAgendaProntuario] = useState(null);
 
   const [usuarioLogado, setUsuarioLogado] = useState(() => {
     const usuarioSalvo = localStorage.getItem("cuidare_usuario");
@@ -561,6 +564,23 @@ function App() {
     setCurrentPage("editar-usuario");
   }
 
+  function abrirProntuarioPelaAgenda(agendamento) {
+    const perfil = normalizarPerfil(usuarioLogado?.perfil);
+    if (!["administrador", "fisioterapeuta"].includes(perfil)) return;
+    if (!agendamento?.paciente_id) return;
+
+    setPacienteSelecionado(agendamento.paciente_id);
+    setAtendimentoAgendaProntuario({
+      id: agendamento.id,
+      data: agendamento.data,
+      hora_inicio: agendamento.hora_inicio,
+      hora_fim: agendamento.hora_fim,
+      status: agendamento.status,
+    });
+    setOrigemProntuario("agenda");
+    setCurrentPage("prontuario");
+  }
+
   if (!usuarioLogado) {
     return <Login onLogin={handleLogin} />;
   }
@@ -576,8 +596,11 @@ function App() {
       >
       <Prontuario
         pacienteId={pacienteSelecionado}
+        atendimentoAgenda={atendimentoAgendaProntuario}
         onVoltar={() => {
-          setCurrentPage("pacientes");
+          setCurrentPage(origemProntuario === "agenda" ? "agenda" : "pacientes");
+          setAtendimentoAgendaProntuario(null);
+          setOrigemProntuario("pacientes");
         }}
       />
       </LayoutPrincipal>
@@ -637,6 +660,11 @@ function App() {
       <Agenda
         onVoltar={() => setCurrentPage("dashboard")}
         onNovoAgendamento={() => setCurrentPage("novo-agendamento")}
+        onAbrirProntuario={
+          ["administrador", "fisioterapeuta"].includes(
+            normalizarPerfil(usuarioLogado?.perfil)
+          ) ? abrirProntuarioPelaAgenda : undefined
+        }
         onEditarAgendamento={(agendamentoId) => {
           setAgendamentoSelecionado(agendamentoId);
           setCurrentPage("editar-agendamento");
@@ -726,6 +754,8 @@ function App() {
           setCurrentPage("pacientes");
         }}
         onAbrirProntuario={() => {
+          setOrigemProntuario("pacientes");
+          setAtendimentoAgendaProntuario(null);
           setCurrentPage("prontuario");
         }}
       />

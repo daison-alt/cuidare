@@ -1,0 +1,75 @@
+/* CUIDARE_AVALIACAO_FISIO_V1 — ficha estruturada */
+.avaliacoes-fisio {
+  margin: 0 0 22px;
+  padding: 22px;
+  border-radius: 15px;
+  border: 1px solid #dbe5de;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(14, 67, 52, .04);
+}
+.avaliacoes-fisio * { box-sizing: border-box; }
+.avaliacoes-fisio-topo { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 18px; }
+.avaliacoes-fisio-sobretitulo { font-size: 10px; font-weight: 800; color: #b18a3a; letter-spacing: 1.2px; }
+.avaliacoes-fisio h3 { margin: 6px 0; font-size: 20px; color: #0e4334; }
+.avaliacoes-fisio-topo p { font-size: 12px; margin: 0; line-height: 1.55; color: #687b70; }
+.avaliacoes-fisio button { font: inherit; cursor: pointer; }
+.avaliacoes-fisio button:disabled { cursor: not-allowed; opacity: .65; }
+.avaliacoes-fisio-nova, .avaliacoes-fisio-rodape button {
+  flex-shrink: 0; padding: 11px 16px; border: 0; border-radius: 9px;
+  background: #0e4334; color: white; font-size: 12px !important; font-weight: 700 !important;
+}
+.avaliacoes-fisio-nova:hover:not(:disabled), .avaliacoes-fisio-rodape button:hover:not(:disabled) { background: #166149; }
+.avaliacoes-fisio-aviso { border-radius: 10px; background: #f5f7f4; padding: 22px; text-align: center; font-size: 13px; color: #567163; }
+.avaliacoes-fisio-historico { margin-bottom: 22px; border-top: 1px solid #e8eeea; padding-top: 14px; }
+.avaliacoes-fisio-historico > strong { display: block; font-size: 13px; margin-bottom: 10px; color: #234e3d; }
+.avaliacoes-fisio-registros { display: flex; gap: 9px; flex-wrap: wrap; }
+.avaliacoes-fisio-registro { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; border: 1px solid #e1e7e1; background: #fafbf9; border-radius: 9px; padding: 10px 13px; color: #476155; font-size: 12px !important; }
+.avaliacoes-fisio-registro small { font-size: 10px; color: #778a7e; }
+.avaliacoes-fisio-registro.ativo { background: #e7f1e9; border-color: #0e4334; color: #0e4334; }
+.avaliacoes-fisio-contexto { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; margin-bottom: 16px; }
+.avaliacoes-fisio-registrado, .avaliacoes-fisio-rascunho { display: flex; flex-direction: column; gap: 4px; margin: 0; font-size: 12px; color: #607569; line-height: 1.45; }
+.avaliacoes-fisio-registrado strong { color: #0e4334; }
+.avaliacoes-fisio-abas { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; padding: 5px; border-radius: 10px; background: #f2f5f1; }
+.avaliacoes-fisio-abas button { flex: 1; min-width: 125px; border: 0; border-radius: 8px; padding: 11px 12px; background: transparent; color: #537063; font-size: 12px !important; font-weight: 700 !important; }
+.avaliacoes-fisio-abas button.ativo { background: #0e4334; color: white; }
+.avaliacoes-fisio-secao h4 { color: #0e4334; font-size: 16px; margin: 5px 0 17px; }
+.avaliacoes-fisio-instrucao { color: #587063; font-size: 12px; margin: -8px 0 18px; line-height: 1.5; }
+.avaliacoes-fisio-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.avaliacoes-fisio-campo { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.avaliacoes-fisio-campo.inteiro { grid-column: 1 / -1; }
+.avaliacoes-fisio-campo label { font-size: 12px; font-weight: 700; color: #354d40; }
+.avaliacoes-fisio-campo select, .avaliacoes-fisio-campo input, .avaliacoes-fisio-campo textarea {
+  display: block; width: 100%; padding: 11px 12px; background: #fff; color: #303f36;
+  border: 1px solid #d7e2d9; border-radius: 9px; font: inherit; font-size: 12px; outline-color: #0e4334;
+}
+.avaliacoes-fisio-campo textarea { min-height: 94px; line-height: 1.5; resize: vertical; }
+.avaliacoes-fisio-campo :is(textarea,input,select):disabled { background: #f8faf7; opacity: 1; color: #3c4f43; }
+.avaliacoes-fisio-opcoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.avaliacoes-fisio-opcoes button {
+  background: #fff; border: 1px solid #dbe4dc; border-radius: 9px; padding: 11px;
+  text-align: left; display: flex; flex-direction: column; gap: 4px; color: #3d5b47;
+}
+.avaliacoes-fisio-opcoes button strong { font-size: 12px; }
+.avaliacoes-fisio-opcoes button small { font-size: 10px; line-height: 1.35; color: #708176; }
+.avaliacoes-fisio-opcoes button.selecionado { background: #eaf3eb; border: 2px solid #0e4334; padding: 10px; }
+.avaliacoes-fisio-opcoes button:disabled { opacity: 1; }
+.avaliacoes-fisio-erro { margin-bottom: 14px; border: 1px solid #e5c8c7; background: #fff4f3; color: #9c423d; border-radius: 10px; padding: 12px; font-size: 12px; }
+.avaliacoes-fisio-rodape { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid #edf0eb; padding-top: 20px; margin-top: 22px; color: #698071; font-size: 12px; }
+@media (max-width: 1000px) { .avaliacoes-fisio-opcoes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .avaliacoes-fisio { padding: 16px; }
+  .avaliacoes-fisio-topo { flex-direction: column; }
+  .avaliacoes-fisio-campos, .avaliacoes-fisio-opcoes { grid-template-columns: 1fr; }
+  .avaliacoes-fisio-contexto > * { width: 100%; }
+}
+
+/* Conceitos clinicos exibidos ao lado dos termos — CUIDARE_DOR_CLINICA_V2 */
+.avaliacoes-fisio-opcoes .avaliacoes-fisio-definicao {
+  font-weight: 400;
+  color: #5d7163;
+  line-height: 1.5;
+  font-size: 11px;
+}
+.avaliacoes-fisio-opcoes button.selecionado .avaliacoes-fisio-definicao {
+  color: #395e48;
+}

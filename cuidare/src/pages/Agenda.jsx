@@ -29,6 +29,7 @@ function Agenda({
   onNovoAgendamento,
   onEditarAgendamento,
   onVisualizarAgendamento,
+  onAbrirProntuario, // CUIDARE_AGENDA_PRONTUARIO_V1
 }) {
   const hoje = new Date().toISOString().slice(0, 10);
 
@@ -447,6 +448,17 @@ function Agenda({
                         onClick={() => onEditarAgendamento(agendamento.id)}
                       >
                         Editar
+                      </button>
+                    )}
+
+                    {onAbrirProntuario && agendamento.paciente_id && (
+                      <button
+                        type="button"
+                        className="agenda-prontuario-atalho"
+                        onClick={() => onAbrirProntuario(agendamento)}
+                        title="Consultar prontuario do paciente deste agendamento"
+                      >
+                        Abrir prontuário
                       </button>
                     )}
                   </div>

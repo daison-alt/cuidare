@@ -9,6 +9,7 @@ from app.database import Base, engine
 from app.models.configuracao_fiscal import ConfiguracaoFiscal
 from app.models.paciente import Paciente
 from app.models.prontuario import Prontuario
+from app.models.avaliacao_fisioterapeutica import AvaliacaoFisioterapeutica  # CUIDARE_AVALIACAO_FISIO_V1
 from app.models.evolucao import Evolucao
 from app.models.agendamento import Agendamento
 from app.models.agendamento_plano_pilates import AgendamentoPlanoPilates
@@ -35,6 +36,7 @@ from app.routers.gestao_fiscal import router as gestao_fiscal_router
 from app.routers.configuracao_fiscal import router as configuracao_fiscal_router
 from app.routers.pacientes import router as pacientes_router
 from app.routers.prontuarios import router as prontuarios_router
+from app.routers.avaliacoes_fisioterapeuticas import router as avaliacoes_fisioterapeuticas_router
 from app.routers.evolucoes import router as evolucoes_router
 from app.routers.agendamentos import router as agendamentos_router
 from app.routers.servicos import router as servicos_router
@@ -205,6 +207,7 @@ app.include_router(gestao_fiscal_router)
 app.include_router(configuracao_fiscal_router)
 app.include_router(pacientes_router)
 app.include_router(prontuarios_router)
+app.include_router(avaliacoes_fisioterapeuticas_router)
 app.include_router(evolucoes_router)
 app.include_router(agendamentos_router)
 app.include_router(servicos_router)

@@ -71,7 +71,12 @@ def registrar_avaliacao(
     verificar_prontuario(db, prontuario_id)
 
     formulario = dados.formulario.model_dump()
-    if not any(v is not None and (not isinstance(v, str) or v.strip()) for v in formulario.values()):
+    if not any(
+        v is not None
+        and (len(v) > 0 if isinstance(v, (list, str)) else True)
+        and (not isinstance(v, str) or bool(v.strip()))
+        for v in formulario.values()
+    ):
         raise HTTPException(
             status_code=422,
             detail="Preencha ao menos um campo da avaliacao antes de registrar.",

@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 21652)
-Total output lines: 3135
-
 import { useEffect, useMemo, useState } from "react";
 import "./Financeiro.css";
 import RecebimentoLotePilates from "../components/RecebimentoLotePilates"; // CUIDARE_RECEBIMENTO_LOTE_V1
@@ -963,7 +960,1432 @@ function Financeiro({ onVoltar, onAbrirCaixa , atalhoDashboard }) { // CUIDARE_I
       const passouAluno =
         aba !== "receber" ||
         visaoCobrancas !== "alunos" ||
-   …9652 tokens truncated…                     />
+        alunoSelecionadoId === null ||
+        String(conta.paciente_id ?? "sem-aluno") === alunoSelecionadoId;
+
+      const hoje = dataLocalFinanceiro();
+      const passouVencimento =
+        filtroVencimento === "todos" ||
+        (filtroVencimento === "hoje" && conta.vencimento === hoje) ||
+        (filtroVencimento === "data" &&
+          Boolean(dataVencimento) &&
+          conta.vencimento === dataVencimento) ||
+        (filtroVencimento === "atrasados" &&
+          Boolean(conta.vencimento) &&
+          conta.vencimento < hoje &&
+          status !== "pago" &&
+          status !== "cancelado");
+
+      return passouStatus && passouCategoria && passouAluno && passouVencimento;
+    });
+  }, [
+    listaAtual,
+    filtroStatus,
+    filtroCategoria,
+    filtroVencimento,
+    dataVencimento,
+    aba,
+    visaoCobrancas,
+    alunoSelecionadoId,
+  ]);
+
+  const gruposAlunos = useMemo(() => {
+    const grupos = new Map();
+    if (aba !== "receber") return [];
+
+    for (const conta of listaFiltrada) {
+      const id = String(conta.paciente_id ?? "sem-aluno");
+      if (!grupos.has(id)) {
+        grupos.set(id, {
+          id,
+          nome: conta.paciente_id == null
+            ? "Sem paciente vinculado"
+            : nomesAlunos.get(id) || "Paciente #" + id,
+          quantidade: 0,
+          pendentes: 0,
+          valorPendente: 0,
+        });
+      }
+
+      const grupo = grupos.get(id);
+      grupo.quantidade += 1;
+      const status = calcularStatus(conta);
+      const saldo = Math.max(
+        0,
+        Number(conta.valor || 0) - Number(conta.valor_pago || 0)
+      );
+
+      if (status !== "pago" && status !== "cancelado" && saldo > 0) {
+        grupo.pendentes += 1;
+        grupo.valorPendente += saldo;
+      }
+    }
+
+    return [...grupos.values()].sort((a, b) =>
+      a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+    );
+  }, [listaFiltrada, nomesAlunos, aba]);
+
+  const resumoReceber = useMemo(() => {
+    let pendente = 0;
+    let recebido = 0;
+    let vencido = 0;
+    let cancelado = 0;
+
+    contasReceber.forEach((conta) => {
+      const valor = Number(conta.valor || 0);
+      const status = calcularStatus(conta);
+
+      if (status === "pago") {
+        recebido += Number(
+          conta.valor_pago ||
+            conta.valor ||
+            0
+        );
+      }
+
+      if (status === "pendente") {
+        pendente += valor;
+      }
+
+      if (status === "vencido") {
+        vencido += valor;
+      }
+
+      if (status === "cancelado") {
+        cancelado += valor;
+      }
+    });
+
+    return {
+      pendente,
+      recebido,
+      vencido,
+      cancelado,
+    };
+  }, [contasReceber]);
+
+  const resumoPagar = useMemo(() => {
+    let pendente = 0;
+    let pago = 0;
+    let vencido = 0;
+    let cancelado = 0;
+
+    contasPagar.forEach((conta) => {
+      const valor = Number(conta.valor || 0);
+      const status = calcularStatus(conta);
+
+      if (status === "pago") {
+        pago += Number(
+          conta.valor_pago ||
+            conta.valor ||
+            0
+        );
+      }
+
+      if (status === "pendente") {
+        pendente += valor;
+      }
+
+      if (status === "vencido") {
+        vencido += valor;
+      }
+
+      if (status === "cancelado") {
+        cancelado += valor;
+      }
+    });
+
+    return {
+      pendente,
+      pago,
+      vencido,
+      cancelado,
+    };
+  }, [contasPagar]);
+
+  const saldoPrevisto =
+    resumoReceber.pendente -
+    resumoPagar.pendente;
+
+  const saldoRealizado =
+    resumoReceber.recebido -
+    resumoPagar.pago;
+
+  const totalVencido =
+    resumoReceber.vencido +
+    resumoPagar.vencido;
+
+  const totalCancelado =
+    resumoReceber.cancelado +
+    resumoPagar.cancelado;
+
+  function renderResumoAba() {
+    if (aba === "receber") {
+      return (
+        <>
+          <div className="financeiro-resumo-card">
+            <span>A RECEBER</span>
+
+            <strong>
+              {formatarMoeda(
+                resumoReceber.pendente
+              )}
+            </strong>
+
+            <small>
+              Contas pendentes
+            </small>
+          </div>
+
+          <div className="financeiro-resumo-card">
+            <span>RECEBIDO</span>
+
+            <strong>
+              {formatarMoeda(
+                resumoReceber.recebido
+              )}
+            </strong>
+
+            <small>
+              Contas pagas
+            </small>
+          </div>
+
+          <div className="financeiro-resumo-card">
+            <span>VENCIDO</span>
+
+            <strong>
+              {formatarMoeda(
+                resumoReceber.vencido
+              )}
+            </strong>
+
+            <small>
+              Valores em atraso
+            </small>
+          </div>
+
+          <div className="financeiro-resumo-card">
+            <span>CANCELADO</span>
+
+            <strong>
+              {formatarMoeda(
+                resumoReceber.cancelado
+              )}
+            </strong>
+
+            <small>
+              Lançamentos cancelados
+            </small>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className="financeiro-resumo-card">
+          <span>A PAGAR</span>
+
+          <strong>
+            {formatarMoeda(
+              resumoPagar.pendente
+            )}
+          </strong>
+
+          <small>
+            Contas pendentes
+          </small>
+        </div>
+
+        <div className="financeiro-resumo-card">
+          <span>PAGO</span>
+
+          <strong>
+            {formatarMoeda(
+              resumoPagar.pago
+            )}
+          </strong>
+
+          <small>
+            Contas pagas
+          </small>
+        </div>
+
+        <div className="financeiro-resumo-card">
+          <span>VENCIDO</span>
+
+          <strong>
+            {formatarMoeda(
+              resumoPagar.vencido
+            )}
+          </strong>
+
+          <small>
+            Valores em atraso
+          </small>
+        </div>
+
+        <div className="financeiro-resumo-card">
+          <span>CANCELADO</span>
+
+          <strong>
+            {formatarMoeda(
+              resumoPagar.cancelado
+            )}
+          </strong>
+
+          <small>
+            Lançamentos cancelados
+          </small>
+        </div>
+      </>
+    );
+  }
+
+  function renderVisaoGeral() {
+    return (
+      <>
+        <section className="financeiro-overview-grid">
+
+          <div className="financeiro-overview-card">
+            <span>RECEITAS RECEBIDAS</span>
+
+            <strong>
+              {formatarMoeda(
+                resumoReceber.recebido
+              )}
+            </strong>
+
+            <small>
+              Valores efetivamente recebidos
+            </small>
+          </div>
+
+          <div className="financeiro-overview-card">
+            <span>DESPESAS PAGAS</span>
+
+            <strong>
+              {formatarMoeda(
+                resumoPagar.pago
+              )}
+            </strong>
+
+            <small>
+              Valores efetivamente pagos
+            </small>
+          </div>
+
+          <div className="financeiro-overview-card destaque">
+            <span>SALDO REALIZADO</span>
+
+            <strong>
+              {formatarMoeda(
+                saldoRealizado
+              )}
+            </strong>
+
+            <small>
+              Recebimentos menos pagamentos
+            </small>
+          </div>
+
+          <div className="financeiro-overview-card">
+            <span>SALDO PREVISTO</span>
+
+            <strong>
+              {formatarMoeda(
+                saldoPrevisto
+              )}
+            </strong>
+
+            <small>
+              Valores pendentes a receber menos a pagar
+            </small>
+          </div>
+
+        </section>
+
+        <section className="financeiro-ia-card">
+
+          <div className="financeiro-ia-header">
+
+            <div>
+              <span className="financeiro-ia-label">
+                CUIDARE IA
+              </span>
+
+              <h2>
+                Controle de consumo da Inteligência Artificial
+              </h2>
+
+              <p>
+                Acompanhe o consumo mensal, o limite financeiro
+                e a situação da integração da Cuidare IA.
+              </p>
+            </div>
+
+            <div
+              className={`financeiro-ia-status ${
+                !resumoCuidareIA
+                  ? "indisponivel"
+                  : !resumoCuidareIA.ativa
+                  ? "desativada"
+                  : resumoCuidareIA.percentual_utilizado >= 100
+                  ? "bloqueada"
+                  : resumoCuidareIA.percentual_utilizado >= 80
+                  ? "alerta"
+                  : "ativa"
+              }`}
+            >
+              {!resumoCuidareIA
+                ? "INDISPONÍVEL"
+                : !resumoCuidareIA.ativa
+                ? "DESATIVADA"
+                : resumoCuidareIA.percentual_utilizado >= 100
+                ? "LIMITE ATINGIDO"
+                : resumoCuidareIA.percentual_utilizado >= 80
+                ? "ATENÇÃO"
+                : "ATIVA"}
+            </div>
+
+          </div>
+
+          {carregandoCuidareIA ? (
+
+            <div className="financeiro-ia-carregando">
+              Carregando informações da Cuidare IA...
+            </div>
+
+          ) : resumoCuidareIA ? (
+
+            <>
+
+              <div className="financeiro-ia-grid">
+
+                <div className="financeiro-ia-item">
+                  <span>CONSUMO DO MÊS</span>
+
+                  <strong>
+                    {formatarMoeda(
+                      resumoCuidareIA.consumo_mes
+                    )}
+                  </strong>
+
+                  <small>
+                    Consumo registrado no mês atual
+                  </small>
+                </div>
+
+                <div className="financeiro-ia-item">
+                  <span>LIMITE MENSAL</span>
+
+                  <strong>
+                    {formatarMoeda(
+                      resumoCuidareIA.limite_mensal
+                    )}
+                  </strong>
+
+                  <small>
+                    Limite configurado para a Cuidare IA
+                  </small>
+                </div>
+
+                <div className="financeiro-ia-item">
+                  <span>UTILIZAÇÃO</span>
+
+                  <strong>
+                    {Number(
+                      resumoCuidareIA.percentual_utilizado || 0
+                    ).toLocaleString("pt-BR", {
+                      maximumFractionDigits: 1,
+                    })}
+                    %
+                  </strong>
+
+                  <small>
+                    Alerta em 80% e bloqueio em 100%
+                  </small>
+                </div>
+
+                <div className="financeiro-ia-item">
+                  <span>MODO</span>
+
+                  <strong>
+                    {resumoCuidareIA.modo === "teste"
+                      ? "Teste"
+                      : "Real"}
+                  </strong>
+
+                  <small>
+                    {resumoCuidareIA.modo === "teste"
+                      ? "Nenhum custo financeiro é gerado"
+                      : "Consumo real da Cuidare IA"}
+                  </small>
+                </div>
+
+              </div>
+
+              <div className="financeiro-ia-barra">
+
+                <div
+                  className="financeiro-ia-barra-preenchimento"
+                  style={{
+                    width: `${Math.min(
+                      Number(
+                        resumoCuidareIA.percentual_utilizado || 0
+                      ),
+                      100
+                    )}%`,
+                  }}
+                />
+
+              </div>
+
+              <div className="financeiro-ia-rodape">
+
+                <div>
+                  <strong>Financeiro</strong>
+
+                  <span>
+                    {resumoCuidareIA.despesa_financeira_gerada
+                      ? `Conta a pagar #${resumoCuidareIA.conta_pagar_id}`
+                      : resumoCuidareIA.modo === "teste"
+                      ? "Modo Teste: nenhuma despesa gerada"
+                      : "Nenhuma despesa gerada neste mês"}
+                  </span>
+                </div>
+
+                <small>
+                  {resumoCuidareIA.observacao}
+                </small>
+
+              </div>
+
+            </>
+
+          ) : (
+
+            <div className="financeiro-ia-vazio">
+              Não foi possível carregar o resumo da Cuidare IA.
+            </div>
+
+          )}
+
+        </section>
+
+        <section className="financeiro-overview-section">
+
+          <div className="financeiro-section-title">
+            <div>
+              <span>
+                RESUMO FINANCEIRO
+              </span>
+
+              <h2>
+                Situação atual
+              </h2>
+            </div>
+          </div>
+
+          <div className="financeiro-overview-lines">
+
+            <div>
+              <span>
+                Contas a receber pendentes
+              </span>
+
+              <strong>
+                {formatarMoeda(
+                  resumoReceber.pendente
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                Contas a pagar pendentes
+              </span>
+
+              <strong>
+                {formatarMoeda(
+                  resumoPagar.pendente
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                Total vencido
+              </span>
+
+              <strong>
+                {formatarMoeda(
+                  totalVencido
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                Total cancelado
+              </span>
+
+              <strong>
+                {formatarMoeda(
+                  totalCancelado
+                )}
+              </strong>
+            </div>
+
+          </div>
+
+        </section>
+
+        <section className="financeiro-acoes-card">
+
+          <div>
+            <span>
+              ATALHOS
+            </span>
+
+            <h2>
+              Gestão financeira
+            </h2>
+
+            <p>
+              Acesse rapidamente os lançamentos
+              financeiros da clínica.
+            </p>
+          </div>
+
+          <div className="financeiro-acoes">
+
+            <button
+              type="button"
+              className="financeiro-secondary-button"
+              onClick={() =>
+                trocarAba("receber")
+              }
+            >
+              Ver contas a receber
+            </button>
+
+            <button
+              type="button"
+              className="financeiro-primary-button"
+              onClick={() => {
+                trocarAba("pagar");
+                setTimeout(() => {
+                  setMostrarFormulario(true);
+                }, 0);
+              }}
+            >
+              Nova conta a pagar
+            </button>
+
+          </div>
+
+        </section>
+      </>
+    );
+  }
+
+  function renderLista() {
+    const listaDetalhada = contaEmFoco == null
+      ? listaFiltrada
+      : listaFiltrada.filter((conta) => String(conta.id) === String(contaEmFoco));
+    const gruposVisiveis = gruposAlunos.filter((grupo) =>
+      normalizarBuscaAluno(grupo.nome).includes(normalizarBuscaAluno(buscaAluno))
+    );
+
+    return (
+      <section className="financeiro-lista">
+
+        <div className="financeiro-section-title">
+
+          <div>
+            <span>
+              {aba === "receber"
+                ? "CONTAS A RECEBER"
+                : "CONTAS A PAGAR"}
+            </span>
+
+            <h2>
+              Lançamentos
+            </h2>
+          </div>
+
+          <span>
+            {listaDetalhada.length}{" "}
+            {listaDetalhada.length === 1
+              ? "lançamento"
+              : "lançamentos"}
+          </span>
+
+        </div>
+
+        <div className="financeiro-vencimento-bar">
+          <div className="financeiro-vencimento-titulo">
+            <strong>
+              {aba === "receber" ? "Cobranças por vencimento" : "Despesas por vencimento"}
+            </strong>
+            <span>Encontre rapidamente o que vence em cada dia.</span>
+          </div>
+
+          <div className="financeiro-vencimento-opcoes">
+            <button
+              type="button"
+              className={filtroVencimento === "todos" ? "ativo" : ""}
+              aria-pressed={filtroVencimento === "todos"}
+              onClick={() => setFiltroVencimento("todos")}
+            >
+              Todas as datas
+            </button>
+            <button
+              type="button"
+              className={filtroVencimento === "hoje" ? "ativo" : ""}
+              aria-pressed={filtroVencimento === "hoje"}
+              onClick={() => {
+                setFiltroVencimento("hoje");
+                if (aba === "receber") setVisaoCobrancas("todas");
+              }}
+            >
+              Vencem hoje
+            </button>
+            <button
+              type="button"
+              className={filtroVencimento === "atrasados" ? "ativo" : ""}
+              aria-pressed={filtroVencimento === "atrasados"}
+              onClick={() => {
+                setFiltroVencimento("atrasados");
+                if (aba === "receber") setVisaoCobrancas("todas");
+              }}
+            >
+              Em atraso
+            </button>
+            <label className="financeiro-vencimento-data">
+              Escolher data
+              <input
+                type="date"
+                value={dataVencimento}
+                onChange={(event) => {
+                  setDataVencimento(event.target.value);
+                  setFiltroVencimento(event.target.value ? "data" : "todos");
+                  if (event.target.value && aba === "receber") setVisaoCobrancas("todas");
+                }}
+                onClick={() => {
+                  if (dataVencimento) {
+                    setFiltroVencimento("data");
+                    if (aba === "receber") setVisaoCobrancas("todas");
+                  }
+                }}
+              />
+            </label>
+          </div>
+
+          {filtroVencimento !== "todos" && (
+            <div className="financeiro-vencimento-resumo" aria-live="polite">
+              <span>{listaDetalhada.length} lançamento(s) no filtro</span>
+              <strong>
+                Saldo em aberto: {formatarMoeda(
+                  listaFiltrada.reduce((total, conta) => {
+                    const status = calcularStatus(conta);
+                    if (status === "pago" || status === "cancelado") return total;
+                    return total + Math.max(
+                      0,
+                      Number(conta.valor || 0) - Number(conta.valor_pago || 0)
+                    );
+                  }, 0)
+                )}
+              </strong>
+            </div>
+          )}
+        </div>
+
+        {contaEmFoco != null && (
+          <div className="financeiro-foco-lancamento">
+            <strong>Visualizando lançamento #{contaEmFoco}</strong>
+            <button type="button" onClick={() => setContaEmFoco(null)}>
+              ← Ver todos deste período
+            </button>
+          </div>
+        )}
+
+        <div className="financeiro-filtros">
+
+          <label>
+            Status
+
+            <select
+              value={filtroStatus}
+              onChange={(event) =>
+                setFiltroStatus(
+                  event.target.value
+                )
+              }
+            >
+              <option value="todos">
+                Todos
+              </option>
+
+              <option value="pendente">
+                Pendentes
+              </option>
+
+              <option value="pago">
+                Pagos
+              </option>
+
+              <option value="vencido">
+                Vencidos
+              </option>
+
+              <option value="cancelado">
+                Cancelados
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Categoria
+
+            <select
+              value={filtroCategoria}
+              onChange={(event) =>
+                setFiltroCategoria(
+                  event.target.value
+                )
+              }
+            >
+              <option value="">
+                Todas
+              </option>
+
+              {categorias.map(
+                (categoria) => (
+                  <option
+                    key={categoria}
+                    value={categoria}
+                  >
+                    {categoria}
+                  </option>
+                )
+              )}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            className="financeiro-limpar-filtros"
+            onClick={() => {
+              setFiltroStatus("todos");
+              setFiltroCategoria("");
+              setFiltroVencimento("todos");
+            }}
+          >
+            Limpar filtros
+          </button>
+
+        </div>
+
+        {aba === "receber" && (
+          <div className="financeiro-por-aluno-controles">
+          {/* CUIDARE_CORRECAO_JSX_LOTE_V1 */}
+          {aba === "receber" && visaoCobrancas === "alunos" &&
+            alunoSelecionadoId !== null && alunoSelecionadoId !== "sem-aluno" &&
+            contasReceber.filter((conta) =>
+              String(conta.paciente_id) === String(alunoSelecionadoId) &&
+              conta.categoria === "Pilates" &&
+              /Parcela\s+\d+\/\d+/i.test(conta.descricao || "") &&
+              conta.ativo !== false &&
+              !["pago", "cancelado"].includes(conta.status) &&
+              Number(conta.valor || 0) - Number(conta.valor_pago || 0) > 0
+            ).length >= 2 && (
+              <div className="financeiro-lote-acesso">
+                <button type="button" onClick={() =>
+                  setRecebimentoMultiplo({
+                    pacienteId: Number(alunoSelecionadoId),
+                    nome: nomeAlunoPorId(alunoSelecionadoId),
+                  })
+                }>
+                  Receber várias parcelas
+                </button>
+                <small>Selecione parcelas e registre um único pagamento.</small>
+              </div>
+            )}
+
+            <div className="financeiro-modos-cobranca">
+              <button type="button"
+                className={visaoCobrancas === "alunos" ? "selecionado" : ""}
+                aria-pressed={visaoCobrancas === "alunos"}
+                onClick={() => { setVisaoCobrancas("alunos"); setAlunoSelecionadoId(null); }}>
+                Por aluno
+              </button>
+              <button type="button"
+                className={visaoCobrancas === "todas" ? "selecionado" : ""}
+                aria-pressed={visaoCobrancas === "todas"}
+                onClick={() => { setVisaoCobrancas("todas"); setAlunoSelecionadoId(null); }}>
+                Todas as cobranças
+              </button>
+            </div>
+
+            {visaoCobrancas === "alunos" && alunoSelecionadoId === null && (
+              <label className="financeiro-busca-aluno">
+                Buscar aluno
+                <input type="search"
+                  value={buscaAluno}
+                  placeholder="Digite o nome do aluno..."
+                  onChange={(event) => setBuscaAluno(event.target.value)}
+                />
+              </label>
+            )}
+
+            {visaoCobrancas === "alunos" && alunoSelecionadoId !== null && (
+              <div className="financeiro-aluno-selecionado">
+                <button type="button" onClick={() => setAlunoSelecionadoId(null)}>
+                  ← Voltar aos alunos
+                </button>
+                <strong>
+                  {alunoSelecionadoId === "sem-aluno"
+                    ? "Sem paciente vinculado"
+                    : nomeAlunoPorId(alunoSelecionadoId)}
+                </strong>
+              </div>
+            )}
+
+            {erroNomesFinanceiro && (
+              <p className="financeiro-aviso-alunos">
+                Não foi possível consultar os nomes dos pacientes.
+                As cobranças continuam disponíveis pelo número do cadastro.
+              </p>
+            )}
+          </div>
+        )}
+
+        {carregando ? (
+          <div className="financeiro-empty">
+            <div className="financeiro-empty-icon">
+              ...
+            </div>
+
+            <strong>
+              Carregando lançamentos
+            </strong>
+
+            <p>
+              Aguarde enquanto buscamos os dados financeiros.
+            </p>
+          </div>
+        ) : aba === "receber" &&
+          visaoCobrancas === "alunos" &&
+          alunoSelecionadoId === null ? (
+          gruposVisiveis.length === 0 ? (
+            <div className="financeiro-empty">
+              <strong>Nenhum aluno encontrado</strong>
+              <p>Procure outro nome ou ajuste os filtros.</p>
+            </div>
+          ) : (
+            <div className="financeiro-alunos-grid">
+              {gruposVisiveis.map((grupo) => (
+                <button key={grupo.id} type="button"
+                  className="financeiro-aluno-card"
+                  onClick={() => setAlunoSelecionadoId(grupo.id)}>
+                  <div className="financeiro-aluno-card-topo">
+                    <strong>{grupo.nome}</strong>
+                    <span aria-hidden="true">→</span>
+                  </div>
+                  <span className="financeiro-aluno-detalhe">
+                    {grupo.quantidade} {grupo.quantidade === 1 ? "cobrança" : "cobranças"}
+                    {" · "}
+                    {grupo.pendentes} pendente(s)
+                  </span>
+                  <span className="financeiro-aluno-pendente">
+                    <small>Total em aberto</small>
+                    <strong>{formatarMoeda(grupo.valorPendente)}</strong>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )
+        ) : listaDetalhada.length === 0 ? (
+          <div className="financeiro-empty">
+            <div className="financeiro-empty-icon">
+              $
+            </div>
+
+            <strong>
+              Nenhum lançamento encontrado
+            </strong>
+
+            <p>
+              Ajuste os filtros ou cadastre
+              um novo lançamento.
+            </p>
+          </div>
+        ) : (
+          <div className="financeiro-table-wrapper">
+
+            <table className="financeiro-table">
+
+              <thead>
+                <tr>
+
+                  {aba === "pagar" && (
+                    <th>
+                      Fornecedor
+                    </th>
+                  )}
+
+                  <th>
+                    Descrição
+                  </th>
+
+                  <th>
+                    Categoria
+                  </th>
+
+                  <th>
+                    Vencimento
+                  </th>
+
+                  <th>
+                    Valor
+                  </th>
+
+                  <th>
+                    Pagamento
+                  </th>
+
+                  <th>
+                    Status
+                  </th>
+
+                  <th>
+                    Ações
+                  </th>
+
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {listaDetalhada.map(
+                  (conta) => {
+                    const status =
+                      calcularStatus(
+                        conta
+                      );
+
+                    const protegido =
+                      (aba === "receber" && (
+                        conta.status === "pago" ||
+                        Number(conta.valor_pago || 0) > 0 ||
+                        (
+                          conta.categoria === "Pilates" &&
+                          /Matrícula\s*#\d+/i.test(conta.descricao || "")
+                        )
+                      )) ||
+                      (aba === "pagar" && (
+                        conta.status === "pago" ||
+                        Number(conta.valor_pago || 0) > 0
+                      ));
+
+                    return (
+                      <tr key={conta.id}>
+
+                        {aba === "pagar" && (
+                          <td>
+                            <strong>
+                              {conta.fornecedor ||
+                                "-"}
+                            </strong>
+                          </td>
+                        )}
+
+                        <td>
+                          {aba === "receber" && (
+                            <strong className="financeiro-nome-aluno-linha">
+                              {nomeAlunoPorId(conta.paciente_id)}
+                            </strong>
+                          )}
+                          <strong>{conta.descricao}</strong>
+                          {conta.observacoes && conta.categoria !== "Pilates" && (
+                            <small>{conta.observacoes}</small>
+                          )}
+                        </td>
+
+                        <td>
+                          {conta.categoria ||
+                            "-"}
+                        </td>
+
+                        <td>
+                          {formatarData(
+                            conta.vencimento
+                          )}
+                        </td>
+
+                        <td>
+                          <strong>
+                            {formatarMoeda(
+                              conta.valor
+                            )}
+                          </strong>
+
+                          {conta.valor_pago && (
+                            <small>
+                              Pago:{" "}
+                              {formatarMoeda(
+                                conta.valor_pago
+                              )}
+                            </small>
+                          )}
+                        </td>
+
+                        <td>
+                          {conta.forma_pagamento ? (
+                            <>
+                              <strong>
+                                {FORMAS_PAGAMENTO[
+                                  conta.forma_pagamento
+                                ] ||
+                                  conta.forma_pagamento}
+                              </strong>
+
+                              {conta.data_pagamento && (
+                                <small>
+                                  {formatarData(
+                                    conta.data_pagamento
+                                  )}
+                                </small>
+                              )}
+                            </>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+
+                        <td>
+                          <span
+                            className={`financeiro-status financeiro-status-${status}`}
+                          >
+                            {STATUS_LABELS[
+                              status
+                            ] || status}
+                          </span>
+                        </td>
+
+                        <td>
+                          <div className="financeiro-acoes-tabela">
+
+                            {!protegido && (
+                              <button
+                                type="button"
+                                className="financeiro-acao-editar"
+                                onClick={() => editarLancamento(conta)}
+                              >
+                                Editar
+                              </button>
+                            )}
+
+                            {status !== "pago" &&
+                              status !== "cancelado" && (
+                                <button
+                                  type="button"
+                                  className="financeiro-acao-pagamento"
+                                  onClick={() =>
+                                    registrarPagamento(conta)
+                                  }
+                                >
+                                  {aba === "receber"
+                                    ? "Receber"
+                                    : "Pagar"}
+                                </button>
+                              )}
+
+                            {!protegido && (
+                              <button
+                                type="button"
+                                className="financeiro-acao-excluir"
+                                onClick={() => excluirLancamento(conta)}
+                              >
+                                Excluir
+                              </button>
+                            )}
+
+                          </div>
+                        </td>
+
+                      </tr>
+                    );
+                  }
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+        )}
+
+      </section>
+    );
+  }
+
+  return (
+    <div className="financeiro-page">
+
+      <header className="financeiro-header">
+
+        <div>
+          <span className="financeiro-kicker">
+            FINANCEIRO
+          </span>
+
+          <h1>
+            Gestão Financeira
+          </h1>
+
+          <p>
+            Controle de receitas, despesas e
+            acompanhe a movimentação financeira
+            da clínica.
+          </p>
+        </div>
+
+        <div className="financeiro-header-actions">
+
+          <button
+            type="button"
+            className="financeiro-secondary-button"
+            onClick={onVoltar}
+          >
+            Voltar
+          </button>
+
+          <button
+            type="button"
+            className="financeiro-secondary-button"
+            onClick={onAbrirCaixa}
+          >
+            Ir ao Caixa →
+          </button>
+
+          <button
+            type="button"
+            className="financeiro-secondary-button"
+            onClick={() => setMostrarConciliacao((atual) => !atual)}
+          >
+            {mostrarConciliacao ? "Fechar conferência" : "Conferir Recibos e Caixa"}
+          </button>
+
+          <button
+            type="button"
+            className="financeiro-refresh-button"
+            onClick={carregarContas}
+          >
+            Atualizar
+          </button>
+
+          <button
+            type="button"
+            className="financeiro-primary-button"
+            onClick={abrirNovoLancamento}
+          >
+            + Lançamento manual
+          </button>
+
+        </div>
+
+      </header>
+
+      {erro && (
+        <AvisoSistema
+          titulo="Operação não permitida"
+          mensagem={erro}
+          instrucao="Confira as informações antes de continuar. Para corrigir pagamentos já registrados no Caixa, utilize a rotina apropriada de estorno ou correção."
+          botao="Entendi"
+          aoFechar={() => setErro("")}
+        />
+      )}
+
+      {sucesso && (
+        <div className="financeiro-alert financeiro-alert-sucesso">
+          {sucesso}
+        </div>
+      )}
+
+      {mostrarConciliacao && (
+        <ConciliacaoFinanceira onFechar={() => setMostrarConciliacao(false)} />
+      )}
+
+      <section className="financeiro-saldo-card">
+
+        <div>
+          <span>
+            SALDO PREVISTO
+          </span>
+
+          <strong>
+            {formatarMoeda(
+              saldoPrevisto
+            )}
+          </strong>
+
+          <small>
+            A receber menos contas a pagar pendentes
+          </small>
+        </div>
+
+        <div className="financeiro-saldo-detalhes">
+
+          <div>
+            <span>
+              Receitas pendentes
+            </span>
+
+            <strong>
+              {formatarMoeda(
+                resumoReceber.pendente
+              )}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Despesas pendentes
+            </span>
+
+            <strong>
+              {formatarMoeda(
+                resumoPagar.pendente
+              )}
+            </strong>
+          </div>
+
+        </div>
+
+      </section>
+
+      <div className="financeiro-tabs">
+
+        <button
+          type="button"
+          className={
+            aba === "visao-geral"
+              ? "financeiro-tab ativo"
+              : "financeiro-tab"
+          }
+          onClick={() =>
+            trocarAba("visao-geral")
+          }
+        >
+          <span>
+            Visão Geral
+          </span>
+
+          <small>
+            Resumo financeiro
+          </small>
+        </button>
+
+        <button
+          type="button"
+          className={
+            aba === "receber"
+              ? "financeiro-tab ativo"
+              : "financeiro-tab"
+          }
+          onClick={() =>
+            trocarAba("receber")
+          }
+        >
+          <span>
+            Cobranças
+          </span>
+
+          <small>
+            {contasReceber.length}{" "}
+            {contasReceber.length === 1
+              ? "lançamento"
+              : "lançamentos"}
+          </small>
+        </button>
+
+        <button
+          type="button"
+          className={
+            aba === "pagar"
+              ? "financeiro-tab ativo"
+              : "financeiro-tab"
+          }
+          onClick={() =>
+            trocarAba("pagar")
+          }
+        >
+          <span>
+            Despesas
+          </span>
+
+          <small>
+            {contasPagar.length}{" "}
+            {contasPagar.length === 1
+              ? "lançamento"
+              : "lançamentos"}
+          </small>
+        </button>
+
+      </div>
+
+      {aba === "visao-geral" ? (
+        renderVisaoGeral()
+      ) : (
+        <>
+          <section className="financeiro-resumo">
+            {renderResumoAba()}
+          </section>
+
+          {mostrarFormulario && (
+            <section className="financeiro-form-card">
+
+              <div className="financeiro-section-title">
+
+                <div>
+                  <span>
+                    {editandoId
+                      ? "EDITAR LANÇAMENTO"
+                      : "NOVO LANÇAMENTO"}
+                  </span>
+
+                  <h2>
+                    {aba === "receber"
+                      ? "Conta a receber"
+                      : "Conta a pagar"}
+                  </h2>
+                </div>
+
+              </div>
+
+              <form onSubmit={salvarConta}>
+
+                <div className="financeiro-form-grid">
+
+                  {aba === "pagar" && (
+                    <label>
+                      Fornecedor
+
+                      <input
+                        name="fornecedor"
+                        value={
+                          formulario.fornecedor
+                        }
+                        onChange={
+                          alterarCampo
+                        }
+                        placeholder="Ex.: Empresa de materiais"
+                      />
                     </label>
                   )}
 

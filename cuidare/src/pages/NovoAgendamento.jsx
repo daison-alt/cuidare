@@ -2,7 +2,7 @@ import { useErro } from "../components/avisos";
 import "./NovoAgendamento.css";
 import { useEffect, useMemo, useState } from "react";
 import { API_URL } from "../config";
-import AvisoSistema, { prepararSomAviso } from "../components/AvisoSistema";
+import { prepararSomAviso } from "../components/avisoAudio";
 
 
 const STATUS_OPTIONS = [
@@ -62,7 +62,7 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
   const [carregando, setCarregando] = useState(true);
   const [carregandoPlanos, setCarregandoPlanos] = useState(false);
   const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useErro();
+  const [, setErro] = useErro();
 
   useEffect(() => {
     async function carregarDados() {
@@ -141,7 +141,7 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
     }
 
     carregarDados();
-  }, []);
+  }, [setErro]);
 
   useEffect(() => {
     async function carregarPlanosDoPaciente() {
@@ -208,7 +208,7 @@ function NovoAgendamento({ onVoltar, onSalvo }) {
     }
 
     carregarPlanosDoPaciente();
-  }, [formulario.paciente_id]);
+  }, [formulario.paciente_id, formulario.aluno_plano_id]);
 
   const servicoSelecionado = useMemo(() => {
     return servicos.find(

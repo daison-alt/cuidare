@@ -3,7 +3,9 @@ import "./Financeiro.css";
 import RecebimentoLotePilates from "../components/RecebimentoLotePilates"; // CUIDARE_RECEBIMENTO_LOTE_V1
 import ConciliacaoFinanceira from "../components/ConciliacaoFinanceira";  // CUIDARE_CONCILIACAO_LEITURA_V1
 import { API_URL } from "../config";
-import AvisoSistema, { prepararSomAviso } from "../components/AvisoSistema";
+import AvisoSistema from "../components/AvisoSistema";
+import { prepararSomAviso } from "../components/avisoAudio";
+import VisualizadorRecibo from "../components/VisualizadorRecibo";
 
 
 const STATUS_LABELS = {
@@ -93,6 +95,7 @@ function Financeiro({ onVoltar, onAbrirCaixa , atalhoDashboard }) { // CUIDARE_I
   const [editandoId, setEditandoId] = useState(null);
 
   const [pagamentoModal, setPagamentoModal] = useState(null);
+  const [reciboVisualizacao, setReciboVisualizacao] = useState(null);
   const [recebimentoMultiplo, setRecebimentoMultiplo] = useState(null);
   const [formaPagamentoSelecionada, setFormaPagamentoSelecionada] = useState("");
   const [valorPagamento, setValorPagamento] = useState("");
@@ -671,7 +674,7 @@ function Financeiro({ onVoltar, onAbrirCaixa , atalhoDashboard }) { // CUIDARE_I
       }
 
       // ------------------------------------------------------
-      // RECIBO PDF - DOWNLOAD AUTOMÁTICO
+      // Abre o recibo dentro do Cuidare para visualizar e imprimir.
       // ------------------------------------------------------
 
       if (!dados.id) {
@@ -680,63 +683,10 @@ function Financeiro({ onVoltar, onAbrirCaixa , atalhoDashboard }) { // CUIDARE_I
         );
       }
 
-      try {
-        const respostaRecibo = await fetch(
-          `${API_URL}/contas-receber/recebimentos/${dados.id}/recibo.pdf`
-        );
-
-        if (!respostaRecibo.ok) {
-          const erroRecibo = await respostaRecibo.text();
-
-          console.error(
-            "Erro ao gerar recibo:",
-            erroRecibo
-          );
-
-          throw new Error(
-            "O recebimento foi salvo, mas não foi possível gerar o recibo PDF."
-          );
-        }
-
-        const blobRecibo =
-          await respostaRecibo.blob();
-
-        const urlRecibo =
-          window.URL.createObjectURL(blobRecibo);
-
-        const linkRecibo =
-          document.createElement("a");
-
-        linkRecibo.href = urlRecibo;
-
-        linkRecibo.download =
-          `recibo_cuidare_${String(dados.id).padStart(6, "0")}.pdf`;
-
-        document.body.appendChild(linkRecibo);
-
-        linkRecibo.click();
-
-        linkRecibo.remove();
-
-        window.URL.revokeObjectURL(urlRecibo);
-
-        console.log(
-          `🟢 Recibo PDF baixado: #${dados.numero_recibo}`
-        );
-
-      } catch (erroRecibo) {
-        console.error(
-          "Erro no download do recibo PDF:",
-          erroRecibo
-        );
-
-        // O recebimento já foi salvo no banco.
-        // Não desfazemos o recebimento por falha do PDF.
-        setErro(
-          erroRecibo.message ||
-            "Recebimento salvo, mas não foi possível baixar o recibo PDF."
-        );
-      }
+      setReciboVisualizacao({
+        id: dados.id,
+        numero: dados.numero_recibo || String(dados.id).padStart(6, "0"),
+      });
 
       // Recarrega a conta para obter o saldo/status
       // atualizados pelo backend.
@@ -3168,6 +3118,14 @@ function Financeiro({ onVoltar, onAbrirCaixa , atalhoDashboard }) { // CUIDARE_I
 
           </div>
         </div>
+      )}
+
+      {reciboVisualizacao && (
+        <VisualizadorRecibo
+          reciboId={reciboVisualizacao.id}
+          numeroRecibo={reciboVisualizacao.numero}
+          onFechar={() => setReciboVisualizacao(null)}
+        />
       )}
 
 

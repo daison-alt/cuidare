@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../config";
 import "./ConciliacaoFinanceira.css";
 
@@ -36,12 +36,10 @@ function ListaItens({ itens, titulo, tipo }) {
 export default function ConciliacaoFinanceira({ onFechar }) {
   const [resultado, setResultado] = useState(null);
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
 
-  async function conferir() {
+  const conferir = useCallback(async () => {
     try {
-      setCarregando(true);
-      setErro("");
       const resposta = await fetch(API_URL + "/financeiro/conciliacao");
       if (!resposta.ok) {
         const dados = await resposta.json().catch(() => ({}));
@@ -53,9 +51,9 @@ export default function ConciliacaoFinanceira({ onFechar }) {
     } finally {
       setCarregando(false);
     }
-  }
+  }, []);
 
-  useEffect(() => { conferir(); }, []);
+  useEffect(() => { conferir(); }, [conferir]);
 
   return (
     <section className="conciliacao-card" aria-label="Conferência de recibos e Caixa">
@@ -66,7 +64,11 @@ export default function ConciliacaoFinanceira({ onFechar }) {
           <p>Compare recebimentos, formas de pagamento e entradas registradas no Caixa.</p>
         </div>
         <div className="conciliacao-botoes">
-          <button type="button" onClick={conferir} disabled={carregando}>
+          <button type="button" onClick={() => {
+            setCarregando(true);
+            setErro("");
+            conferir();
+          }} disabled={carregando}>
             {carregando ? "Conferindo..." : "Conferir novamente"}
           </button>
           <button type="button" onClick={onFechar}>Fechar</button>

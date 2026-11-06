@@ -91,7 +91,7 @@ function EditarPaciente({ pacienteId, onVoltar, onSalvo }) {
       setErro("Paciente não informado.");
       setCarregando(false);
     }
-  }, [pacienteId]);
+  }, [pacienteId, setErro]);
 
   function alterarCampo(event) {
     const { name, value } = event.target;

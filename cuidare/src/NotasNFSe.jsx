@@ -1,5 +1,5 @@
 import { useMensagem, mensagemEhErro } from "./components/avisos";
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "./config";
 
 function moeda(valor) {
@@ -43,10 +43,8 @@ export default function NotasNFSe({ onVoltar }) {
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useMensagem();
 
-  async function carregarNotas() {
+  const carregarNotas = useCallback(async () => {
     try {
-      setCarregando(true);
-
       const response = await fetch(`${API_URL}/recibos`);
 
       if (!response.ok) {
@@ -61,11 +59,11 @@ export default function NotasNFSe({ onVoltar }) {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setMensagem]);
 
   useEffect(() => {
     carregarNotas();
-  }, []);
+  }, [carregarNotas]);
 
   async function emitirNFSe(id) {
     try {

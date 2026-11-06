@@ -47,7 +47,7 @@ function VisualizarPaciente({ pacienteId, onVoltar, onAbrirProntuario }) {
       setErro("Paciente não informado.");
       setCarregando(false);
     }
-  }, [pacienteId]);
+  }, [pacienteId, setErro]);
 
   function formatarData(data) {
     if (!data) {

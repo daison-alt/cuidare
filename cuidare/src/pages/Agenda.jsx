@@ -1,6 +1,6 @@
 import { useErro } from "../components/avisos";
 import "./Agenda.css";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { API_URL } from "../config";
 
 const STATUS_LABELS = {
@@ -43,7 +43,7 @@ function Agenda({
   const [erro, setErro] = useErro();
   const [registrandoPresenca, setRegistrandoPresenca] = useState(null);
 
-  async function carregarDados() {
+  const carregarDados = useCallback(async () => {
     try {
       setCarregando(true);
       setErro("");
@@ -138,7 +138,7 @@ function Agenda({
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setErro]);
 
   async function registrarPresenca(agendamento) {
     if (agendamento.status === "concluido") {
@@ -209,7 +209,7 @@ function Agenda({
 
   useEffect(() => {
     carregarDados();
-  }, []);
+  }, [carregarDados]);
 
   const agendamentosDoDia = useMemo(() => {
     return agendamentos

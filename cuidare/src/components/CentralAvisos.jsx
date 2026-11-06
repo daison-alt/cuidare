@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import AvisoSistema, {
-  prepararSomAviso
-} from "./AvisoSistema";
+import AvisoSistema from "./AvisoSistema";
+import { prepararSomAviso } from "./avisoAudio";
 import { notificarErro } from "./avisos";
 import "./CentralAvisos.css";
 

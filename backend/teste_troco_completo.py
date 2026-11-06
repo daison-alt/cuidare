@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.database import Base, get_db
+from app.security.auth import criar_token_acesso
 
 
 # ============================================================
@@ -42,6 +43,9 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
+client.headers.update({
+    "Authorization": f"Bearer {criar_token_acesso(1, 'administrador')}"
+})
 
 
 # ============================================================

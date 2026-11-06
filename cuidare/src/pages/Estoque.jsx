@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
-import AvisoSistema, {
-  prepararSomAviso
-} from "../components/AvisoSistema";
+import AvisoSistema from "../components/AvisoSistema";
+import { prepararSomAviso } from "../components/avisoAudio";
 
 
 function formatarNumero(valor) {

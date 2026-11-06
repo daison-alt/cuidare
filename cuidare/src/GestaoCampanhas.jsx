@@ -1,5 +1,5 @@
 import { useMensagem, mensagemEhErro } from "./components/avisos";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import API_URL from "./config";
 
 export default function GestaoCampanhas() {
@@ -39,7 +39,7 @@ export default function GestaoCampanhas() {
         setModal(false);
         carregarCampanhas();
       }
-    } catch (err) {
+    } catch {
       setMensagem("Erro ao salvar campanha.");
     }
   };
@@ -52,7 +52,7 @@ export default function GestaoCampanhas() {
         setMensagem(data.mensagem);
         carregarCampanhas();
       }
-    } catch (err) {
+    } catch {
       setMensagem("Erro ao disparar campanha.");
     }
   };

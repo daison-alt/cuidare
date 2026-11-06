@@ -1,5 +1,5 @@
 import { useErro } from "../components/avisos";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./GestaoFiscal.css";
 import { API_URL } from "../config";
 
@@ -95,7 +95,7 @@ function GestaoFiscal({ onVoltar }) {
   const [editandoId, setEditandoId] = useState(null);
   const [salvando, setSalvando] = useState(false);
 
-  async function carregarRegistros() {
+  const carregarRegistros = useCallback(async () => {
     try {
       setCarregando(true);
       setErro("");
@@ -128,11 +128,11 @@ function GestaoFiscal({ onVoltar }) {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setErro]);
 
   useEffect(() => {
     carregarRegistros();
-  }, []);
+  }, [carregarRegistros]);
 
   function alterarCampo(event) {
     const { name, value } = event.target;

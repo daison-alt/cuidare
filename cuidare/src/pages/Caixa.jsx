@@ -1,5 +1,5 @@
 import { useErro } from "../components/avisos";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./Caixa.css";
 import "./CaixaVisual.css";
 import "./CaixaAbas.css";
@@ -39,7 +39,7 @@ function formatarData(data) {
 
 function Caixa({ onVoltar }) {
   const [caixa, setCaixa] = useState(null);
-  const [saldo, setSaldo] = useState(null);
+  const [, setSaldo] = useState(null);
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [historicoCaixas, setHistoricoCaixas] = useState([]);
   const [mostrarHistorico, setMostrarHistorico] = useState(false);
@@ -155,7 +155,7 @@ function Caixa({ onVoltar }) {
     }
   }
 
-  async function carregarCaixa() {
+  const carregarCaixa = useCallback(async () => {
     try {
       setCarregando(true);
       setErro("");
@@ -201,12 +201,12 @@ function Caixa({ onVoltar }) {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setErro]);
 
   useEffect(() => {
     carregarCaixa();
     carregarHistorico();
-  }, []);
+  }, [carregarCaixa]);
 
   useEffect(() => {
     if (!caixa && mostrarAbertura) {

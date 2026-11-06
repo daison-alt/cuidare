@@ -3,7 +3,8 @@ import "./Financeiro.css";
 import RecebimentoLotePilates from "../components/RecebimentoLotePilates"; // CUIDARE_RECEBIMENTO_LOTE_V1
 import ConciliacaoFinanceira from "../components/ConciliacaoFinanceira";  // CUIDARE_CONCILIACAO_LEITURA_V1
 import { API_URL } from "../config";
-import AvisoSistema, { prepararSomAviso } from "../components/AvisoSistema";
+import AvisoSistema from "../components/AvisoSistema";
+import { prepararSomAviso } from "../components/avisoAudio";
 import VisualizadorRecibo from "../components/VisualizadorRecibo";
 
 

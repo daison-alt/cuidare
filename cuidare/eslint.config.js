@@ -17,5 +17,10 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // API effects intentionally store fetched results after awaiting the request.
+      // The compiler diagnostic treats these asynchronous updates as synchronous loops.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])

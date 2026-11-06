@@ -1,5 +1,5 @@
 import { useErro } from "../components/avisos";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./Servicos.css";
 import { API_URL } from "../config";
 
@@ -76,7 +76,7 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
 
   const [filtro, setFiltro] = useState("todos");
 
-  async function carregarServicos() {
+  const carregarServicos = useCallback(async () => {
     setCarregando(true);
     setErro("");
 
@@ -101,11 +101,11 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setErro]);
 
   useEffect(() => {
     carregarServicos();
-  }, []);
+  }, [carregarServicos]);
 
   const servicosFiltrados = useMemo(() => {
     if (filtro === "ativos") {

@@ -1,7 +1,7 @@
 import { notificarErro } from "./components/avisos";
 import "./App.css";
 import LayoutPrincipal from "./LayoutPrincipal";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Login from "./Login";
 import Usuarios from "./pages/Usuarios";
@@ -28,7 +28,46 @@ import Campanhas from "./pages/Campanhas";
 import CentralRecibos from "./CentralRecibos";
 import NotasNFSe from "./NotasNFSe";
 import { API_URL } from "./config";
-import ResumoPendencias from "./ResumoPendencias";
+
+function obterToken() {
+  return localStorage.getItem("cuidare_token");
+}
+
+function normalizarPerfil(perfil) {
+  const valor = String(perfil || "").trim().toLowerCase();
+  const perfis = {
+    administrador: "administrador",
+    fisioterapeuta: "fisioterapeuta",
+    secretaria: "secretaria",
+    recepção: "secretaria",
+    recepcao: "secretaria",
+    estagiario: "estagiario",
+    "estagiário": "estagiario",
+    contabilidade: "contabilidade",
+    contador: "contabilidade",
+  };
+
+  return perfis[valor] || valor;
+}
+
+function formatarUsuarioApi(usuario) {
+  const nomesPerfil = {
+    administrador: "Administrador",
+    fisioterapeuta: "Fisioterapeuta",
+    secretaria: "Recepção",
+    contabilidade: "Contabilidade",
+    estagiario: "Estagiário",
+  };
+
+  return {
+    ...usuario,
+    perfil: nomesPerfil[normalizarPerfil(usuario.perfil)] || usuario.perfil,
+    status: usuario.status ? "Ativo" : "Inativo",
+    ultimoAcesso: usuario.ultimo_acesso
+      ? new Date(usuario.ultimo_acesso).toLocaleString("pt-BR")
+      : "Nunca acessou",
+  };
+}
 
 
 const STATUS_LABELS = {
@@ -93,22 +132,23 @@ function App() {
   const [atalhoFinanceiro, setAtalhoFinanceiro] = useState(null);
 
   useEffect(() => {
-    if (currentPage !== "financeiro") setAtalhoFinanceiro(null);
+    if (currentPage !== "financeiro") {
+      setAtalhoFinanceiro(null);
+    }
   }, [currentPage]);
+
   // CUIDARE_TURNO_GRADE_V1
   const [relogioDashboard, setRelogioDashboard] = useState(() => new Date());
 
   useEffect(() => {
     if (currentPage !== "dashboard") return;
-    setRelogioDashboard(new Date());
     const timer = setInterval(() => setRelogioDashboard(new Date()), 60000);
     return () => clearInterval(timer);
   }, [currentPage]);
 
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
 
-  const [configuracaoFiscalSelecionada, setConfiguracaoFiscalSelecionada] =
-    useState(null);
+  const [configuracaoFiscalSelecionada] = useState(null);
 
   const [usuarios, setUsuarios] = useState([]);
 
@@ -127,7 +167,7 @@ function App() {
   });
 
   const [logoCuidare, setLogoCuidare] = useState(null);
-  const [logoVersao, setLogoVersao] = useState(Date.now());
+  const [logoVersao, setLogoVersao] = useState(() => Date.now());
 
   useEffect(() => {
     if (!usuarioLogado) {
@@ -257,7 +297,7 @@ function App() {
             erro: "",
           });
         }
-      } catch (erro) {
+      } catch {
         if (!controller.signal.aborted) {
           setFinanceiroDashboard((atual) => ({
             ...atual,
@@ -290,52 +330,7 @@ function App() {
     setCurrentPage("dashboard");
   }
 
-  function obterToken() {
-    return localStorage.getItem("cuidare_token");
-  }
-
-  function normalizarPerfil(perfil) {
-    const valor = String(perfil || "").trim().toLowerCase();
-
-    const perfis = {
-      administrador: "administrador",
-      "administrador": "administrador",
-      fisioterapeuta: "fisioterapeuta",
-      secretaria: "secretaria",
-      recepção: "secretaria",
-      recepcao: "secretaria",
-      estagiario: "estagiario",
-      "estagiário": "estagiario",
-      contabilidade: "contabilidade",
-      contador: "contabilidade",
-    };
-
-    return perfis[valor] || valor;
-  }
-
-  function formatarUsuarioApi(usuario) {
-    const nomesPerfil = {
-      administrador: "Administrador",
-      fisioterapeuta: "Fisioterapeuta",
-      secretaria: "Recepção",
-      contabilidade: "Contabilidade",
-      estagiario: "Estagiário",
-    };
-
-    return {
-      ...usuario,
-      perfil:
-        nomesPerfil[
-          normalizarPerfil(usuario.perfil)
-        ] || usuario.perfil,
-      status: usuario.status ? "Ativo" : "Inativo",
-      ultimoAcesso: usuario.ultimo_acesso
-        ? new Date(usuario.ultimo_acesso).toLocaleString("pt-BR")
-        : "Nunca acessou",
-    };
-  }
-
-  async function carregarUsuarios() {
+  const carregarUsuarios = useCallback(async () => {
     try {
       const token = obterToken();
 
@@ -378,7 +373,7 @@ function App() {
           "Não foi possível carregar os usuários."
       );
     }
-  }
+  }, []);
 
   useEffect(() => {
     if (
@@ -389,7 +384,7 @@ function App() {
     }
 
     carregarUsuarios();
-  }, [usuarioLogado, currentPage]);
+  }, [usuarioLogado, currentPage, carregarUsuarios]);
 
   async function adicionarUsuario(novoUsuario) {
     try {

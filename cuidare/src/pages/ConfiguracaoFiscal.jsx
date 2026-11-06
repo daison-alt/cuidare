@@ -1,5 +1,5 @@
 import { useErro } from "../components/avisos";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./ConfiguracaoFiscal.css";
 import { API_URL } from "../config";
 
@@ -62,14 +62,9 @@ function ConfiguracaoFiscal({ onVoltar }) {
   const [logoRemovendo, setLogoRemovendo] = useState(false);
   const [logoMensagem, setLogoMensagem] = useState("");
   const [logoErro, setLogoErro] = useErro();
-  const [logoVersao, setLogoVersao] = useState(Date.now());
+  const [logoVersao, setLogoVersao] = useState(() => Date.now());
 
-  useEffect(() => {
-    carregarConfiguracao();
-    carregarIdentidadeVisual();
-  }, []);
-
-  async function carregarConfiguracao() {
+  const carregarConfiguracao = useCallback(async () => {
     try {
       setCarregando(true);
       setErro("");
@@ -170,9 +165,9 @@ function ConfiguracaoFiscal({ onVoltar }) {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setErro]);
 
-  async function carregarIdentidadeVisual() {
+  const carregarIdentidadeVisual = useCallback(async () => {
     try {
       setLogoCarregando(true);
       setLogoErro("");
@@ -199,7 +194,12 @@ function ConfiguracaoFiscal({ onVoltar }) {
     } finally {
       setLogoCarregando(false);
     }
-  }
+  }, [setLogoErro]);
+
+  useEffect(() => {
+    carregarConfiguracao();
+    carregarIdentidadeVisual();
+  }, [carregarConfiguracao, carregarIdentidadeVisual]);
 
   function alterarCampo(event) {
     const { name, value, type, checked } = event.target;

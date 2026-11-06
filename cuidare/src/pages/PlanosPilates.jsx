@@ -1,5 +1,5 @@
 import { useErro } from "../components/avisos";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../config";
 
 
@@ -27,7 +27,7 @@ export default function PlanosPilates({ onVoltar }) {
     ativo: true,
   });
 
-  async function carregarPlanos() {
+  const carregarPlanos = useCallback(async () => {
     try {
       setCarregando(true);
       setErro("");
@@ -54,11 +54,11 @@ export default function PlanosPilates({ onVoltar }) {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setErro]);
 
   useEffect(() => {
     carregarPlanos();
-  }, []);
+  }, [carregarPlanos]);
 
   function formatarValor(valor) {
     return Number(valor || 0).toLocaleString("pt-BR", {

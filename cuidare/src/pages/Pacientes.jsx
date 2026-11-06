@@ -1,5 +1,5 @@
 import { useErro } from "../components/avisos";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./Pacientes.css";
 import { API_URL } from "../config";
 
@@ -14,7 +14,7 @@ function Pacientes({
   const [erro, setErro] = useErro();
   const [busca, setBusca] = useState("");
 
-  async function carregarPacientes() {
+  const carregarPacientes = useCallback(async () => {
     try {
       setCarregando(true);
       setErro("");
@@ -42,11 +42,11 @@ function Pacientes({
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setErro]);
 
   useEffect(() => {
     carregarPacientes();
-  }, []);
+  }, [carregarPacientes]);
 
   const pacientesFiltrados = pacientes.filter((paciente) => {
     const termo = busca.toLowerCase().trim();

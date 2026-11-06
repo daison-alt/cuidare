@@ -1,6 +1,6 @@
 import { useErro } from "../components/avisos";
 import "./ContasPagar.css";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { API_URL } from "../config";
 
 
@@ -99,7 +99,7 @@ function ContasPagar({ onVoltar }) {
     observacoes: "",
   });
 
-  async function carregarContas() {
+  const carregarContas = useCallback(async () => {
     try {
       setCarregando(true);
       setErro("");
@@ -131,11 +131,11 @@ function ContasPagar({ onVoltar }) {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setErro]);
 
   useEffect(() => {
     carregarContas();
-  }, []);
+  }, [carregarContas]);
 
   function alterarCampo(event) {
     const { name, value } = event.target;

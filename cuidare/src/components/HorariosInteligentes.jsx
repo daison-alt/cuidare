@@ -8,20 +8,16 @@ export default function HorariosInteligentes({
   pacienteId, planoId, profissionalId, inicio, fim, selecionados, onChange,
 }) {
   const [dados, setDados] = useState(null);
-  const [carregando, setCarregando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
   const [mostrarTodos, setMostrarTodos] = useState(false);
   const [erro, setErro] = useState("");
 
   useEffect(() => {
     let ativo = true;
-    setDados(null);
-    setErro("");
-    setMostrarTodos(false);
     if (!pacienteId || !planoId || !profissionalId || !inicio || !fim) {
       return () => { ativo = false; };
     }
     async function carregar() {
-      setCarregando(true);
       try {
         const params = new URLSearchParams({
           paciente_id: String(pacienteId),

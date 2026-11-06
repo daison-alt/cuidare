@@ -1,5 +1,5 @@
 import { useErro } from "../components/avisos";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./Prontuario.css";
 import { API_URL } from "../config";
 import AvaliacoesFisioterapeuticas from "../components/AvaliacoesFisioterapeuticas"; // CUIDARE_AVALIACAO_FISIO_V1
@@ -32,7 +32,7 @@ function Prontuario({
     return localStorage.getItem("cuidare_token") || "";
   }
 
-  async function carregarDados() {
+  const carregarDados = useCallback(async () => {
     try {
       setCarregando(true);
       setErro("");
@@ -104,13 +104,13 @@ function Prontuario({
     } finally {
       setCarregando(false);
     }
-  }
+  }, [pacienteId, setErro]);
 
   useEffect(() => {
     if (pacienteId) {
       carregarDados();
     }
-  }, [pacienteId]);
+  }, [pacienteId, carregarDados]);
 
   async function salvarProntuario() {
     try {
@@ -538,7 +538,10 @@ function Prontuario({
       <div className="prontuario-grid">
 
         <div className="prontuario-main">
-          <AvaliacoesFisioterapeuticas prontuarioId={prontuario?.id} />
+          <AvaliacoesFisioterapeuticas
+            key={prontuario?.id || "sem-prontuario"}
+            prontuarioId={prontuario?.id}
+          />
 
           <div className="prontuario-card">
 

@@ -119,7 +119,7 @@ function VisualizarAgendamento({
       setErro("Agendamento não informado.");
       setCarregando(false);
     }
-  }, [agendamentoId]);
+  }, [agendamentoId, setErro]);
 
   if (carregando) {
     return (

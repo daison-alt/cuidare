@@ -37,32 +37,26 @@ export default function CentralRecibos({ onVoltar }) {
   const [erro, setErro] = useErro();
   const [reciboVisualizacao, setReciboVisualizacao] = useState(null);
 
-  async function carregarRecibos() {
-    try {
-      setCarregando(true);
-      setErro("");
-
-      const response = await fetch(
-        `${API_URL}/contas-receber/recibos`
-      );
-
-      if (!response.ok) {
-        throw new Error("Não foi possível carregar os recibos.");
-      }
-
-      const data = await response.json();
-      setRecibos(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Erro ao carregar recibos:", error);
-      setErro(error.message || "Erro ao carregar recibos.");
-    } finally {
-      setCarregando(false);
-    }
-  }
-
   useEffect(() => {
+    let ativo = true;
+    async function carregarRecibos() {
+      try {
+        const response = await fetch(`${API_URL}/contas-receber/recibos`);
+        if (!response.ok) throw new Error("Não foi possível carregar os recibos.");
+        const data = await response.json();
+        if (ativo) setRecibos(Array.isArray(data) ? data : []);
+      } catch (error) {
+        if (ativo) {
+          console.error("Erro ao carregar recibos:", error);
+          setErro(error.message || "Erro ao carregar recibos.");
+        }
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
     carregarRecibos();
-  }, []);
+    return () => { ativo = false; };
+  }, [setErro]);
 
   function abrirPdf(recibo) {
     setReciboVisualizacao({ id: recibo.id, numero: recibo.numero_recibo });

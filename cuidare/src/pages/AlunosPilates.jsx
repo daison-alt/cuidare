@@ -1,5 +1,5 @@
 import { useErro } from "../components/avisos";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../config";
 import HorariosInteligentes from "../components/HorariosInteligentes";
 
@@ -85,7 +85,7 @@ export default function AlunosPilates({ onVoltar }) {
     return response.json();
   }
 
-  async function carregarDados() {
+  const carregarDados = useCallback(async () => {
     try {
       setCarregando(true);
       setErro("");
@@ -129,11 +129,11 @@ export default function AlunosPilates({ onVoltar }) {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [setErro]);
 
   useEffect(() => {
     carregarDados();
-  }, []);
+  }, [carregarDados]);
 
   function adicionarMeses(data, meses) {
     if (!data) return "";
@@ -813,6 +813,7 @@ export default function AlunosPilates({ onVoltar }) {
           )}
 
           <HorariosInteligentes
+            key={[formulario.paciente_id, formulario.plano_id, formulario.profissional_id, formulario.data_inicio, formulario.data_fim].join(":")}
             pacienteId={formulario.paciente_id}
             planoId={formulario.plano_id}
             profissionalId={formulario.profissional_id}

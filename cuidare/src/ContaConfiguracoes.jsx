@@ -1,5 +1,5 @@
 import { useMensagem, mensagemEhErro } from "./components/avisos";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import API_URL from "./config";
 
 export default function ContaConfiguracoes() {
@@ -30,7 +30,7 @@ export default function ContaConfiguracoes() {
         body: JSON.stringify(form)
       });
       if (res.ok) setMensagem("Configurações salvas com sucesso!");
-    } catch (err) {
+    } catch {
       setMensagem("Erro ao salvar configurações.");
     }
   };

@@ -107,21 +107,14 @@ export default function AvaliacoesFisioterapeuticas({ prontuarioId }) {
   const [tipo, setTipo] = useState("inicial");
   const [aba, setAba] = useState("anamnese");
   const [selecionada, setSelecionada] = useState(null);
-  const [carregando, setCarregando] = useState(false);
+  const [carregando, setCarregando] = useState(Boolean(prontuarioId));
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useErro();
 
   useEffect(() => {
-    if (!prontuarioId) {
-      setAvaliacoes([]);
-      setSelecionada(null);
-      setFormulario({ ...MODELO_VAZIO });
-      return;
-    }
+    if (!prontuarioId) return undefined;
     let ativo = true;
     async function carregar() {
-      setCarregando(true);
-      setErro("");
       try {
         const resposta = await fetch(
           `${API_URL}/prontuarios/${prontuarioId}/avaliacoes`,

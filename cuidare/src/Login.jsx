@@ -4,24 +4,15 @@ import "./Login.css";
 import { API_URL } from "./config";
 
 function Login({ onLogin }) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem("cuidare_email") || "");
   const [senha, setSenha] = useState("");
-  const [lembrar, setLembrar] = useState(false);
+  const lembrar = Boolean(localStorage.getItem("cuidare_email"));
   const [erro, setErro] = useErro();
   const [carregando, setCarregando] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const [logoCuidare, setLogoCuidare] = useState(null);
-  const [logoVersao, setLogoVersao] = useState(Date.now());
-
-  useEffect(() => {
-    const emailSalvo = localStorage.getItem("cuidare_email");
-
-    if (emailSalvo) {
-      setEmail(emailSalvo);
-      setLembrar(true);
-    }
-  }, []);
+  const [logoVersao, setLogoVersao] = useState(() => Date.now());
 
   useEffect(() => {
     async function carregarLogo() {
@@ -116,12 +107,6 @@ function Login({ onLogin }) {
     } finally {
       setCarregando(false);
     }
-  }
-
-  function abrirPrototipo() {
-    window.dispatchEvent(
-      new CustomEvent("cuidare-abrir-prototipo")
-    );
   }
 
   return (

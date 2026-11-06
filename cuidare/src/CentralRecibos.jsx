@@ -1,6 +1,7 @@
 import { useErro } from "./components/avisos";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { API_URL } from "./config";
+import VisualizadorRecibo from "./components/VisualizadorRecibo";
 
 function formatarMoeda(valor) {
   return Number(valor || 0).toLocaleString("pt-BR", {
@@ -34,6 +35,7 @@ export default function CentralRecibos({ onVoltar }) {
   const [recibos, setRecibos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useErro();
+  const [reciboVisualizacao, setReciboVisualizacao] = useState(null);
 
   async function carregarRecibos() {
     try {
@@ -62,11 +64,8 @@ export default function CentralRecibos({ onVoltar }) {
     carregarRecibos();
   }, []);
 
-  function abrirPdf(id) {
-    window.open(
-      `${API_URL}/contas-receber/recebimentos/${id}/recibo.pdf`,
-      "_blank"
-    );
+  function abrirPdf(recibo) {
+    setReciboVisualizacao({ id: recibo.id, numero: recibo.numero_recibo });
   }
 
   return (
@@ -256,7 +255,7 @@ export default function CentralRecibos({ onVoltar }) {
 
                     <td style={{ padding: "14px" }}>
                       <button
-                        onClick={() => abrirPdf(recibo.id)}
+                        onClick={() => abrirPdf(recibo)}
                         style={{
                           padding: "8px 14px",
                           border: "none",
@@ -277,6 +276,13 @@ export default function CentralRecibos({ onVoltar }) {
           </div>
         )}
       </div>
+      {reciboVisualizacao && (
+        <VisualizadorRecibo
+          reciboId={reciboVisualizacao.id}
+          numeroRecibo={reciboVisualizacao.numero}
+          onFechar={() => setReciboVisualizacao(null)}
+        />
+      )}
     </div>
   );
 }

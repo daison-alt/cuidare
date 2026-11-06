@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { API_URL } from "../config";
 import "./RecebimentoLotePilates.css";
+import VisualizadorRecibo from "./VisualizadorRecibo";
 
 const FORMAS = [
   ["pix", "Pix"],
@@ -46,6 +47,7 @@ export default function RecebimentoLotePilates({
   const [processando, setProcessando] = useState(false);
   const [erro, setErro] = useState("");
   const [resultado, setResultado] = useState(null);
+  const [reciboVisualizacao, setReciboVisualizacao] = useState(null);
 
   const elegiveis = useMemo(() => contas.filter((c) =>
     String(c.paciente_id) === String(pacienteId) &&
@@ -157,27 +159,12 @@ export default function RecebimentoLotePilates({
     }
   }
 
-  async function baixarRecibo(recibo) {
-    try {
-      const resposta = await fetch(
-        API_URL + "/contas-receber/recebimentos/" + recibo.id + "/recibo.pdf"
-      );
-      if (!resposta.ok) throw new Error("Não foi possível gerar o PDF deste recibo.");
-      const blob = await resposta.blob();
-      const endereco = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = endereco;
-      link.download = "recibo_cuidare_" + recibo.numero_recibo + ".pdf";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(endereco), 30000);
-    } catch (e) {
-      setErro(e.message || "Falha ao baixar recibo.");
-    }
+  function abrirRecibo(recibo) {
+    setReciboVisualizacao({ id: recibo.id, numero: recibo.numero_recibo });
   }
 
   return (
+    <>
     <div className="cuidare-lote-overlay" role="presentation">
       <section className="cuidare-lote-modal" role="dialog" aria-modal="true"
         aria-label="Receber várias parcelas de Pilates">
@@ -195,14 +182,14 @@ export default function RecebimentoLotePilates({
           <div className="cuidare-lote-sucesso">
             <h3>Recebimento concluído!</h3>
             <p>{resultado.quantidade_parcelas} parcelas quitadas · Total: <strong>{reais(resultado.total)}</strong></p>
-            <p>Cada parcela possui seu próprio recibo. Baixe os comprovantes abaixo:</p>
+            <p>Cada parcela possui seu próprio recibo. Abra um recibo para visualizar e imprimir:</p>
             <div className="cuidare-lote-recibos">
               {resultado.recibos.map((recibo) => (
                 <button type="button" key={recibo.id}
-                  onClick={() => baixarRecibo(recibo)}>
+                  onClick={() => abrirRecibo(recibo)}>
                   <span>Parcela #{recibo.conta_receber_id}</span>
                   <strong>Recibo #{recibo.numero_recibo}</strong>
-                  <span>{reais(recibo.valor)} · Baixar PDF ↗</span>
+                  <span>{reais(recibo.valor)} · Visualizar / imprimir</span>
                 </button>
               ))}
             </div>
@@ -316,5 +303,13 @@ export default function RecebimentoLotePilates({
         )}
       </section>
     </div>
+    {reciboVisualizacao && (
+      <VisualizadorRecibo
+        reciboId={reciboVisualizacao.id}
+        numeroRecibo={reciboVisualizacao.numero}
+        onFechar={() => setReciboVisualizacao(null)}
+      />
+    )}
+    </>
   );
 }

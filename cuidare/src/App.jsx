@@ -876,6 +876,8 @@ function App() {
       >
       <Caixa
         onVoltar={() => setCurrentPage("financeiro")}
+        perfil={usuarioLogado?.perfil}
+        onAbrirRecebimentos={() => setCurrentPage("financeiro")}
       />
       </LayoutPrincipal>
     );

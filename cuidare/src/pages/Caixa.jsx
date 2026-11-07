@@ -1,5 +1,6 @@
 import { useErro } from "../components/avisos";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import CaixaRecepcao from "./CaixaRecepcao";
 import "./Caixa.css";
 import "./CaixaVisual.css";
 import "./CaixaAbas.css";
@@ -37,7 +38,7 @@ function formatarData(data) {
   });
 }
 
-function Caixa({ onVoltar }) {
+function CaixaAdministrador({ onVoltar }) {
   const [caixa, setCaixa] = useState(null);
   const [, setSaldo] = useState(null);
   const [movimentacoes, setMovimentacoes] = useState([]);
@@ -1767,6 +1768,25 @@ function Caixa({ onVoltar }) {
 
 
   );
+}
+
+function Caixa({ onVoltar, perfil, onAbrirRecebimentos }) {
+  const perfilNormalizado = String(perfil || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
+  if (perfilNormalizado === "secretaria" || perfilNormalizado === "recepcao") {
+    return (
+      <CaixaRecepcao
+        onVoltar={onVoltar}
+        onAbrirRecebimentos={onAbrirRecebimentos}
+      />
+    );
+  }
+
+  return <CaixaAdministrador onVoltar={onVoltar} />;
 }
 
 export default Caixa;

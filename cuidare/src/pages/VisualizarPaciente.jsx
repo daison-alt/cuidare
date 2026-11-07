@@ -111,13 +111,15 @@ function VisualizarPaciente({ pacienteId, onVoltar, onAbrirProntuario }) {
         </div>
 
         <div className="visualizar-paciente-header-actions">
-          <button
-            type="button"
-            className="visualizar-paciente-prontuario-button"
-            onClick={onAbrirProntuario}
-          >
-            Prontuário
-          </button>
+          {onAbrirProntuario && (
+            <button
+              type="button"
+              className="visualizar-paciente-prontuario-button"
+              onClick={onAbrirProntuario}
+            >
+              Prontuário
+            </button>
+          )}
 
           <button
             type="button"

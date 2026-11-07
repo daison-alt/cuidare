@@ -581,6 +581,26 @@ function App() {
   }
 
   if (currentPage === "prontuario") {
+    const perfilAtual = normalizarPerfil(usuarioLogado.perfil);
+    if (!["administrador", "fisioterapeuta"].includes(perfilAtual)) {
+      return (
+        <LayoutPrincipal
+          pagina="pacientes"
+          usuario={usuarioLogado}
+          logoUrl={logoCuidare ? obterLogoCuidareUrl() : ""}
+          onNavigate={setCurrentPage}
+          onLogout={handleLogout}
+        >
+          <section className="acesso-restrito-page">
+            <h2>Prontuário restrito</h2>
+            <p>Este perfil não tem acesso a prontuários ou evoluções clínicas.</p>
+            <button type="button" onClick={() => setCurrentPage("pacientes")}>
+              Voltar para pacientes
+            </button>
+          </section>
+        </LayoutPrincipal>
+      );
+    }
     return (
       <LayoutPrincipal
         pagina={currentPage}
@@ -748,11 +768,17 @@ function App() {
           setPacienteSelecionado(null);
           setCurrentPage("pacientes");
         }}
-        onAbrirProntuario={() => {
-          setOrigemProntuario("pacientes");
-          setAtendimentoAgendaProntuario(null);
-          setCurrentPage("prontuario");
-        }}
+        onAbrirProntuario={
+          ["administrador", "fisioterapeuta"].includes(
+            normalizarPerfil(usuarioLogado?.perfil)
+          )
+            ? () => {
+                setOrigemProntuario("pacientes");
+                setAtendimentoAgendaProntuario(null);
+                setCurrentPage("prontuario");
+              }
+            : undefined
+        }
       />
       </LayoutPrincipal>
     );
@@ -876,6 +902,8 @@ function App() {
       >
       <Caixa
         onVoltar={() => setCurrentPage("financeiro")}
+        perfil={usuarioLogado?.perfil}
+        onAbrirRecebimentos={() => setCurrentPage("financeiro")}
       />
       </LayoutPrincipal>
     );
@@ -987,6 +1015,7 @@ function App() {
         onLogout={handleLogout}
       >
       <Servicos
+        somenteLeitura={normalizarPerfil(usuarioLogado?.perfil) !== "administrador"}
         onVoltar={() => setCurrentPage("dashboard")}
         onAbrirPlanosPilates={() => setCurrentPage("planos-pilates")}
         onAbrirAlunosPilates={() => setCurrentPage("alunos-pilates")}

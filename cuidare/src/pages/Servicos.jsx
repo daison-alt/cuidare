@@ -63,7 +63,7 @@ const formularioInicial = {
   ativo: true,
 };
 
-export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunosPilates }) {
+export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunosPilates, somenteLeitura = false }) {
   const [servicos, setServicos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useErro();
@@ -281,7 +281,9 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
           <span className="servicos-kicker">CONFIGURAÇÃO</span>
           <h1>Serviços</h1>
           <p>
-            Cadastre e organize os serviços oferecidos pela clínica.
+            {somenteLeitura
+              ? "Consulte os serviços, durações e valores disponíveis."
+              : "Cadastre e organize os serviços oferecidos pela clínica."}
           </p>
         </div>
 
@@ -294,13 +296,15 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
             ← Voltar
           </button>
 
-          <button
-            type="button"
-            className="servicos-button primary"
-            onClick={abrirNovo}
-          >
-            + Novo serviço
-          </button>
+          {!somenteLeitura && (
+            <button
+              type="button"
+              className="servicos-button primary"
+              onClick={abrirNovo}
+            >
+              + Novo serviço
+            </button>
+          )}
         </div>
       </header>
 
@@ -316,6 +320,7 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
         </div>
       )}
 
+      {!somenteLeitura && (
       <section className="servicos-modulos">
         <div className="servicos-modulo destaque">
           <div className="servicos-modulo-icone">🧘</div>
@@ -347,6 +352,7 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
           </div>
         </div>
       </section>
+      )}
 
       <section className="servicos-summary">
         <div className="servicos-summary-card">
@@ -424,13 +430,15 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
             </p>
 
             {servicos.length === 0 && (
-              <button
-                type="button"
-                className="servicos-button primary"
-                onClick={abrirNovo}
-              >
-                + Cadastrar primeiro serviço
-              </button>
+              {!somenteLeitura && (
+                <button
+                  type="button"
+                  className="servicos-button primary"
+                  onClick={abrirNovo}
+                >
+                  + Cadastrar primeiro serviço
+                </button>
+              )}
             )}
           </div>
         ) : (
@@ -442,7 +450,7 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
                   <th>Duração</th>
                   <th>Valor</th>
                   <th>Status</th>
-                  <th>Ações</th>
+                  {!somenteLeitura && <th>Ações</th>}
                 </tr>
               </thead>
 
@@ -474,6 +482,7 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
                       </span>
                     </td>
 
+                    {!somenteLeitura && (
                     <td>
                       <div className="servico-acoes">
                         <button
@@ -497,6 +506,7 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
                         </button>
                       </div>
                     </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -505,7 +515,7 @@ export default function Servicos({ onVoltar, onAbrirPlanosPilates, onAbrirAlunos
         )}
       </section>
 
-      {modalAberto && (
+      {modalAberto && !somenteLeitura && (
         <div className="servicos-modal-backdrop">
           <div
             className="servicos-modal"

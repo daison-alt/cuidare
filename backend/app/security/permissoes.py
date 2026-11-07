@@ -26,6 +26,7 @@ PERMISSOES = {
         "agenda.editar",
 
         "cuidare_ia.visualizar",
+        "servicos.visualizar",
     },
 
     "secretaria": {
@@ -36,6 +37,9 @@ PERMISSOES = {
         "agenda.visualizar",
         "agenda.criar",
         "agenda.editar",
+        "servicos.visualizar",
+        "marketing.visualizar",
+        "marketing.criar",
 
         "financeiro.visualizar",
         "financeiro.receber",
@@ -62,11 +66,13 @@ PERMISSOES = {
 
         "relatorios.fiscais.visualizar",
         "relatorios.fiscais.exportar",
+        "servicos.visualizar",
     },
 
     "estagiario": {
         "pacientes.visualizar",
         "agenda.visualizar",
+        "servicos.visualizar",
     },
 }
 

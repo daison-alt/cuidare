@@ -120,6 +120,48 @@ PERMISSOES_MOVIMENTACAO = {
 }
 
 
+PERMISSOES_CLINICAS = {
+    "/prontuarios": {
+        "GET": "prontuarios.visualizar",
+        "POST": "prontuarios.criar",
+        "PUT": "prontuarios.editar",
+        "PATCH": "prontuarios.editar",
+        "DELETE": "prontuarios.editar",
+    },
+    "/evolucoes": {
+        "GET": "prontuarios.visualizar",
+        "POST": "prontuarios.criar",
+        "PUT": "prontuarios.editar",
+        "PATCH": "prontuarios.editar",
+        "DELETE": "prontuarios.editar",
+    },
+}
+
+PERMISSOES_SERVICOS = {
+    "GET": "servicos.visualizar",
+    "POST": "servicos.criar",
+    "PUT": "servicos.editar",
+    "PATCH": "servicos.editar",
+    "DELETE": "servicos.editar",
+}
+
+PERMISSOES_MARKETING = {
+    "/campanhas": {
+        "GET": "marketing.visualizar",
+        "POST": "marketing.criar",
+    },
+    "/indicacoes": {
+        "GET": "marketing.visualizar",
+        "POST": "marketing.criar",
+        "DELETE": "marketing.editar",
+    },
+}
+
+
+def caminho_dentro_da_rota(caminho: str, prefixo: str) -> bool:
+    return caminho == prefixo or caminho.startswith(prefixo + "/")
+
+
 def usuario_tem_permissao(payload, permissao: str) -> bool:
     perfil = str(payload.get("perfil", "")).strip().lower()
     return bool(perfil and tem_permissao(perfil, permissao))
@@ -197,6 +239,26 @@ async def proteger_api(request: Request, call_next):
 
             if not usuario_tem_permissao(payload, permissao_movimentacao):
                 return resposta_sem_permissao()
+
+
+    for prefixo, mapa_permissoes in PERMISSOES_CLINICAS.items():
+        if caminho_dentro_da_rota(request.url.path, prefixo):
+            permissao = mapa_permissoes.get(request.method)
+            if permissao and not usuario_tem_permissao(payload, permissao):
+                return resposta_sem_permissao()
+            break
+
+    if caminho_dentro_da_rota(request.url.path, "/servicos"):
+        permissao = PERMISSOES_SERVICOS.get(request.method)
+        if permissao and not usuario_tem_permissao(payload, permissao):
+            return resposta_sem_permissao()
+
+    for prefixo, mapa_permissoes in PERMISSOES_MARKETING.items():
+        if caminho_dentro_da_rota(request.url.path, prefixo):
+            permissao = mapa_permissoes.get(request.method)
+            if permissao and not usuario_tem_permissao(payload, permissao):
+                return resposta_sem_permissao()
+            break
 
     return await call_next(request)
 
